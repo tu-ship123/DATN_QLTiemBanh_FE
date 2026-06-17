@@ -16,15 +16,15 @@
         </div>
         <div>
           <div class="font-display font-black text-lg text-[#1E2A3B] leading-tight">Polycake</div>
-          <div class="text-[10px] font-bold tracking-[0.2em] uppercase text-[#B0A8A3]">Workspace</div>
+          <div class="text-[10px] font-bold tracking-[0.2em] uppercase text-[#B0A8A3]">Staff Area</div>
         </div>
       </div>
 
       <nav class="flex-1 overflow-y-auto px-3 py-4 custom-scrollbar">
-        <p class="text-[10px] font-bold tracking-widest uppercase text-[#B0A8A3] px-3 pb-2 pt-1">Menu Chính</p>
+        <p class="text-[10px] font-bold tracking-widest uppercase text-[#B0A8A3] px-3 pb-2 pt-1">Nhân viên</p>
 
         <RouterLink
-          v-for="item in mainMenu"
+          v-for="item in staffMenu"
           :key="item.path"
           :to="item.path"
           class="flex items-center gap-3 px-3 py-2.5 mb-1 rounded-xl cursor-pointer transition-all duration-200 group relative text-sm font-semibold text-[#5A6474] hover:bg-[#FFF0EC] hover:text-[#E8634A]"
@@ -43,47 +43,30 @@
           </span>
         </RouterLink>
 
-        <p class="text-[10px] font-bold tracking-widest uppercase text-[#B0A8A3] px-3 pb-2 pt-5">Kho & Marketing</p>
+        <p class="text-[10px] font-bold tracking-widest uppercase text-[#B0A8A3] px-3 pb-2 pt-5">Hỗ trợ</p>
 
         <RouterLink
-          v-for="item in secondMenu"
-          :key="item.path"
-          :to="item.path"
+          to="/staff-area/messages"
           class="flex items-center gap-3 px-3 py-2.5 mb-1 rounded-xl cursor-pointer transition-all duration-200 group relative text-sm font-semibold text-[#5A6474] hover:bg-[#FFF0EC] hover:text-[#E8634A]"
-          :class="{ 'bg-gradient-to-r from-[#E8634A] to-[#F57858] text-white shadow-md shadow-[#E8634A]/20 hover:bg-none hover:text-white': isActive(item.path) }"
+          :class="{ 'bg-gradient-to-r from-[#E8634A] to-[#F57858] text-white shadow-md shadow-[#E8634A]/20 hover:bg-none hover:text-white': isActive('/staff-area/messages') }"
           @click="isMobile && (sidebarOpen = false)"
         >
           <div class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
-               :class="isActive(item.path) ? 'bg-white/20' : 'bg-[#F5F0ED] group-hover:bg-white'">
-            <iconify-icon :icon="item.icon" class="text-[18px]"></iconify-icon>
+               :class="isActive('/staff-area/messages') ? 'bg-white/20' : 'bg-[#F5F0ED] group-hover:bg-white'">
+            <iconify-icon icon="ph:chat-teardrop-dots-duotone" class="text-[18px]"></iconify-icon>
           </div>
-          <span class="flex-1">{{ item.label }}</span>
-        </RouterLink>
-
-        <p class="text-[10px] font-bold tracking-widest uppercase text-[#B0A8A3] px-3 pb-2 pt-5">Hệ Thống</p>
-
-        <RouterLink
-          to="/settings"
-          class="flex items-center gap-3 px-3 py-2.5 mb-1 rounded-xl cursor-pointer transition-all duration-200 group relative text-sm font-semibold text-[#5A6474] hover:bg-[#FFF0EC] hover:text-[#E8634A]"
-          :class="{ 'bg-gradient-to-r from-[#E8634A] to-[#F57858] text-white shadow-md shadow-[#E8634A]/20 hover:bg-none hover:text-white': isActive('/settings') }"
-          @click="isMobile && (sidebarOpen = false)"
-        >
-          <div class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
-               :class="isActive('/settings') ? 'bg-white/20' : 'bg-[#F5F0ED] group-hover:bg-white'">
-            <iconify-icon icon="ph:gear-duotone" class="text-[18px]"></iconify-icon>
-          </div>
-          <span class="flex-1">Cài đặt</span>
+          <span class="flex-1">Tin nhắn</span>
         </RouterLink>
       </nav>
 
       <div class="p-3 border-t border-[#EDE8E3] shrink-0 bg-white">
         <div class="flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-colors hover:bg-[#FFF0EC]">
-          <div class="w-10 h-10 rounded-xl bg-[#1E2A3B] text-white text-sm font-bold flex items-center justify-center shrink-0">
-            CĐ
+          <div class="w-10 h-10 rounded-xl bg-[#FBB830] text-white text-sm font-bold flex items-center justify-center shrink-0">
+            NV
           </div>
           <div class="flex-1 min-w-0">
-            <div class="text-sm font-bold truncate text-[#1E2A3B]">Đoàn Chí Đạt</div>
-            <div class="text-[11px] font-black uppercase tracking-wider text-[#E8634A]">Super Admin</div>
+            <div class="text-sm font-bold truncate text-[#1E2A3B]">Nguyễn Văn A</div>
+            <div class="text-[11px] font-black uppercase tracking-wider text-[#E8634A]">Nhân viên</div>
           </div>
           <el-dropdown trigger="click">
             <button class="p-1.5 rounded-lg hover:bg-white text-gray-400 transition-colors shadow-sm border border-transparent hover:border-gray-200">
@@ -92,7 +75,6 @@
             <template #dropdown>
               <el-dropdown-menu class="w-48 rounded-xl font-sans">
                 <el-dropdown-item><iconify-icon icon="ph:user-circle" class="mr-2 text-lg"></iconify-icon>Hồ sơ cá nhân</el-dropdown-item>
-                <el-dropdown-item><iconify-icon icon="ph:lock-key" class="mr-2 text-lg"></iconify-icon>Đổi mật khẩu</el-dropdown-item>
                 <el-dropdown-item divided @click="$router.push('/login')" class="text-red-500 font-semibold hover:bg-red-50">
                   <iconify-icon icon="ph:sign-out" class="mr-2 text-lg"></iconify-icon>Đăng xuất
                 </el-dropdown-item>
@@ -132,11 +114,10 @@
         <div class="flex items-center gap-3">
           <div class="hidden lg:flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 w-[280px] focus-within:border-[#E8634A] focus-within:ring-2 focus-within:ring-[#E8634A]/20 transition-all">
             <iconify-icon icon="ph:magnifying-glass" class="text-gray-400 text-lg"></iconify-icon>
-            <input type="text" placeholder="Tìm kiếm nhanh..." class="bg-transparent border-none outline-none w-full text-sm text-[#1E2A3B] placeholder-gray-400" />
-            <span class="text-[10px] px-1.5 py-0.5 rounded bg-white border border-gray-200 text-gray-400 font-mono font-bold shadow-sm">⌘K</span>
+            <input type="text" placeholder="Tìm kiếm mã đơn..." class="bg-transparent border-none outline-none w-full text-sm text-[#1E2A3B] placeholder-gray-400" />
           </div>
 
-          <el-badge :value="5" :max="9" class="ml-2 mt-1">
+          <el-badge :value="2" :max="9" class="ml-2 mt-1">
             <button class="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center hover:bg-[#FFF0EC] hover:text-[#E8634A] hover:border-[#E8634A]/30 transition-all text-gray-500 shadow-sm">
               <iconify-icon icon="ph:bell-duotone" class="text-xl"></iconify-icon>
             </button>
@@ -146,7 +127,7 @@
 
           <button class="hidden sm:flex items-center gap-2 bg-gradient-to-r from-[#E8634A] to-[#F07A5E] text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-[#E8634A]/30 hover:shadow-[#E8634A]/50 hover:-translate-y-0.5 transition-all" @click="handleAddNew">
             <iconify-icon icon="ph:plus-bold" class="text-base"></iconify-icon>
-            <span>Thêm mới</span>
+            <span>Tạo đơn</span>
           </button>
         </div>
       </header>
@@ -173,19 +154,9 @@ const router = useRouter()
 const sidebarOpen = ref(true)
 const isMobile    = ref(false)
 
-const mainMenu = [
-  { path: '/dashboard', icon: 'ph:squares-four-duotone', label: 'Tổng quan' },
-  { path: '/orders',    icon: 'ph:receipt-duotone', label: 'Quản lý đơn hàng', badge: 24 },
-  { path: '/staff',     icon: 'ph:users-three-duotone', label: 'Nhân sự & Phân quyền' },
-  { path: '/products',  icon: 'ph:cake-duotone', label: 'Sản phẩm' },
-  { path: '/reviews',   icon: 'ph:star-duotone', label: 'Đánh giá' },
-  { path: '/analytics', icon: 'ph:chart-line-up-duotone', label: 'Phân tích' },
-  { path: '/messages',  icon: 'ph:chat-teardrop-dots-duotone', label: 'Tin nhắn', badge: 3 },
-]
-
-const secondMenu = [
-  { path: '/inventory', icon: 'ph:package-duotone', label: 'Kho hàng' },
-  { path: '/vouchers',  icon: 'ph:ticket-duotone', label: 'Voucher & Khuyến mãi' },
+const staffMenu = [
+  { path: '/staff-area/orders',   icon: 'ph:receipt-duotone', label: 'Quản lý đơn hàng', badge: 12 },
+  { path: '/staff-area/products', icon: 'ph:cake-duotone', label: 'Danh sách bánh' },
 ]
 
 const currentBreadcrumb = computed(

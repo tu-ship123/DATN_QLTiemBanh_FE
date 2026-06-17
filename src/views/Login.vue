@@ -57,7 +57,16 @@
         </div>
 
         <h2 class="font-display font-black text-3xl mb-1" style="color:#1E2A3B">Xin chào 👋</h2>
-        <p class="text-gray-500 mb-8">Đăng nhập vào tài khoản quản trị của bạn</p>
+        <p class="text-gray-500 mb-4">Đăng nhập để xem giao diện (chọn vai trò để chuyển hướng)</p>
+
+        <div class="mb-4">
+          <label class="form-label">Vai trò</label>
+          <el-select v-model="form.role" placeholder="Chọn vai trò" size="large" style="width:100%">
+            <el-option label="Admin" value="admin" />
+            <el-option label="Staff" value="staff" />
+            <el-option label="Customer" value="customer" />
+          </el-select>
+        </div>
 
         <el-form :model="form" :rules="rules" ref="formRef" @submit.prevent="handleLogin">
           <!-- Username -->
@@ -144,6 +153,11 @@ async function handleLogin() {
   await new Promise(r => setTimeout(r, 1200))
   loading.value = false
   ElMessage.success('Đăng nhập thành công! 🎉')
-  router.push('/dashboard')
+  // Save chosen role locally so layouts or guards can read it
+  localStorage.setItem('polycake_role', form.role || 'admin')
+  // Redirect based on role
+  if ((form.role || 'admin') === 'staff') router.push('/staff-area/orders')
+  else if ((form.role || 'admin') === 'customer') router.push('/shop')
+  else router.push('/dashboard')
 }
 </script>

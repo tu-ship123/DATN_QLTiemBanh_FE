@@ -1,6 +1,58 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
+  // Quick preview route for Staff layout
+  {
+    path: '/staff-area',
+    component: () => import('@/components/StaffLayout.vue'),
+    redirect: '/staff-area/orders',
+    children: [
+      {
+        path: 'orders',
+        name: 'StaffOrders',
+        component: () => import('@/views/Orders.vue'),
+        meta: { title: 'Đơn hàng (Staff)', breadcrumb: ['Nhân viên', 'Đơn hàng'] }
+      },
+      {
+        path: 'products',
+        name: 'StaffProducts',
+        component: () => import('@/views/Products.vue'),
+        meta: { title: 'Sản phẩm (Staff)', breadcrumb: ['Nhân viên', 'Sản phẩm'] }
+      }
+    ]
+  },
+
+  // Customer-facing shop preview
+  {
+    path: '/shop',
+    component: () => import('@/components/CustomerLayout.vue'),
+    children: [
+      {
+        path: '',
+        name: 'Shop',
+        component: () => import('@/views/Shop.vue'),
+        meta: { title: 'Cửa hàng', breadcrumb: ['Cửa hàng'] }
+      },
+      {
+        path: 'design',
+        name: 'Design',
+        component: () => import('@/views/Design.vue'),
+        meta: { title: 'Thiết kế 3D', breadcrumb: ['Cửa hàng', 'Thiết kế 3D'] }
+      },
+      {
+        path: 'contact',
+        name: 'Contact',
+        component: () => import('@/views/Contact.vue'),
+        meta: { title: 'Liên hệ', breadcrumb: ['Cửa hàng', 'Liên hệ'] }
+      },
+      {
+        path: 'cart',
+        name: 'Cart',
+        component: () => import('@/views/Cart.vue'),
+        meta: { title: 'Giỏ hàng', breadcrumb: ['Cửa hàng', 'Giỏ hàng'] }
+      }
+    ]
+  },
   {
     path: '/login',
     name: 'Login',
@@ -8,9 +60,15 @@ const routes = [
     meta: { public: true }
   },
   {
+    path: '/register',
+    name: 'Register',
+    component: () => import('@/views/Register.vue'),
+    meta: { public: true }
+  },
+  {
     path: '/',
     component: () => import('@/components/AdminLayout.vue'),
-    redirect: '/dashboard',
+    redirect: '/login',
     children: [
       {
         path: 'dashboard',
