@@ -59,12 +59,7 @@ const routes = [
     component: () => import('@/views/Login.vue'),
     meta: { public: true }
   },
-  {
-    path: '/register',
-    name: 'Register',
-    component: () => import('@/views/Register.vue'),
-    meta: { public: true }
-  },
+
   {
     path: '/',
     component: () => import('@/components/AdminLayout.vue'),
@@ -139,4 +134,28 @@ const router = createRouter({
   routes
 })
 
+const routes = [
+  { path: '/login', name: 'Login', component: () => import('@/views/Login.vue') },
+  
+  // Layout cho Khách hàng
+  {
+    path: '/',
+    component: () => import('@/components/CustomerLayout.vue'),
+    children: [
+      { path: '', component: () => import('@/views/Shop.vue') }, // Trang chủ khách
+      { path: 'cart', component: () => import('@/views/Cart.vue') }
+    ]
+  },
+
+  // Layout cho Admin (Bảo vệ bởi Route Guard)
+  {
+    path: '/admin',
+    component: () => import('@/components/AdminLayout.vue'),
+    meta: { requiresAuth: true, adminOnly: true }, // Chỉ admin mới vào được
+    children: [
+      { path: 'dashboard', component: () => import('@/views/Dashboard.vue') },
+      { path: 'inventory', component: () => import('@/views/Inventory.vue') }
+    ]
+  }
+];
 export default router
