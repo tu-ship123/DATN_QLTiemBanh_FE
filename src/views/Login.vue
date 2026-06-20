@@ -1,8 +1,8 @@
-<template>
-  <div class="auth-page-wrapper">
+<template> 
+ <div>
+   <div class="auth-page-wrapper">
     <div class="container" :class="{ 'right-panel-active': isSignUp }">
       
-      <!-- FORM ĐĂNG KÝ (Bên trái, ẩn dưới lớp trượt) -->
       <div class="form-container sign-up-container">
         <form @submit.prevent="handleRegister">
           <h1>Tạo tài khoản</h1>
@@ -19,7 +19,6 @@
         </form>
       </div>
 
-      <!-- FORM ĐĂNG NHẬP (Bên trái, hiển thị mặc định) -->
       <div class="form-container sign-in-container">
         <form @submit.prevent="handleLogin">
           <h1>Đăng nhập</h1>
@@ -36,17 +35,14 @@
         </form>
       </div>
 
-      <!-- LỚP OVERLAY TRƯỢT CHỨA HÌNH ẢNH -->
       <div class="overlay-container">
         <div class="overlay">
-          <!-- Bảng thông tin bên trái (Thấy khi ở màn Đăng ký) -->
           <div class="overlay-panel overlay-left">
             <h1>Chào mừng trở lại!</h1>
             <p>Để duy trì kết nối với Polycake, vui lòng đăng nhập bằng thông tin cá nhân của bạn.</p>
             <el-button plain class="ghost-btn" @click="isSignUp = false">Đăng nhập</el-button>
           </div>
           
-          <!-- Bảng thông tin bên phải (Thấy khi ở màn Đăng nhập) -->
           <div class="overlay-panel overlay-right">
             <h1>Chào bạn mới!</h1>
             <p>Nhập thông tin cá nhân và bắt đầu hành trình thưởng thức bánh ngon cùng chúng tôi.</p>
@@ -57,6 +53,7 @@
 
     </div>
   </div>
+
   <el-dialog v-model="dialogVisible" title="Khôi phục mật khẩu" width="400px" center align-center>
       <div style="text-align: center; margin-bottom: 20px; font-size: 14px; color: #666;">
         Vui lòng nhập địa chỉ email đã đăng ký. Chúng tôi sẽ gửi cho bạn hướng dẫn để đặt lại mật khẩu.
@@ -70,7 +67,9 @@
           </el-button>
         </span>
       </template>
-    </el-dialog>
+    </el-dialog></div>
+ 
+    
 </template>
 
 <script setup>
@@ -78,7 +77,7 @@ import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import { useAuthStore } from '../stores/authStore'; 
-import apiClient from '../services/apiService';     
+import { authService } from '../services/authService'; // Sử dụng Service thay vì apiClient trực tiếp
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -102,12 +101,31 @@ const registerForm = reactive({ hoTen: '', email: '', soDienThoai: '', matKhau: 
 const handleLogin = async () => {
   isLoading.value = true;
   try {
-    const response = await apiClient.post('/api/v1/auth/login', loginForm);
+    const response = await authService.login(loginForm);
+    
     authStore.setAuthData(response.data);
+    
+    if (response.data.user) {
+      authStore.setUser(response.data.user);
+    } else {
+      authStore.setUser({ email: loginForm.email });
+    }
+
     ElMessage.success('Đăng nhập thành công!');
-    router.push('/'); 
+
+    // Redirect theo role
+    const role = response.data.user?.role || response.data.role;
+    
+    if (role === 'ADMIN') {
+      router.push('/admin/dashboard');
+    } else if (role === 'STAFF') {
+      router.push('/staff-area/orders');
+    } else {
+      router.push('/shop');
+    }
+
   } catch (error) {
-    ElMessage.error(error.response?.data?.message || error.response?.data || 'Đăng nhập thất bại. Kiểm tra lại thông tin.');
+    ElMessage.error(error.response?.data?.message || error.response?.data || 'Đăng nhập thất bại.');
   } finally {
     isLoading.value = false;
   }
@@ -117,11 +135,11 @@ const handleLogin = async () => {
 const handleRegister = async () => {
   isLoading.value = true;
   try {
-    await apiClient.post('/api/v1/auth/register', registerForm);
+    await authService.register(registerForm);
     ElMessage.success('Đăng ký thành công! Vui lòng đăng nhập.');
     isSignUp.value = false; 
     loginForm.email = registerForm.email; 
-    registerForm.matKhau = ''; // Xóa trắng pass đăng ký cho an toàn
+    registerForm.matKhau = ''; 
   } catch (error) {
     ElMessage.error(error.response?.data?.message || error.response?.data || 'Đăng ký thất bại.');
   } finally {
@@ -143,7 +161,7 @@ const handleForgotPassword = async () => {
   }
   isForgotLoading.value = true;
   try {
-    await apiClient.post('/api/v1/auth/forgot-password', { email: forgotEmail.value });
+    await authService.forgotPassword(forgotEmail.value);
     ElMessage.success('Đã gửi hướng dẫn khôi phục! Vui lòng kiểm tra hộp thư email của bạn.');
     dialogVisible.value = false; 
   } catch (error) {
@@ -153,6 +171,7 @@ const handleForgotPassword = async () => {
   }
 };
 </script>
+
 <style scoped>
 /* --- PHẦN NỀN BÊN NGOÀI ĐƯỢC NÂNG CẤP --- */
 .auth-page-wrapper {
@@ -208,8 +227,6 @@ const handleForgotPassword = async () => {
   min-height: 550px;
   z-index: 1; /* Đảm bảo form luôn nổi lên trên các khối màu mờ */
 }
-
-
 
 /* Khung chính chứa form và ảnh */
 .container {

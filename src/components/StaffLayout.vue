@@ -153,8 +153,8 @@ const router = useRouter()
 
 const sidebarOpen = ref(true)
 const isMobile    = ref(false)
-
 const staffMenu = [
+  { path: '/staff-area/checkin',  icon: 'ph:fingerprint-duotone', label: 'Chấm công' }, // ← THÊM
   { path: '/staff-area/orders',   icon: 'ph:receipt-duotone', label: 'Quản lý đơn hàng', badge: 12 },
   { path: '/staff-area/products', icon: 'ph:cake-duotone', label: 'Danh sách bánh' },
 ]

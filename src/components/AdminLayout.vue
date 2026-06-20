@@ -63,13 +63,13 @@
         <p class="text-[10px] font-bold tracking-widest uppercase text-[#B0A8A3] px-3 pb-2 pt-5">Hệ Thống</p>
 
         <RouterLink
-          to="/settings"
+          to="/admin/settings"
           class="flex items-center gap-3 px-3 py-2.5 mb-1 rounded-xl cursor-pointer transition-all duration-200 group relative text-sm font-semibold text-[#5A6474] hover:bg-[#FFF0EC] hover:text-[#E8634A]"
-          :class="{ 'bg-gradient-to-r from-[#E8634A] to-[#F57858] text-white shadow-md shadow-[#E8634A]/20 hover:bg-none hover:text-white': isActive('/settings') }"
+          :class="{ 'bg-gradient-to-r from-[#E8634A] to-[#F57858] text-white shadow-md shadow-[#E8634A]/20 hover:bg-none hover:text-white': isActive('/admin/settings') }"
           @click="isMobile && (sidebarOpen = false)"
         >
           <div class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
-               :class="isActive('/settings') ? 'bg-white/20' : 'bg-[#F5F0ED] group-hover:bg-white'">
+               :class="isActive('/admin/settings') ? 'bg-white/20' : 'bg-[#F5F0ED] group-hover:bg-white'">
             <iconify-icon icon="ph:gear-duotone" class="text-[18px]"></iconify-icon>
           </div>
           <span class="flex-1">Cài đặt</span>
@@ -173,19 +173,21 @@ const router = useRouter()
 const sidebarOpen = ref(true)
 const isMobile    = ref(false)
 
+// Đã thêm tiền tố /admin vào toàn bộ đường dẫn
 const mainMenu = [
-  { path: '/dashboard', icon: 'ph:squares-four-duotone', label: 'Tổng quan' },
-  { path: '/orders',    icon: 'ph:receipt-duotone', label: 'Quản lý đơn hàng', badge: 24 },
-  { path: '/staff',     icon: 'ph:users-three-duotone', label: 'Nhân sự & Phân quyền' },
-  { path: '/products',  icon: 'ph:cake-duotone', label: 'Sản phẩm' },
-  { path: '/reviews',   icon: 'ph:star-duotone', label: 'Đánh giá' },
-  { path: '/analytics', icon: 'ph:chart-line-up-duotone', label: 'Phân tích' },
-  { path: '/messages',  icon: 'ph:chat-teardrop-dots-duotone', label: 'Tin nhắn', badge: 3 },
+  { path: '/admin/dashboard', icon: 'ph:squares-four-duotone', label: 'Tổng quan' },
+  { path: '/admin/orders',    icon: 'ph:receipt-duotone', label: 'Quản lý đơn hàng', badge: 24 },
+  { path: '/admin/staff',     icon: 'ph:users-three-duotone', label: 'Nhân sự & Phân quyền' },
+  { path: '/admin/products',  icon: 'ph:cake-duotone', label: 'Sản phẩm' },
+  { path: '/admin/reviews',   icon: 'ph:star-duotone', label: 'Đánh giá' },
+  { path: '/admin/analytics', icon: 'ph:chart-line-up-duotone', label: 'Phân tích' },
+  { path: '/admin/messages',  icon: 'ph:chat-teardrop-dots-duotone', label: 'Tin nhắn', badge: 3 },
 ]
 
+// Đã thêm tiền tố /admin vào toàn bộ đường dẫn
 const secondMenu = [
-  { path: '/inventory', icon: 'ph:package-duotone', label: 'Kho hàng' },
-  { path: '/vouchers',  icon: 'ph:ticket-duotone', label: 'Voucher & Khuyến mãi' },
+  { path: '/admin/inventory', icon: 'ph:package-duotone', label: 'Kho hàng' },
+  { path: '/admin/vouchers',  icon: 'ph:ticket-duotone', label: 'Voucher & Khuyến mãi' },
 ]
 
 const currentBreadcrumb = computed(
