@@ -19,7 +19,9 @@ const routes = [
       { path: 'products', name: 'ShopProducts', component: () => import('@/views/Products.vue'), meta: { title: 'Sản phẩm', breadcrumb: ['Cửa hàng', 'Sản phẩm'] } },
       { path: 'design', name: 'Design', component: () => import('@/views/Design.vue'), meta: { title: 'Thiết kế 3D', breadcrumb: ['Cửa hàng', 'Thiết kế 3D'] } },
       { path: 'contact', name: 'Contact', component: () => import('@/views/Contact.vue'), meta: { title: 'Liên hệ', breadcrumb: ['Cửa hàng', 'Liên hệ'] } },
-      { path: 'cart', name: 'Cart', component: () => import('@/views/Cart.vue'), meta: { title: 'Giỏ hàng', breadcrumb: ['Cửa hàng', 'Giỏ hàng'] } }
+      { path: 'cart', name: 'Cart', component: () => import('@/views/Cart.vue'), meta: { title: 'Giỏ hàng', breadcrumb: ['Cửa hàng', 'Giỏ hàng'] } },
+      { path: 'payment', name: 'Payment', component: () => import('@/views/Payment.vue'), meta: { title: 'Thanh toán', breadcrumb: ['Cửa hàng', 'Thanh toán'] } },
+      { path: 'order-tracking', name: 'OrderTracking', component: () => import('@/views/OrderTracking.vue'), meta: { title: 'Theo dõi đơn hàng', breadcrumb: ['Cửa hàng', 'Theo dõi đơn hàng'] } }
     ]
   },
 
