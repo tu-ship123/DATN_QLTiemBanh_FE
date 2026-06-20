@@ -27,12 +27,14 @@
           <span class="font-semibold text-slate-900">{{ row.amount }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="Hành động" width="260">
+      <el-table-column label="Hành động" width="360">
         <template #default="{ row }">
           <div class="flex flex-wrap items-center gap-2">
             <el-button type="info" size="mini" @click="openDetailDialog(row)">Chi tiết</el-button>
             <el-button type="primary" size="mini" @click="openEditDialog(row)">Sửa</el-button>
             <el-button type="danger" size="mini" @click="handleDelete(row)">Xóa</el-button>
+            <el-button type="warning" size="mini" plain @click="openRefundDialog(row)">Hoàn tiền</el-button>
+            <el-button type="danger" size="mini" plain @click="openOverrideDialog(row)">Ghi đè</el-button>
           </div>
         </template>
       </el-table-column>
@@ -123,6 +125,52 @@
         </div>
       </template>
     </el-dialog>
+
+    <el-dialog v-model:visible="showRefund" title="Xử lý hoàn tiền" width="450px" center>
+      <div class="mb-5 text-sm text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-200">
+        Đang xử lý hoàn tiền cho đơn hàng <strong class="text-orange-500">{{ currentActionRow?.orderId }}</strong>.<br>
+        Khách hàng: <strong>{{ currentActionRow?.customer }}</strong>
+      </div>
+      <el-form label-position="top">
+        <el-form-item label="Số tiền hoàn (VNĐ)" required>
+          <el-input v-model="refundData.amount" placeholder="Nhập số tiền..." />
+        </el-form-item>
+        <el-form-item label="Lý do hoàn tiền" required>
+          <el-input v-model="refundData.reason" type="textarea" :rows="2" placeholder="VD: Khách hủy đơn, sai mẫu bánh..." />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="flex justify-end gap-3">
+          <el-button @click="showRefund = false">Hủy</el-button>
+          <el-button type="primary" @click="processRefund">Xác nhận hoàn tiền</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model:visible="showOverride" title="Ghi đè hệ thống (Override)" width="450px" center>
+      <div class="mb-5 text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-200">
+        <strong>⚠️ Cảnh báo:</strong> Thao tác này sẽ ép buộc chuyển đổi trạng thái, bỏ qua quy trình thông thường cho đơn <strong class="text-red-700">{{ currentActionRow?.orderId }}</strong>.
+      </div>
+      <el-form label-position="top">
+        <el-form-item label="Ép chuyển sang trạng thái" required>
+          <el-select v-model="overrideData.status" class="w-full" placeholder="Chọn trạng thái">
+            <el-option label="Hoàn thành" value="Hoàn thành" />
+            <el-option label="Đã giao" value="Đã giao" />
+            <el-option label="Đã huỷ" value="Đã huỷ" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="Mã PIN Admin" required>
+          <el-input v-model="overrideData.pin" type="password" placeholder="Nhập mã PIN xác nhận..." show-password />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="flex justify-end gap-3">
+          <el-button @click="showOverride = false">Hủy</el-button>
+          <el-button type="danger" @click="processOverride">Thực thi Ghi đè</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
   </el-card>
 </template>
 
@@ -159,7 +207,14 @@ const orderForm = reactive({
   amount: ''
 });
 
-const statusOptions = ['Chờ nhận', 'Sản xuất', 'Hoàn thành', 'Đã giao'];
+// Các state phục vụ cho Refund và Override (Mới thêm)
+const showRefund = ref(false);
+const refundData = ref({ amount: '', reason: '' });
+const showOverride = ref(false);
+const overrideData = ref({ status: 'Hoàn thành', pin: '' });
+const currentActionRow = ref(null);
+
+const statusOptions = ['Chờ nhận', 'Sản xuất', 'Hoàn thành', 'Đã giao', 'Đã huỷ'];
 
 const dialogTitle = computed(() => (editingId.value ? 'Chỉnh sửa đơn hàng' : 'Tạo đơn hàng mới'));
 
@@ -208,6 +263,56 @@ const openEditDialog = row => {
   orderForm.status = row.status;
   orderForm.amount = row.amount;
   orderDialogVisible.value = true;
+};
+
+// Hàm mở Modal Hoàn tiền (Mới thêm)
+const openRefundDialog = row => {
+  currentActionRow.value = row;
+  refundData.value.amount = row.amount; 
+  refundData.value.reason = '';
+  showRefund.value = true;
+};
+
+// Hàm xử lý Hoàn tiền (Mới thêm)
+const processRefund = () => {
+  if (!refundData.value.amount || !refundData.value.reason) {
+    ElMessage.warning('Vui lòng nhập đủ thông tin hoàn tiền!');
+    return;
+  }
+  
+  const index = orders.findIndex(item => item.id === currentActionRow.value.id);
+  if (index !== -1) {
+    orders[index].status = 'Đã huỷ';
+    orders[index].note = `[Đã hoàn tiền: ${refundData.value.amount}] Lý do: ${refundData.value.reason}`;
+  }
+  
+  showRefund.value = false;
+  ElMessage.success(`Đã hoàn tất lệnh trả tiền cho đơn ${currentActionRow.value.orderId}`);
+};
+
+// Hàm mở Modal Ghi đè (Mới thêm)
+const openOverrideDialog = row => {
+  currentActionRow.value = row;
+  overrideData.value.status = 'Hoàn thành';
+  overrideData.value.pin = '';
+  showOverride.value = true;
+};
+
+// Hàm xử lý Ghi đè (Mới thêm)
+const processOverride = () => {
+  if (overrideData.value.pin !== '1234') { // Mock PIN
+    ElMessage.error('Mã PIN xác thực không hợp lệ!');
+    return;
+  }
+  
+  const index = orders.findIndex(item => item.id === currentActionRow.value.id);
+  if (index !== -1) {
+    orders[index].status = overrideData.value.status;
+    orders[index].note = `[SYSTEM OVERRIDE] Trạng thái được ép chuyển thành: ${overrideData.value.status}`;
+  }
+  
+  showOverride.value = false;
+  ElMessage.success(`Ghi đè thành công đơn ${currentActionRow.value.orderId}`);
 };
 
 const saveOrder = async () => {
@@ -260,6 +365,8 @@ const statusTagType = status => {
       return 'info';
     case 'Đã giao':
       return 'success';
+    case 'Đã huỷ':
+      return 'danger';
     default:
       return 'info';
   }
@@ -272,7 +379,7 @@ const loadOrders = async () => {
   orders.splice(0, orders.length, ...data);
 };
 
-onMounted(() => {
+onMounted(() => { 
   pageActions.openOrderModal = openCreateDialog;
   loadOrders();
 });

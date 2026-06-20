@@ -306,11 +306,11 @@ function printBill() {
       <title>Hoa don #POS-${orderNo.value}</title>
       <style>
         * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family: monospace; font-size:12px; width:80mm; margin: 0 auto; padding:4mm; }
+        body { font-family: monospace; font-size:12px; width:80mm; padding:4mm; }
         .divider { border-top: 1px dashed #000; margin: 6px 0; }
         @media print {
           @page { size: 80mm auto; margin: 0; }
-          body { width: 80mm; margin: 0 auto; }
+          body { width: 80mm; }
         }
       </style>
     </head>

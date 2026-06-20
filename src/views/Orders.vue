@@ -1,6 +1,5 @@
 <template>
   <div>
-    <!-- Page Header -->
     <div class="flex items-center justify-between mb-6">
       <div>
         <h1 class="font-display font-black text-2xl" style="color:#1E2A3B">Quản lý đơn hàng</h1>
@@ -16,7 +15,6 @@
       </div>
     </div>
 
-    <!-- Stats Row -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
       <div v-for="s in orderStats" :key="s.label"
            class="bg-white rounded-2xl p-4 border border-[var(--color-border)] flex items-center gap-3">
@@ -28,7 +26,6 @@
       </div>
     </div>
 
-    <!-- Filters -->
     <div class="data-card mb-4">
       <div class="p-4 flex flex-wrap gap-3 items-center">
         <div class="search-input flex-1" style="min-width:220px">
@@ -52,7 +49,6 @@
       </div>
     </div>
 
-    <!-- Orders Table -->
     <div class="data-card">
       <el-table
         :data="filteredOrders"
@@ -130,6 +126,10 @@
                   <el-dropdown-item command="edit">✏️ Chỉnh sửa</el-dropdown-item>
                   <el-dropdown-item command="status">🔄 Đổi trạng thái</el-dropdown-item>
                   <el-dropdown-item command="print">🖨️ In đơn</el-dropdown-item>
+                  
+                  <el-dropdown-item command="override" divided>⚡ Ghi đè (Override)</el-dropdown-item>
+                  <el-dropdown-item command="refund">💸 Hoàn tiền (Refund)</el-dropdown-item>
+
                   <el-dropdown-item command="delete" divided>
                     <span style="color:#EF4444">🗑 Xoá đơn</span>
                   </el-dropdown-item>
@@ -140,7 +140,6 @@
         </el-table-column>
       </el-table>
 
-      <!-- Pagination -->
       <div class="px-4 py-3 border-t border-[var(--color-border)] flex items-center justify-between">
         <span class="text-sm text-muted">Hiển thị {{ filteredOrders.length }} / {{ orders.length }} đơn hàng</span>
         <el-pagination
@@ -153,10 +152,8 @@
       </div>
     </div>
 
-    <!-- ===== ORDER DETAIL DIALOG ===== -->
     <el-dialog v-model="showDetail" :title="`Chi tiết đơn hàng ${selectedOrder?.id}`" width="660px">
       <div v-if="selectedOrder">
-        <!-- Status Steps -->
         <el-steps :active="statusStep(selectedOrder.status)" align-center class="mb-6">
           <el-step title="Tiếp nhận" icon="DocumentChecked" />
           <el-step title="Sản xuất" icon="Tools" />
@@ -188,7 +185,6 @@
           </div>
         </div>
 
-        <!-- Note -->
         <div class="bg-amber-50 rounded-2xl p-4 border border-amber-100" v-if="selectedOrder.note">
           <div class="text-xs font-bold text-amber-700 uppercase tracking-wider mb-1">📝 Ghi chú đặc biệt</div>
           <div class="text-sm text-amber-800">{{ selectedOrder.note }}</div>
@@ -207,7 +203,6 @@
       </template>
     </el-dialog>
 
-    <!-- ===== ADD ORDER DIALOG ===== -->
     <el-dialog v-model="showAddOrder" title="Tạo đơn hàng mới" width="600px">
       <el-form :model="newOrder" label-position="top">
         <div class="grid grid-cols-2 gap-4">
@@ -256,6 +251,52 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="showRefund" title="Xử lý hoàn tiền" width="450px">
+      <div class="mb-5 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-200">
+        Đang xử lý hoàn tiền cho đơn hàng <strong class="text-[#E8634A]">{{ selectedOrder?.id }}</strong>.<br>
+        Khách hàng: <strong>{{ selectedOrder?.customer }}</strong>
+      </div>
+      <el-form label-position="top">
+        <el-form-item label="Số tiền hoàn (VNĐ)" required>
+          <el-input v-model="refundData.amount" placeholder="Nhập số tiền..." />
+        </el-form-item>
+        <el-form-item label="Lý do hoàn tiền" required>
+          <el-input v-model="refundData.reason" type="textarea" :rows="2" placeholder="VD: Khách hủy đơn, sai mẫu bánh..." />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showRefund = false">Hủy</el-button>
+        <el-button type="primary" :style="{ background:'#E8634A', borderColor:'#E8634A' }" @click="processRefund">
+          Xác nhận hoàn tiền
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="showOverride" title="Ghi đè hệ thống (Override)" width="450px">
+      <div class="mb-5 text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-200">
+        <strong>⚠️ Cảnh báo:</strong> Thao tác này sẽ ép buộc chuyển đổi trạng thái đơn <strong class="text-[#E8634A]">{{ selectedOrder?.id }}</strong>, bỏ qua quy trình thông thường.
+      </div>
+      <el-form label-position="top">
+        <el-form-item label="Ép chuyển sang trạng thái" required>
+          <el-select v-model="overrideData.status" class="w-full">
+            <el-option label="Hoàn thành" value="Hoàn thành" />
+            <el-option label="Đã giao" value="Đã giao" />
+            <el-option label="Đã huỷ" value="Đã huỷ" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="Mã PIN Admin" required>
+          <el-input v-model="overrideData.pin" type="password" placeholder="Nhập mã PIN xác nhận..." show-password />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showOverride = false">Hủy</el-button>
+        <el-button type="danger" @click="processOverride">
+          Thực thi Ghi đè
+        </el-button>
+      </template>
+    </el-dialog>
+
   </div>
 </template>
 
@@ -268,6 +309,12 @@ const search = ref(''), filterStatus = ref(''), filterDate = ref(null), sortBy =
 const page = ref(1), tableLoading = ref(false)
 const showDetail = ref(false), showAddOrder = ref(false)
 const selectedOrder = ref(null)
+
+// State mới thêm cho Refund và Override
+const showRefund = ref(false)
+const refundData = ref({ amount: '', reason: '' })
+const showOverride = ref(false)
+const overrideData = ref({ status: 'Hoàn thành', pin: '' })
 
 const newOrder = ref({ customer:'', phone:'', product:'', deliveryDate:null, deliveryTime:null, total:'', deposit:'', address:'', note:'', urgent:false })
 
@@ -316,13 +363,62 @@ const statusStep = (s) => {
 
 function openDetail(row) { selectedOrder.value = row; showDetail.value = true }
 
+// Hàm xử lý Menu thả xuống (Đã cập nhật logic mới)
 function handleRowAction(cmd, row) {
-  if (cmd === 'view') openDetail(row)
+  selectedOrder.value = row;
+  
+  if (cmd === 'view') {
+    openDetail(row)
+  } 
+  else if (cmd === 'refund') {
+    refundData.value.amount = row.deposit || row.total
+    refundData.value.reason = ''
+    showRefund.value = true
+  } 
+  else if (cmd === 'override') {
+    overrideData.value.status = 'Hoàn thành'
+    overrideData.value.pin = ''
+    showOverride.value = true
+  } 
   else if (cmd === 'delete') {
     ElMessageBox.confirm(`Xoá đơn ${row.id}?`, 'Xác nhận', { type:'warning' })
       .then(() => { orders.value = orders.value.filter(o => o.id !== row.id); ElMessage.success('Đã xoá đơn hàng') })
       .catch(() => {})
-  } else ElMessage.info('Tính năng đang phát triển')
+  } 
+  else {
+    ElMessage.info('Tính năng đang phát triển')
+  }
+}
+
+// Hàm xử lý Hoàn tiền (Mới thêm)
+function processRefund() {
+  if (!refundData.value.amount || !refundData.value.reason) {
+    return ElMessage.warning('Vui lòng nhập đủ thông tin hoàn tiền!')
+  }
+  
+  selectedOrder.value.status = 'Đã huỷ'
+  selectedOrder.value.statusKey = 'cancelled'
+  selectedOrder.value.note = `[Đã hoàn tiền: ${refundData.value.amount}] Lý do: ${refundData.value.reason}`
+  
+  showRefund.value = false
+  ElMessage.success(`Hoàn tất lệnh trả tiền cho đơn ${selectedOrder.value.id}`)
+}
+
+// Hàm xử lý Ghi đè (Mới thêm)
+function processOverride() {
+  if (overrideData.value.pin !== '1234') { // Mock PIN
+    return ElMessage.error('Mã PIN xác thực không hợp lệ!')
+  }
+
+  const statusMap = { 'Hoàn thành': 'done', 'Đã giao': 'delivered', 'Đã huỷ': 'cancelled' }
+  const newStatus = overrideData.value.status
+  
+  selectedOrder.value.status = newStatus
+  selectedOrder.value.statusKey = statusMap[newStatus]
+  selectedOrder.value.note = `[SYSTEM OVERRIDE] Trạng thái được ép chuyển thành: ${newStatus}`
+  
+  showOverride.value = false
+  ElMessage.success(`Ghi đè thành công đơn ${selectedOrder.value.id}`)
 }
 
 function saveOrder() {

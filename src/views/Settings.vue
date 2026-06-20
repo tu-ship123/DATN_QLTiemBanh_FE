@@ -34,7 +34,33 @@
           </el-form>
         </el-collapse-item>
 
-        <el-collapse-item title="Cấu hình bảo mật" name="2">
+        <!-- Cấu hình vận hành: form dựng động từ mảng operationalConfigs.
+             Thêm/bớt 1 phần tử trong mảng là tự sinh thêm field, không cần sửa template. -->
+        <el-collapse-item title="Cấu hình vận hành" name="2">
+          <p class="mb-4 text-sm text-slate-400">
+            Các thông số áp dụng cho toàn bộ đơn hàng. Dữ liệu hiện đang là dữ liệu mẫu, chưa kết nối API.
+          </p>
+          <el-form label-width="240px" class="space-y-4">
+            <el-form-item
+              v-for="cfg in operationalConfigs"
+              :key="cfg.key"
+              :label="cfg.label"
+            >
+              <el-input-number
+                v-model="cfg.value"
+                :min="cfg.min"
+                :max="cfg.max"
+                :step="cfg.step"
+                controls-position="right"
+                class="w-full max-w-xs"
+              />
+              <span v-if="cfg.suffix" class="ml-3 text-sm text-slate-400">{{ cfg.suffix }}</span>
+              <p v-if="cfg.description" class="mt-1 text-xs text-slate-400">{{ cfg.description }}</p>
+            </el-form-item>
+          </el-form>
+        </el-collapse-item>
+
+        <el-collapse-item title="Cấu hình bảo mật" name="3">
           <el-form :model="form.security" label-width="170px" class="space-y-4">
             <el-form-item label="Mật khẩu hiện tại">
               <el-input v-model="form.security.currentPassword" type="password" placeholder="••••••••" />
@@ -51,7 +77,7 @@
           </el-form>
         </el-collapse-item>
 
-        <el-collapse-item title="Cấu hình thông báo" name="3">
+        <el-collapse-item title="Cấu hình thông báo" name="4">
           <el-form :model="form.notifications" label-width="170px" class="space-y-4">
             <el-form-item label="Thông báo đơn hàng">
               <el-switch v-model="form.notifications.orderUpdates" active-color="#fb923c" inactive-color="#d1d5db" />
@@ -95,7 +121,55 @@ const form = reactive({
   }
 });
 
+// Dữ liệu mẫu (mock) — sau này thay bằng GET /admin/settings từ API.
+// Mỗi phần tử = 1 field trên form, key dùng để map với backend khi đấu API thật.
+const operationalConfigs = reactive([
+  {
+    key: 'shipping_fee',
+    label: 'Phí vận chuyển',
+    value: 20000,
+    min: 0,
+    max: 200000,
+    step: 1000,
+    suffix: 'VNĐ',
+    description: 'Áp dụng cho đơn hàng dưới ngưỡng miễn phí ship.'
+  },
+  {
+    key: 'min_order_days',
+    label: 'Số ngày đặt hàng tối thiểu',
+    value: 2,
+    min: 0,
+    max: 14,
+    step: 1,
+    suffix: 'ngày',
+    description: 'Thời gian tối thiểu khách cần đặt trước khi nhận bánh.'
+  },
+  {
+    key: 'free_ship_threshold',
+    label: 'Miễn phí ship từ',
+    value: 300000,
+    min: 0,
+    max: 2000000,
+    step: 10000,
+    suffix: 'VNĐ',
+    description: ''
+  },
+  {
+    key: 'max_order_per_day',
+    label: 'Số đơn nhận tối đa / ngày',
+    value: 50,
+    min: 1,
+    max: 500,
+    step: 1,
+    suffix: 'đơn',
+    description: ''
+  }
+]);
+
 const saveSettings = () => {
-  ElMessage.success('Cài đặt đã được lưu thành công');
+  // TODO: thay bằng PUT/PATCH /admin/settings khi có API thật.
+  const payload = Object.fromEntries(operationalConfigs.map((cfg) => [cfg.key, cfg.value]));
+  console.log('Mock save settings payload:', { ...form, operational: payload });
+  ElMessage.success('Cài đặt đã được lưu thành công (dữ liệu mẫu)');
 };
 </script>

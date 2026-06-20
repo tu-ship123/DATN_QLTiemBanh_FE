@@ -38,19 +38,36 @@
               <div class="text-xs text-muted mt-0.5">{{ s.email }}</div>
               <span class="badge mt-1.5" :class="`badge-${roleColor(s.role)}`">{{ s.role }}</span>
             </div>
-            <el-dropdown trigger="click">
-              <button class="opacity-0 group-hover:opacity-100 w-8 h-8 rounded-xl hover:bg-gray-100 flex items-center justify-center transition">
-                <el-icon><MoreFilled /></el-icon>
-              </button>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item>✏️ Chỉnh sửa</el-dropdown-item>
-                  <el-dropdown-item>🔑 Đổi mật khẩu</el-dropdown-item>
-                  <el-dropdown-item>🔄 Đổi vai trò</el-dropdown-item>
-                  <el-dropdown-item divided><span style="color:#EF4444">🚫 Vô hiệu hoá</span></el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
+          <el-dropdown trigger="click" placement="bottom-end">
+  <button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-orange-50 text-slate-400 hover:text-[#E8634A] transition-all">
+    <el-icon><MoreFilled /></el-icon>
+  </button>
+
+  <template #dropdown>
+    <el-dropdown-menu class="w-48 rounded-xl p-1 shadow-xl border border-slate-100">
+      <el-dropdown-item class="rounded-lg py-2">
+        <iconify-icon icon="ph:pencil-simple-duotone" class="mr-2 text-lg"></iconify-icon>
+        <span class="font-medium">Chỉnh sửa</span>
+      </el-dropdown-item>
+
+      <el-dropdown-item class="rounded-lg py-2">
+        <iconify-icon icon="ph:calendar-plus-duotone" class="mr-2 text-lg text-blue-500"></iconify-icon>
+        <span class="font-medium">Phân ca làm việc</span>
+      </el-dropdown-item>
+
+      <el-dropdown-item class="rounded-lg py-2">
+        <iconify-icon icon="ph:key-duotone" class="mr-2 text-lg"></iconify-icon>
+        <span class="font-medium">Đổi mật khẩu</span>
+      </el-dropdown-item>
+
+      <el-dropdown-item divided class="rounded-lg py-2 text-red-500 hover:text-red-600 hover:bg-red-50 transition-colors">
+        <iconify-icon icon="ph:prohibit-duotone" class="mr-2 text-lg"></iconify-icon>
+        <span class="font-medium">Vô hiệu hoá</span>
+      </el-dropdown-item>
+    </el-dropdown-menu>
+  </template>
+</el-dropdown>
+              <
           </div>
           <div class="grid grid-cols-3 gap-3 text-center">
             <div class="bg-[#FFF8F4] rounded-xl p-2">

@@ -63,8 +63,11 @@
           />
           <div class="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-transparent"></div>
           <div class="absolute top-3 right-3 flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 transition">
-            <button class="w-8 h-8 bg-white rounded-xl shadow flex items-center justify-center text-sm" @click.stop="openEdit(product)">✏️</button>
-            <button class="w-8 h-8 bg-white rounded-xl shadow flex items-center justify-center text-sm" @click.stop="deleteProduct(product)">🗑</button>
+            <button class="w-8 h-8 bg-white rounded-xl shadow flex items-center justify-center text-sm" @click.stop="openEdit(product)" title="Sửa">✏️</button>
+            <button class="w-8 h-8 bg-white rounded-xl shadow flex items-center justify-center text-sm" @click.stop="toggleActiveGrid(product)" :title="product.active ? 'Tạm dừng bán' : 'Mở bán lại'">
+              {{ product.active ? '⏸️' : '▶️' }}
+            </button>
+            <button class="w-8 h-8 bg-white rounded-xl shadow flex items-center justify-center text-sm" @click.stop="deleteProduct(product)" title="Xoá">🗑</button>
           </div>
           <div class="absolute top-3 left-3">
             <span v-if="product.isBestseller" class="badge badge-warning text-xs">🔥 Bán chạy</span>
@@ -114,8 +117,25 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="GIÁ BÁN" width="130">
-          <template #default="{ row }"><span class="font-bold" style="color:#E8634A">{{ row.price }}</span></template>
+        <el-table-column label="GIÁ BÁN" width="150">
+          <template #default="{ row }">
+            <div v-if="inlineEditId === row.id" class="flex items-center gap-1" @click.stop>
+              <el-input
+                v-model="inlineEditValue"
+                size="small"
+                style="width:110px"
+                @keyup.enter="saveInlinePrice(row)"
+                @blur="saveInlinePrice(row)"
+              />
+            </div>
+            <span
+              v-else
+              class="font-bold cursor-pointer hover:underline decoration-dashed"
+              style="color:#E8634A"
+              title="Bấm để sửa nhanh giá"
+              @click="startInlinePrice(row)"
+            >{{ row.price }}</span>
+          </template>
         </el-table-column>
         <el-table-column label="ĐÃ BÁN" width="100" align="center">
           <template #default="{ row }"><span class="font-semibold">{{ row.soldCount }}</span></template>
@@ -128,57 +148,23 @@
             <el-switch v-model="row.active" :active-color="'#E8634A'" @change="toggleProduct(row)" />
           </template>
         </el-table-column>
-        <el-table-column label="" width="80" align="center">
+        <el-table-column label="" width="120" align="center">
           <template #default="{ row }">
-            <button class="btn-secondary py-1 px-3 text-xs" @click="openEdit(row)">Sửa</button>
+            <div class="flex items-center justify-center gap-3">
+              <button class="btn-secondary py-1 px-3 text-xs" @click="openEdit(row)">Sửa</button>
+              <button class="text-red-400 hover:text-red-500 text-sm" title="Xoá" @click="deleteProduct(row)">🗑</button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
     </div>
 
     <!-- ===== ADD/EDIT PRODUCT DIALOG ===== -->
-    <el-dialog v-model="showProductDialog" :title="editingProduct ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới'" width="620px">
-      <el-form :model="productForm" label-position="top">
-        <div class="grid grid-cols-2 gap-4">
-          <el-form-item label="Tên sản phẩm" required class="col-span-2">
-            <el-input v-model="productForm.name" placeholder="VD: Bánh sinh nhật 3D Custom" />
-          </el-form-item>
-          <el-form-item label="Danh mục" required>
-            <el-select v-model="productForm.category" style="width:100%">
-              <el-option v-for="c in ['Bánh sinh nhật','Bánh cưới','Cupcake','Mousse','Macaron','Bánh kem']" :key="c" :label="c" :value="c" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="Giá bán (đ)" required>
-            <el-input v-model="productForm.price" placeholder="500,000" />
-          </el-form-item>
-          <el-form-item label="Giá gốc (đ)">
-            <el-input v-model="productForm.originalPrice" placeholder="Để trống nếu không có khuyến mãi" />
-          </el-form-item>
-          <el-form-item label="Thời gian làm (giờ)">
-            <el-input-number v-model="productForm.makeTime" :min="1" :max="72" style="width:100%" />
-          </el-form-item>
-          <el-form-item label="Mô tả" class="col-span-2">
-            <el-input v-model="productForm.description" type="textarea" :rows="3" placeholder="Mô tả chi tiết về sản phẩm..." />
-          </el-form-item>
-          <el-form-item label="Thành phần / Nguyên liệu" class="col-span-2">
-            <el-input v-model="productForm.ingredients" placeholder="Bột mì, trứng, đường, kem tươi..." />
-          </el-form-item>
-          <el-form-item class="col-span-2">
-            <div class="flex gap-6">
-              <el-checkbox v-model="productForm.active" label="Đang bán" />
-              <el-checkbox v-model="productForm.isBestseller" label="🔥 Gắn nhãn Bán chạy" />
-              <el-checkbox v-model="productForm.canCustomize" label="Cho phép tuỳ chỉnh" />
-            </div>
-          </el-form-item>
-        </div>
-      </el-form>
-      <template #footer>
-        <el-button @click="showProductDialog = false">Huỷ</el-button>
-        <el-button type="primary" :style="{background:'#E8634A',borderColor:'#E8634A'}" @click="saveProduct">
-          {{ editingProduct ? 'Cập nhật' : 'Thêm sản phẩm' }}
-        </el-button>
-      </template>
-    </el-dialog>
+    <AdminProductModal
+      v-model:visible="showProductDialog"
+      :editing-product="editingProduct"
+      @save="handleSaveProduct"
+    />
   </div>
 </template>
 
@@ -186,11 +172,15 @@
 import { ref, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Plus } from '@element-plus/icons-vue'
+import AdminProductModal from './AdminProductModal.vue'
 
 const viewMode = ref('grid'), search = ref(''), activeCategory = ref('Tất cả'), sortBy = ref('popular')
 const showProductDialog = ref(false), editingProduct = ref(null)
 const defaultProductImage = '/cake-placeholder.svg'
-const productForm = ref({ name:'', category:'', price:'', originalPrice:'', makeTime:4, description:'', ingredients:'', active:true, isBestseller:false, canCustomize:false, image: defaultProductImage })
+
+// CRUD inline: sửa nhanh giá ngay trong bảng (list view), không cần mở dialog
+const inlineEditId = ref(null)
+const inlineEditValue = ref('')
 
 const categories = ['Tất cả', 'Bánh sinh nhật', 'Bánh cưới', 'Cupcake', 'Mousse', 'Macaron']
 
@@ -217,27 +207,49 @@ const filteredProducts = computed(() => {
 
 function openAdd() {
   editingProduct.value = null
-  productForm.value = { name:'', category:'', price:'', originalPrice:'', makeTime:4, description:'', ingredients:'', active:true, isBestseller:false, canCustomize:false, image: defaultProductImage }
   showProductDialog.value = true
 }
 
 function openEdit(product) {
   editingProduct.value = product
-  productForm.value = { ...product }
   showProductDialog.value = true
 }
 
-function saveProduct() {
-  if (!productForm.value.name || !productForm.value.price) return ElMessage.warning('Vui lòng điền tên và giá')
+function handleSaveProduct(formData) {
   if (editingProduct.value) {
     const idx = products.value.findIndex(p => p.id === editingProduct.value.id)
-    if (idx > -1) products.value[idx] = { ...products.value[idx], ...productForm.value }
+    if (idx > -1) products.value[idx] = { ...products.value[idx], ...formData }
     ElMessage.success('Đã cập nhật sản phẩm')
   } else {
-    products.value.unshift({ ...productForm.value, id: Date.now(), soldCount:0, rating:0, image: productForm.value.image || defaultProductImage })
+    products.value.unshift({
+      ...formData,
+      id: Date.now(),
+      soldCount: 0,
+      rating: 0,
+      image: formData.image || defaultProductImage
+    })
     ElMessage.success('Đã thêm sản phẩm mới 🎉')
   }
   showProductDialog.value = false
+}
+
+// Toggle active nhanh trên card (grid view) — không cần mở dialog
+function toggleActiveGrid(product) {
+  product.active = !product.active
+  toggleProduct(product)
+}
+
+// CRUD inline: bấm vào giá trong list view để sửa nhanh tại chỗ
+function startInlinePrice(row) {
+  inlineEditId.value = row.id
+  inlineEditValue.value = row.price
+}
+function saveInlinePrice(row) {
+  if (inlineEditValue.value.trim()) {
+    row.price = inlineEditValue.value.trim()
+    ElMessage.success('Đã cập nhật giá')
+  }
+  inlineEditId.value = null
 }
 
 function toggleProduct(row) { ElMessage.success(row.active ? `Đã bật "${row.name}"` : `Đã tạm dừng "${row.name}"`) }
