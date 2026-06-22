@@ -76,8 +76,8 @@
 import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
-import { useAuthStore } from '../stores/authStore'; 
-import { authService } from '../services/authService'; // Sử dụng Service thay vì apiClient trực tiếp
+import { useAuthStore } from '../stores/authStore';
+import { authService } from '../services/authService';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -102,27 +102,20 @@ const handleLogin = async () => {
   isLoading.value = true;
   try {
     const response = await authService.login(loginForm);
-    
+
     authStore.setAuthData(response.data);
-    
-    if (response.data.user) {
-      authStore.setUser(response.data.user);
-    } else {
-      authStore.setUser({ email: loginForm.email });
-    }
+
+    const userData = response.data.user || { email: loginForm.email, role: response.data.role };
+    authStore.setUser(userData);
 
     ElMessage.success('Đăng nhập thành công!');
 
-    // Redirect theo role
-    const role = response.data.user?.role || response.data.role;
-    
+    // Redirect theo role — khớp đúng với backend (ADMIN / NHAN_VIEN / KHACH_HANG)
     if (role === 'ADMIN') {
-      router.push('/admin/dashboard');
-    } else if (role === 'STAFF') {
-      router.push('/staff-area/orders');
-    } else {
-      router.push('/shop');
-    }
+  router.push('/admin/dashboard');  // đúng với router
+} else if (role === 'NHAN_VIEN') {
+  router.push('/staff-area/checkin'); // đúng với router
+}
 
   } catch (error) {
     ElMessage.error(error.response?.data?.message || error.response?.data || 'Đăng nhập thất bại.');
@@ -137,9 +130,9 @@ const handleRegister = async () => {
   try {
     await authService.register(registerForm);
     ElMessage.success('Đăng ký thành công! Vui lòng đăng nhập.');
-    isSignUp.value = false; 
-    loginForm.email = registerForm.email; 
-    registerForm.matKhau = ''; 
+    isSignUp.value = false;
+    loginForm.email = registerForm.email;
+    registerForm.matKhau = '';
   } catch (error) {
     ElMessage.error(error.response?.data?.message || error.response?.data || 'Đăng ký thất bại.');
   } finally {
@@ -150,7 +143,7 @@ const handleRegister = async () => {
 // 3. XỬ LÝ MỞ POPUP QUÊN MẬT KHẨU
 const showForgotPassword = () => {
   dialogVisible.value = true;
-  forgotEmail.value = ''; 
+  forgotEmail.value = '';
 };
 
 // 4. GỌI API QUÊN MẬT KHẨU
@@ -163,14 +156,14 @@ const handleForgotPassword = async () => {
   try {
     await authService.forgotPassword(forgotEmail.value);
     ElMessage.success('Đã gửi hướng dẫn khôi phục! Vui lòng kiểm tra hộp thư email của bạn.');
-    dialogVisible.value = false; 
+    dialogVisible.value = false;
   } catch (error) {
     ElMessage.error(error.response?.data?.message || error.response?.data || 'Lỗi khi gửi yêu cầu. Vui lòng thử lại sau.');
-  } finally {
+ } finally {
     isForgotLoading.value = false;
   }
-};
-</script>
+}              // ← thêm dấu } này
+</script> 
 
 <style scoped>
 /* --- PHẦN NỀN BÊN NGOÀI ĐƯỢC NÂNG CẤP --- */

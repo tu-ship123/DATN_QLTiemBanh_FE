@@ -1,10 +1,10 @@
 import axios from 'axios';
 import { useAuthStore } from '../stores/authStore';
 
-const API_URL = import.meta.env.VITE_API_BASE_URL || '';  // ← Đổi thành rỗng
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 const apiClient = axios.create({
-  baseURL: API_URL, 
+  baseURL: API_URL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'
@@ -23,9 +23,10 @@ const onRerefreshed = (token) => {
   refreshSubscribers = [];
 };
 
+// ─── Request Interceptor: tự động gắn Bearer Token ───────────────────────────
 apiClient.interceptors.request.use(
   (config) => {
-    const authStore = useAuthStore(); 
+    const authStore = useAuthStore();
     if (authStore.accessToken) {
       config.headers.Authorization = `Bearer ${authStore.accessToken}`;
     }
@@ -34,6 +35,7 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// ─── Response Interceptor: tự động refresh token khi 401 ─────────────────────
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -59,12 +61,12 @@ apiClient.interceptors.response.use(
         if (!refreshToken) throw new Error('Không tìm thấy Refresh Token');
 
         const response = await axios.post(
-          `/api/v1/auth/refresh?refreshToken=${refreshToken}`  // ← Bỏ ${API_URL}
+          `${API_URL}/api/v1/auth/refresh?refreshToken=${refreshToken}`
         );
 
         const newAccessToken = response.data.accessToken;
         const newRefreshToken = response.data.refreshToken;
-        
+
         authStore.accessToken = newAccessToken;
         authStore.refreshToken = newRefreshToken;
         sessionStorage.setItem('accessToken', newAccessToken);
@@ -79,7 +81,7 @@ apiClient.interceptors.response.use(
         refreshSubscribers = [];
         console.error('Refresh token thất bại:', refreshError);
         authStore.logout();
-        window.location.href = '/login'; 
+        window.location.href = '/login';
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
