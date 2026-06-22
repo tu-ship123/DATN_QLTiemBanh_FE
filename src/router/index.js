@@ -27,7 +27,6 @@ const routes = [
         component: () => import('@/views/Products.vue'),
         meta: { title: 'Sản phẩm', breadcrumb: ['Cửa hàng', 'Sản phẩm'] }
       },
-      // ✅ THÊM MỚI: Chi tiết sản phẩm
       {
         path: 'product/:id',
         name: 'ProductDetail',
@@ -51,6 +50,27 @@ const routes = [
         name: 'Cart',
         component: () => import('@/views/Cart.vue'),
         meta: { title: 'Giỏ hàng', breadcrumb: ['Cửa hàng', 'Giỏ hàng'] }
+      },
+      // ✅ THÊM MỚI: Trang thanh toán (Checkout)
+      {
+        path: 'checkout',
+        name: 'Checkout',
+        component: () => import('@/views/Checkout.vue'),
+        meta: { title: 'Thanh toán', breadcrumb: ['Cửa hàng', 'Thanh toán'] }
+      },
+      // ✅ THÊM MỚI: Trang danh sách Đơn hàng đã mua (MyOrders)
+      {
+        path: 'orders',
+        name: 'MyOrders',
+        component: () => import('@/views/MyOrders.vue'),
+        meta: { title: 'Đơn hàng của tôi', breadcrumb: ['Cửa hàng', 'Đơn hàng của tôi'] }
+      },
+      // ✅ THÊM MỚI: Trang xem chi tiết một đơn hàng sau khi mua xong
+      {
+        path: '/orders/:id',
+        name: 'OrderDetail',
+        component: () => import('@/views/OrderDetail.vue'),
+        meta: { title: 'Chi tiết đơn hàng', breadcrumb: ['Cửa hàng', 'Chi tiết đơn hàng'] }
       }
     ]
   },
