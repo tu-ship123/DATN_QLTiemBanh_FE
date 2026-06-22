@@ -23,7 +23,7 @@ const mockStore = {
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 const api = axios.create({
-  baseURL: 'https://api.polycake.local/v1',
+  baseURL: 'http://localhost:8080/api/v1', // Đã sửa lại thành địa chỉ Backend thật
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'

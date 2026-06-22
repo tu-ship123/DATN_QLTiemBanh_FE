@@ -67,9 +67,8 @@
           </el-button>
         </span>
       </template>
-    </el-dialog></div>
- 
-    
+    </el-dialog>
+  </div>
 </template>
 
 <script setup>
@@ -97,29 +96,30 @@ const registerForm = reactive({ hoTen: '', email: '', soDienThoai: '', matKhau: 
 
 // --- XỬ LÝ GỌI API ---
 
-// 1. GỌI API ĐĂNG NHẬP
+// 1. GỌI API ĐĂNG NHẬP (Bản Debug - Đào tận gốc lỗi)
 const handleLogin = async () => {
+  console.log("🛠️ [BƯỚC 1] Đã bấm nút đăng nhập!");
+  console.log("📦 Dữ liệu form chuẩn bị gửi:", { ...loginForm });
+  
   isLoading.value = true;
   try {
-    const response = await authService.login(loginForm);
-
-    authStore.setAuthData(response.data);
-
-    const userData = response.data.user || { email: loginForm.email, role: response.data.role };
-    authStore.setUser(userData);
-
+    console.log("⏳ [BƯỚC 2] Đang chuyển dữ liệu sang authStore.login...");
+    const redirectUrl = await authStore.login(loginForm);
+    
+    console.log("✅ [BƯỚC 3] Backend duyệt thành công! URL chuẩn bị chuyển tới là:", redirectUrl);
     ElMessage.success('Đăng nhập thành công!');
-
-    // Redirect theo role — khớp đúng với backend (ADMIN / NHAN_VIEN / KHACH_HANG)
-    if (role === 'ADMIN') {
-  router.push('/admin/dashboard');  // đúng với router
-} else if (role === 'NHAN_VIEN') {
-  router.push('/staff-area/checkin'); // đúng với router
-}
-
+    
+    console.log("🚀 [BƯỚC 4] Yêu cầu Vue Router chuyển trang...");
+    router.push(redirectUrl).catch(err => {
+        // Rất nhiều trường hợp Vue Router không tìm thấy trang sẽ âm thầm chặn lại ở đây
+        console.error("❌ [LỖI ROUTER] Không thể chuyển trang:", err);
+    });
+    
   } catch (error) {
-    ElMessage.error(error.response?.data?.message || error.response?.data || 'Đăng nhập thất bại.');
+    console.error("❌ [LỖI CATCH] Có lỗi văng ra từ quá trình xử lý:", error);
+    ElMessage.error(typeof error === 'string' ? error : 'Bị lỗi ẩn! Vui lòng xem log đỏ trong Console.');
   } finally {
+    console.log("🏁 [BƯỚC 5] Kết thúc hàm handleLogin (đã mở khóa nút bấm).");
     isLoading.value = false;
   }
 };
@@ -159,10 +159,10 @@ const handleForgotPassword = async () => {
     dialogVisible.value = false;
   } catch (error) {
     ElMessage.error(error.response?.data?.message || error.response?.data || 'Lỗi khi gửi yêu cầu. Vui lòng thử lại sau.');
- } finally {
+  } finally {
     isForgotLoading.value = false;
   }
-}              // ← thêm dấu } này
+}
 </script> 
 
 <style scoped>

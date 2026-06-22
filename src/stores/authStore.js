@@ -1,6 +1,20 @@
 import { defineStore } from 'pinia';
 import { authService } from '../services/authService';
 
+// ─── HÀM GIẢI MÃ JWT TOKEN ──────────────────────────────────────────────────
+const parseJwt = (token) => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    return {};
+  }
+};
+
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: JSON.parse(sessionStorage.getItem('user')) || null,
@@ -13,30 +27,38 @@ export const useAuthStore = defineStore('auth', {
   getters: {
     isAuthenticated: (state) => !!state.accessToken,
 
-    // Trả về role của user hiện tại: 'ADMIN' | 'NHAN_VIEN' | 'KHACH_HANG'
-    userRole: (state) => state.user?.role || null,
+    userRole: (state) => {
+      const rawRole = state.user?.role || state.user?.quyen || '';
+      return rawRole.trim().toUpperCase();
+    },
 
-    isAdmin: (state) => state.user?.role === 'ADMIN',
-    isNhanVien: (state) => state.user?.role === 'NHAN_VIEN',
-    isKhachHang: (state) => state.user?.role === 'KHACH_HANG',
+    isAdmin(state) {
+      return this.userRole === 'ADMIN' || this.userRole === 'ROLE_ADMIN';
+    },
+    isNhanVien(state) {
+      return this.userRole === 'NHAN_VIEN' || this.userRole === 'ROLE_NHAN_VIEN';
+    },
+    isKhachHang(state) {
+      return this.userRole === 'KHACH_HANG' || this.userRole === 'ROLE_KHACH_HANG';
+    },
   },
 
   actions: {
-    // ─── Lưu token vào state + sessionStorage ──────────────────────────────
-    setAuthData(authResponse) {
-      this.accessToken = authResponse.accessToken;
-      this.refreshToken = authResponse.refreshToken;
-      sessionStorage.setItem('accessToken', authResponse.accessToken);
-      sessionStorage.setItem('refreshToken', authResponse.refreshToken);
+    setAuthData(data) {
+      this.accessToken = data.accessToken || data.token;
+      this.refreshToken = data.refreshToken;
+      
+      if (this.accessToken) sessionStorage.setItem('accessToken', this.accessToken);
+      if (this.refreshToken) sessionStorage.setItem('refreshToken', this.refreshToken);
     },
 
-    // ─── Lưu thông tin user ────────────────────────────────────────────────
     setUser(userData) {
       this.user = userData;
-      sessionStorage.setItem('user', JSON.stringify(userData));
+      if (userData) {
+        sessionStorage.setItem('user', JSON.stringify(userData));
+      }
     },
 
-    // ─── LOGIN: gọi API → lưu token → redirect theo role ──────────────────
     async login(credentials) {
       this.loading = true;
       this.error = null;
@@ -45,53 +67,65 @@ export const useAuthStore = defineStore('auth', {
         const response = await authService.login(credentials);
         const data = response.data;
 
-        // Lưu token
-        this.setAuthData({
-          accessToken: data.accessToken,
-          refreshToken: data.refreshToken,
-        });
+        // 1. Lưu Token vào bộ nhớ
+        this.setAuthData(data);
 
-        // Lưu thông tin user (backend trả về trong data.user hoặc trực tiếp)
-        const userData = data.user || {
-          id: data.id,
-          hoTen: data.hoTen,
-          email: data.email,
-          role: data.role,
+        // 2. BÍ KÍP: GIẢI MÃ TOKEN ĐỂ TÌM QUYỀN ADMIN
+        const decoded = parseJwt(this.accessToken);
+        console.log("🔍 Dữ liệu giấu trong Token:", decoded);
+
+        // 3. Quét tìm quyền trong các biến phổ biến mà Spring Boot hay dùng
+        let currentRole = '';
+        
+        // Xử lý nếu Spring trả về mảng (vd: authorities: [{authority: "ROLE_ADMIN"}])
+        if (Array.isArray(decoded.authorities) && decoded.authorities.length > 0) {
+          const auth = decoded.authorities[0];
+          currentRole = typeof auth === 'object' ? auth.authority : auth;
+        } else if (Array.isArray(decoded.roles) && decoded.roles.length > 0) {
+          currentRole = decoded.roles[0];
+        } else if (decoded.scope) {
+          currentRole = decoded.scope;
+        } else {
+          // Xử lý chuỗi thông thường
+          currentRole = String(decoded.role || decoded.roles || decoded.authorities || decoded.quyen || '');
+        }
+
+        currentRole = currentRole.trim().toUpperCase();
+
+        // 4. Tạo user ảo từ token để Vue lưu trạng thái đăng nhập
+        const userData = {
+          email: credentials.email,
+          role: currentRole
         };
         this.setUser(userData);
 
-        // ── Redirect theo role ─────────────────────────────────────────────
-        const role = userData.role;
-        if (role === 'ADMIN') {
-          return '/dashboard';        // Trang admin dashboard
-        } else if (role === 'NHAN_VIEN') {
-          return '/pos';              // Nhân viên vào thẳng POS
+        // 5. Kiểm tra quyền và chuyển hướng
+        if (currentRole.includes('ADMIN')) {
+          return '/admin/dashboard';
+        } else if (currentRole.includes('NHAN_VIEN')) {
+          return '/staff-area/checkin';
         } else {
-          return '/shop';             // Khách hàng vào trang shop
+          return '/shop'; 
         }
 
       } catch (err) {
-        // Lấy message lỗi từ backend hoặc fallback
+        console.error("❌ [LỖI GỐC TẠI STORE]:", err);
         this.error =
           err.response?.data?.message ||
           err.response?.data?.error ||
           'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.';
-        throw err;
+        throw this.error;
       } finally {
         this.loading = false;
       }
     },
 
-    // ─── LOGOUT: gọi API → xóa state → về trang login ─────────────────────
     async logout() {
       try {
-        // Gọi API logout để server invalidate token
         await authService.logout();
       } catch (err) {
-        // Dù API lỗi vẫn xóa local — không block user
         console.warn('Logout API lỗi (vẫn xóa local):', err.message);
       } finally {
-        // Xóa toàn bộ state
         this.user = null;
         this.accessToken = null;
         this.refreshToken = null;

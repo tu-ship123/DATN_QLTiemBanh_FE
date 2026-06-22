@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { useAuthStore } from '../stores/authStore';
 
+// Trỏ thẳng về cổng 8080 của Backend Spring Boot
 const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 const apiClient = axios.create({
@@ -27,8 +28,10 @@ const onRerefreshed = (token) => {
 apiClient.interceptors.request.use(
   (config) => {
     const authStore = useAuthStore();
-    if (authStore.accessToken) {
-      config.headers.Authorization = `Bearer ${authStore.accessToken}`;
+    // Ưu tiên lấy token từ Pinia, dự phòng bằng sessionStorage
+    const token = authStore.accessToken || sessionStorage.getItem('accessToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
@@ -41,6 +44,7 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Nếu lỗi 401 (Unauthorized) và chưa từng thử refresh lại
     if (error.response && error.response.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       const authStore = useAuthStore();
@@ -57,31 +61,39 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshToken = authStore.refreshToken;
+        const refreshToken = authStore.refreshToken || sessionStorage.getItem('refreshToken');
         if (!refreshToken) throw new Error('Không tìm thấy Refresh Token');
 
+        // Gọi axios độc lập (không dùng apiClient) để không bị kẹt vòng lặp Interceptor
         const response = await axios.post(
           `${API_URL}/api/v1/auth/refresh?refreshToken=${refreshToken}`
         );
 
         const newAccessToken = response.data.accessToken;
-        const newRefreshToken = response.data.refreshToken;
+        const newRefreshToken = response.data.refreshToken || refreshToken; // Đề phòng BE không trả về refresh token mới
 
-        authStore.accessToken = newAccessToken;
-        authStore.refreshToken = newRefreshToken;
-        sessionStorage.setItem('accessToken', newAccessToken);
-        sessionStorage.setItem('refreshToken', newRefreshToken);
+        // Lưu token mới vào Store và Session
+        authStore.setAuthData({
+          accessToken: newAccessToken,
+          refreshToken: newRefreshToken
+        });
 
         onRerefreshed(newAccessToken);
 
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-        return apiClient(originalRequest);
+        return apiClient(originalRequest); // Chạy lại request lúc nãy bị lỗi 401
 
       } catch (refreshError) {
         refreshSubscribers = [];
         console.error('Refresh token thất bại:', refreshError);
-        authStore.logout();
+        
+        // Cực kỳ quan trọng: Xóa sạch dữ liệu cũ và đá về trang Đăng nhập
+        sessionStorage.clear();
+        authStore.user = null;
+        authStore.accessToken = null;
+        authStore.refreshToken = null;
         window.location.href = '/login';
+        
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
