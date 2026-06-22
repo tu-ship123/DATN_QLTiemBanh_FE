@@ -132,15 +132,15 @@
         <div class="flex flex-col sm:flex-row gap-3 pt-2">
           <button
             @click="addToCart"
-            :disabled="product.soLuongTon === 0"
+            :disabled="product.soLuongTon === 0 || cartStore.loading"
             class="flex-1 rounded-full bg-[#E8634A] text-white px-8 py-4 text-sm font-bold shadow-lg shadow-[#E8634A]/30 hover:bg-[#f37356] hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
           >
             <el-icon class="mr-2"><ShoppingCart /></el-icon>
-            Thêm vào giỏ hàng
+            {{ cartStore.loading ? 'Đang thêm...' : 'Thêm vào giỏ hàng' }}
           </button>
           <button
             @click="buyNow"
-            :disabled="product.soLuongTon === 0"
+            :disabled="product.soLuongTon === 0 || cartStore.loading"
             class="flex-1 rounded-full border-2 border-[#E8634A] text-[#E8634A] px-8 py-4 text-sm font-bold hover:bg-[#FFF0EC] hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
           >
             Mua ngay
@@ -203,10 +203,14 @@ import { useRouter, useRoute } from 'vue-router'
 import { ShoppingCart, Box } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useProductStore } from '@/stores/productStore'
+import { useCartStore } from '@/stores/cartStore'
+import { useAuthStore } from '@/stores/authStore'
 
 const router = useRouter()
 const route = useRoute()
 const productStore = useProductStore()
+const cartStore = useCartStore()
+const authStore = useAuthStore()
 
 const product = ref(null)
 const loading = ref(false)
@@ -279,23 +283,48 @@ const decreaseQty = () => {
 // ==========================================
 // GIỎ HÀNG
 // ==========================================
-const addToCart = () => {
+const addToCart = async () => {
   if (!product.value || product.value.soLuongTon === 0) {
     ElMessage.warning('Sản phẩm đã hết hàng!')
     return
   }
-  // TODO: cartStore.addItem({ ...product.value, qty: qty.value })
-  ElMessage.success(`Đã thêm ${qty.value} "${product.value.tenSanPham}" vào giỏ hàng!`)
+  if (!authStore.isAuthenticated) {
+    ElMessage.warning('Vui lòng đăng nhập để thêm vào giỏ hàng!')
+    router.push('/login')
+    return
+  }
+  const result = await cartStore.themVaoGio(product.value.id, qty.value)
+  if (result.success) {
+    ElMessage.success(`Đã thêm ${qty.value} "${product.value.tenSanPham}" vào giỏ hàng!`)
+  } else {
+    ElMessage.error(
+      typeof result.message === 'string'
+        ? result.message
+        : 'Thêm vào giỏ thất bại, vui lòng thử lại!'
+    )
+  }
 }
 
-const buyNow = () => {
+const buyNow = async () => {
   if (!product.value || product.value.soLuongTon === 0) {
     ElMessage.warning('Sản phẩm đã hết hàng!')
     return
   }
-  // TODO: cartStore.addItem rồi push /shop/cart
-  ElMessage.success('Đang chuyển đến giỏ hàng...')
-  router.push('/shop/cart')
+  if (!authStore.isAuthenticated) {
+    ElMessage.warning('Vui lòng đăng nhập để mua hàng!')
+    router.push('/login')
+    return
+  }
+  const result = await cartStore.themVaoGio(product.value.id, qty.value)
+  if (result.success) {
+    router.push('/shop/cart')
+  } else {
+    ElMessage.error(
+      typeof result.message === 'string'
+        ? result.message
+        : 'Thêm vào giỏ thất bại, vui lòng thử lại!'
+    )
+  }
 }
 
 const goToProduct = (id) => {

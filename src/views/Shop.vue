@@ -8,50 +8,6 @@
     >
       <div class="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/70"></div>
 
-      <!-- NAVBAR -->
-      <header class="absolute top-0 left-0 w-full z-50 border-b border-white/10 bg-black/20 backdrop-blur-md">
-        <div class="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 sm:px-8">
-          <div class="flex flex-col cursor-pointer">
-            <span class="font-display text-2xl font-black tracking-wider text-white">Polycake.</span>
-            <span class="text-[10px] font-bold uppercase tracking-widest text-[#E8634A]">Cửa hàng bánh</span>
-          </div>
-          <nav class="hidden md:flex items-center gap-8">
-            <a href="#" class="text-sm font-bold text-[#E8634A] transition">TRANG CHỦ</a>
-            <a href="#" class="text-sm font-bold text-white hover:text-[#E8634A] transition">CỬA HÀNG</a>
-            <a href="#" class="text-sm font-bold text-white hover:text-[#E8634A] transition">THIẾT KẾ 3D</a>
-            <a href="#" class="text-sm font-bold text-white hover:text-[#E8634A] transition">LIÊN HỆ</a>
-          </nav>
-          <div class="flex items-center gap-5">
-            <button class="text-white hover:text-[#E8634A] transition mt-1">
-              <el-icon :size="20"><Search /></el-icon>
-            </button>
-            <button class="relative text-white hover:text-[#E8634A] transition mt-1">
-              <el-icon :size="20"><ShoppingCart /></el-icon>
-              <span class="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#E8634A] text-[10px] font-bold text-white shadow">3</span>
-            </button>
-            <div class="h-6 w-px bg-white/30 hidden sm:block"></div>
-            <div class="hidden sm:flex items-center gap-3">
-              <button class="text-sm font-bold text-white hover:text-[#E8634A] transition">Đăng nhập</button>
-              <button class="rounded-full bg-white px-5 py-2 text-sm font-bold text-[#E8634A] transition hover:bg-gray-100 shadow-lg">Đăng ký</button>
-              <div class="ml-2 flex items-center">
-                <el-dropdown trigger="click" @command="handleUserAction">
-                  <div class="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-gradient-to-tr from-[#E8634A] to-[#FBB830] text-sm font-bold text-white shadow-md transition hover:scale-105 outline-none">
-                    NK
-                  </div>
-                  <template #dropdown>
-                    <el-dropdown-menu class="w-48 rounded-xl">
-                      <el-dropdown-item command="profile">Hồ sơ cá nhân</el-dropdown-item>
-                      <el-dropdown-item command="orders">Đơn hàng của tôi</el-dropdown-item>
-                      <el-dropdown-item divided command="logout" class="text-red-500 font-semibold hover:bg-red-50">Đăng xuất</el-dropdown-item>
-                    </el-dropdown-menu>
-                  </template>
-                </el-dropdown>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
       <!-- Nội dung Hero -->
       <div class="relative w-full h-full flex flex-col items-center justify-center pt-24 pb-12">
         <div class="max-w-2xl space-y-4 text-center px-6 sm:px-8 mt-10">
@@ -215,10 +171,11 @@
                 </div>
               </div>
               <button
-                class="w-full rounded-xl bg-[#FFF0EC] text-[#E8634A] px-4 py-3 text-sm font-bold transition-colors hover:bg-[#E8634A] hover:text-white"
+                :disabled="cartStore.loading || product.soLuongTon === 0"
+                class="w-full rounded-xl bg-[#FFF0EC] text-[#E8634A] px-4 py-3 text-sm font-bold transition-colors hover:bg-[#E8634A] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 @click.stop="addToCart(product)"
               >
-                Thêm vào giỏ
+                {{ cartStore.loading ? 'Đang thêm...' : 'Thêm vào giỏ' }}
               </button>
             </div>
           </div>
@@ -232,15 +189,19 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Search, ShoppingCart, Box } from '@element-plus/icons-vue'
+import { Search, Box } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useProductStore } from '@/stores/productStore'
 import { useCategoryStore } from '@/stores/categoryStore'
+import { useCartStore } from '@/stores/cartStore'
+import { useAuthStore } from '@/stores/authStore'
 import heroImage from '@/assets/images/Screenshot 2026-06-17 151209.png'
 
 const router = useRouter()
 const productStore = useProductStore()
 const categoryStore = useCategoryStore()
+const cartStore = useCartStore()
+const authStore = useAuthStore()
 
 const search = ref('')
 const activeCategory = ref(null)   // null = Tất cả, số = danhMucId
@@ -289,18 +250,25 @@ const goToDetail = (id) => {
   router.push(`/shop/product/${id}`)
 }
 
-const addToCart = (product) => {
+const addToCart = async (product) => {
   if (product.soLuongTon === 0) {
     ElMessage.warning('Sản phẩm này đã hết hàng!')
     return
   }
-  // TODO: Gọi cartStore.addItem(product) sau khi làm giỏ hàng
-  ElMessage.success(`Đã thêm "${product.tenSanPham}" vào giỏ hàng!`)
-}
-
-const handleUserAction = (command) => {
-  if (command === 'logout') router.push('/login')
-  else if (command === 'profile') router.push('/profile')
-  else if (command === 'orders') router.push('/orders')
+  if (!authStore.isAuthenticated) {
+    ElMessage.warning('Vui lòng đăng nhập để thêm vào giỏ hàng!')
+    router.push('/login')
+    return
+  }
+  const result = await cartStore.themVaoGio(product.id, 1)
+  if (result.success) {
+    ElMessage.success(`Đã thêm "${product.tenSanPham}" vào giỏ hàng!`)
+  } else {
+    ElMessage.error(
+      typeof result.message === 'string'
+        ? result.message
+        : 'Thêm vào giỏ thất bại, vui lòng thử lại!'
+    )
+  }
 }
 </script>

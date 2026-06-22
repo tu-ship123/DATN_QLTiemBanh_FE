@@ -33,13 +33,13 @@ export const useAuthStore = defineStore('auth', {
     },
 
     isAdmin(state) {
-      return this.userRole === 'ADMIN' || this.userRole === 'ROLE_ADMIN';
+      return this.userRole.includes('ADMIN');
     },
     isNhanVien(state) {
-      return this.userRole === 'NHAN_VIEN' || this.userRole === 'ROLE_NHAN_VIEN';
+      return this.userRole.includes('NHAN_VIEN');
     },
     isKhachHang(state) {
-      return this.userRole === 'KHACH_HANG' || this.userRole === 'ROLE_KHACH_HANG';
+      return this.userRole.includes('KHACH_HANG');
     },
   },
 

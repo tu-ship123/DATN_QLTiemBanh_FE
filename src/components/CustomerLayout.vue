@@ -37,13 +37,13 @@
           <div class="hidden md:flex items-center gap-3">
             <el-dropdown trigger="click" @command="handleUserAction">
               <div class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl bg-[#1E2A3B] text-sm font-bold text-white shadow-md transition-transform hover:scale-105 outline-none">
-                NK
+                {{ avatarInitials }}
               </div>
               <template #dropdown>
                 <el-dropdown-menu class="w-52 rounded-xl font-sans">
                   <div class="px-4 py-3 border-b border-gray-100 mb-1">
-                    <p class="text-sm font-bold text-gray-800">Nguyễn Khoa</p>
-                    <p class="text-xs text-gray-500 font-medium truncate">khoa@example.com</p>
+                    <p class="text-sm font-bold text-gray-800">{{ displayName }}</p>
+                    <p class="text-xs text-gray-500 font-medium truncate">{{ authStore.user?.email }}</p>
                   </div>
                   <el-dropdown-item command="profile"><iconify-icon icon="ph:user-circle" class="mr-2 text-lg text-gray-400"></iconify-icon>Hồ sơ của tôi</el-dropdown-item>
                   <el-dropdown-item command="orders"><iconify-icon icon="ph:receipt" class="mr-2 text-lg text-gray-400"></iconify-icon>Đơn hàng đã mua</el-dropdown-item>
@@ -91,9 +91,9 @@
           <span class="text-sm font-medium text-gray-500">All rights reserved.</span>
         </div>
         <div class="flex items-center gap-6 text-sm font-semibold text-gray-500">
-          <RouterLink to="/about" class="hover:text-[#E8634A] transition-colors">Về chúng tôi</RouterLink>
-          <RouterLink to="/terms" class="hover:text-[#E8634A] transition-colors">Điều khoản</RouterLink>
-          <RouterLink to="/contact" class="hover:text-[#E8634A] transition-colors">Liên hệ</RouterLink>
+          <RouterLink to="/shop" class="hover:text-[#E8634A] transition-colors">Về chúng tôi</RouterLink>
+          <RouterLink to="/shop" class="hover:text-[#E8634A] transition-colors">Điều khoản</RouterLink>
+          <RouterLink to="/shop/contact" class="hover:text-[#E8634A] transition-colors">Liên hệ</RouterLink>
         </div>
       </div>
     </footer>
@@ -101,37 +101,53 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
+import { useCartStore } from '@/stores/cartStore'
+import { useAuthStore } from '@/stores/authStore'
 
 const route = useRoute()
 const router = useRouter()
 const mobileOpen = ref(false)
-const cartCount = ref(3) // Giả lập có 3 sản phẩm
+
+const cartStore = useCartStore()
+const authStore = useAuthStore()
+
+// Badge số lượng lấy thẳng từ cartStore (reactive)
+const cartCount = computed(() => cartStore.soLuongBadge)
+
+// Tên hiển thị & avatar chữ cái
+const displayName = computed(() => authStore.user?.hoTen || authStore.user?.email || 'Khách')
+const avatarInitials = computed(() => {
+  const name = authStore.user?.hoTen || authStore.user?.email || 'K'
+  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+})
 
 // Kiểm tra xem có đang ở trang chủ (chứa Hero banner) hay không
 const isShop = computed(() => route.path === '/shop')
 
 // Xử lý class động cho thanh Header
-const headerClass = computed(() => isShop.value 
-  ? 'w-full absolute top-0 left-0 right-0 z-50 bg-black/20 backdrop-blur-md border-b border-white/10' 
+const headerClass = computed(() => isShop.value
+  ? 'w-full absolute top-0 left-0 right-0 z-50 bg-black/20 backdrop-blur-md border-b border-white/10'
   : 'w-full fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-[#EDE8E3]')
 
-const linkClass = computed(() => isShop.value 
-  ? 'text-sm font-bold text-white/90 hover:text-[#FBB830] transition-colors' 
+const linkClass = computed(() => isShop.value
+  ? 'text-sm font-bold text-white/90 hover:text-[#FBB830] transition-colors'
   : 'text-sm font-bold text-[#5A6474] hover:text-[#E8634A] transition-colors')
 
-const mobileMenuClass = computed(() => isShop.value 
-  ? 'bg-black/90 backdrop-blur-xl border-b border-white/10 top-20' 
+const mobileMenuClass = computed(() => isShop.value
+  ? 'bg-black/90 backdrop-blur-xl border-b border-white/10 top-20'
   : 'bg-white border-b border-gray-200 top-20')
 
-const mobileLinkClass = computed(() => isShop.value 
-  ? 'text-white hover:bg-white/10' 
+const mobileLinkClass = computed(() => isShop.value
+  ? 'text-white hover:bg-white/10'
   : 'text-[#1E2A3B] hover:bg-[#FFF0EC] hover:text-[#E8634A]')
 
 // Xử lý sự kiện Dropdown Avatar
-const handleUserAction = (command) => {
+const handleUserAction = async (command) => {
   if (command === 'logout') {
+    cartStore.resetCart()
+    await authStore.logout()
     router.push('/login')
   } else if (command === 'profile') {
     router.push('/profile')
@@ -140,9 +156,11 @@ const handleUserAction = (command) => {
   }
 }
 
-// Cập nhật số lượng giỏ hàng
-window.addEventListener('cart:update', (e) => {
-  cartCount.value = e.detail?.count ?? 0
+// Load giỏ hàng khi layout mount (chỉ fetch khi là KHACH_HANG)
+onMounted(async () => {
+  if (authStore.isAuthenticated && authStore.isKhachHang) {
+    await cartStore.fetchGioHang()
+  }
 })
 </script>
 
