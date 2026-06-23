@@ -1,158 +1,243 @@
 <template>
-  <div class="space-y-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-    <div class="rounded-[32px] bg-white p-6 shadow-sm border border-gray-100 flex justify-between items-center">
-      <div>
-        <h1 class="text-3xl font-black text-[#1E2A3B]">Thông tin thanh toán</h1>
-        <p class="text-sm text-gray-500 mt-1">Vui lòng nhập đầy đủ địa chỉ nhận bánh và chọn hình thức thanh toán.</p>
+  <div class="space-y-8 max-w-7xl mx-auto px-4 md:px-12 py-10 animate-fade-in blossom-theme">
+
+    <div class="p-6" style="border-radius:24px;background:#FFFFFF;border:1px solid #FDD8EE;">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-2xl flex items-center justify-center" style="background:linear-gradient(135deg,#EC4899,#F472B6);box-shadow:0 4px 16px rgba(236,72,153,0.2);">
+            <iconify-icon icon="ph:credit-card-duotone" class="text-2xl" style="color:#FFFFFF;"></iconify-icon>
+          </div>
+          <div>
+            <h1 style="font-family:'Playfair Display',serif;font-size:26px;font-weight:950;color:#3D1A2C;letter-spacing:1px;margin:0;">Thanh toán đơn hàng</h1>
+            <p style="font-family:'DM Sans',sans-serif;font-size:13px;color:#7C3D5C;margin:4px 0 0;">Nhập thông tin giao nhận và chọn phương thức thanh toán.</p>
+          </div>
+        </div>
+        <button @click="$router.push('/shop/cart')" class="text-xs font-bold text-[#EC4899] hover:underline font-sans px-4 py-2 bg-[#FFF0F7] rounded-xl border border-[#FDD8EE] hover:bg-[#FDD8EE] transition-colors">
+          ✕ Hủy & Quay lại giỏ hàng
+        </button>
       </div>
-      <button @click="$router.push('/cart')" class="hidden sm:inline-flex items-center justify-center rounded-full bg-gray-100 px-5 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-200 transition">
-        ✕ Hủy & Quay lại
-      </button>
     </div>
 
-    <div class="grid gap-6 lg:grid-cols-[2fr_1.2fr]">
-      <div class="space-y-6">
-        <div class="rounded-[28px] bg-white p-6 shadow-sm border border-gray-100 space-y-4">
-          <h2 class="text-xl font-bold text-[#1E2A3B] flex items-center gap-2">📍 Thông tin nhận hàng</h2>
-          
-          <div class="grid gap-4 sm:grid-cols-2">
+    <div class="grid gap-6 xl:grid-cols-[1fr_380px]">
+
+      <div class="space-y-5">
+
+        <div class="rounded-[24px] bg-white border border-[#FDD8EE] shadow-sm p-6">
+          <div class="flex items-center justify-between mb-5">
+            <h2 class="text-base font-bold text-[#3D1A2C] flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-[#EC4899] text-white text-xs font-black flex items-center justify-center font-sans">1</span>
+              Thông tin nhận hàng
+            </h2>
+          </div>
+
+          <div class="grid sm:grid-cols-2 gap-4 font-sans">
             <div class="space-y-1">
-              <label class="text-xs font-bold text-gray-600 uppercase">Tên người nhận</label>
-              <input v-model="form.tenNguoiNhan" type="text" placeholder="Nguyễn Ngọc Tú" class="w-full rounded-2xl border border-gray-200 p-3.5 text-sm outline-none focus:border-[#E8634A]" />
+              <label class="text-[10px] text-[#B07090] font-bold uppercase tracking-wide">Tên người nhận</label>
+              <input v-model="form.tenNguoiNhan" type="text" placeholder="Nguyễn Ngọc Tú" class="w-full rounded-2xl border border-[#FDD8EE] bg-[#FFF0F7] px-4 py-3.5 text-xs text-[#3D1A2C] outline-none focus:border-[#EC4899] focus:ring-2 focus:ring-[#EC4899]/10 transition-all placeholder:text-[#B07090]" />
             </div>
             <div class="space-y-1">
-              <label class="text-xs font-bold text-gray-600 uppercase">Số điện thoại</label>
-              <input v-model="form.soDienThoai" type="text" placeholder="090xxxxxxx" class="w-full rounded-2xl border border-gray-200 p-3.5 text-sm outline-none focus:border-[#E8634A]" />
+              <label class="text-[10px] text-[#B07090] font-bold uppercase tracking-wide">Số điện thoại</label>
+              <input v-model="form.soDienThoai" type="text" placeholder="090xxxxxxx" class="w-full rounded-2xl border border-[#FDD8EE] bg-[#FFF0F7] px-4 py-3.5 text-xs text-[#3D1A2C] outline-none focus:border-[#EC4899] focus:ring-2 focus:ring-[#EC4899]/10 transition-all placeholder:text-[#B07090]" />
             </div>
-          </div>
-
-          <div class="space-y-1">
-            <label class="text-xs font-bold text-gray-600 uppercase">Ngày nhận bánh (Dự kiến)</label>
-            <input v-model="form.ngayGiaoHang" :min="minDate" type="date" class="w-full rounded-2xl border border-gray-200 p-3.5 text-sm outline-none focus:border-[#E8634A]" />
-          </div>
-
-          <div class="space-y-1">
-            <label class="text-xs font-bold text-gray-600 uppercase">Địa chỉ giao hàng</label>
-            <input v-model="form.diaChiGiaoHang" type="text" placeholder="Số nhà, tên đường, phường/xã, quận/huyện" class="w-full rounded-2xl border border-gray-200 p-3.5 text-sm outline-none focus:border-[#E8634A]" />
-          </div>
-
-          <div class="space-y-1">
-            <label class="text-xs font-bold text-gray-600 uppercase">Ghi chú đơn hàng (Nếu có)</label>
-            <textarea v-model="form.ghiChu" rows="3" placeholder="Ví dụ: Ghi chữ Chúc mừng sinh nhật lên bánh, giao đúng 4h chiều..." class="w-full rounded-2xl border border-gray-200 p-3.5 text-sm outline-none focus:border-[#E8634A]"></textarea>
+            <div class="space-y-1">
+              <label class="text-[10px] text-[#B07090] font-bold uppercase tracking-wide">Ngày nhận bánh (Dự kiến)</label>
+              <input v-model="form.ngayGiaoHang" :min="minDate" type="date" class="w-full rounded-2xl border border-[#FDD8EE] bg-[#FFF0F7] px-4 py-3.5 text-xs text-[#3D1A2C] outline-none focus:border-[#EC4899] focus:ring-2 focus:ring-[#EC4899]/10 transition-all text-[#B07090]" />
+            </div>
+            <div class="space-y-1">
+              <label class="text-[10px] text-[#B07090] font-bold uppercase tracking-wide">Địa chỉ giao hàng</label>
+              <input v-model="form.diaChiGiaoHang" type="text" placeholder="Số nhà, tên đường..." class="w-full rounded-2xl border border-[#FDD8EE] bg-[#FFF0F7] px-4 py-3.5 text-xs text-[#3D1A2C] outline-none focus:border-[#EC4899] focus:ring-2 focus:ring-[#EC4899]/10 transition-all placeholder:text-[#B07090]" />
+            </div>
+            <div class="space-y-1 sm:col-span-2">
+              <label class="text-[10px] text-[#B07090] font-bold uppercase tracking-wide">Ghi chú đơn hàng (Nếu có)</label>
+              <textarea v-model="form.ghiChu" rows="2" placeholder="Ví dụ: Ghi chữ Chúc mừng sinh nhật..." class="w-full rounded-2xl border border-[#FDD8EE] bg-[#FFF0F7] px-4 py-3.5 text-xs text-[#3D1A2C] outline-none focus:border-[#EC4899] focus:ring-2 focus:ring-[#EC4899]/10 transition-all placeholder:text-[#B07090]"></textarea>
+            </div>
           </div>
         </div>
 
-        <div class="rounded-[28px] bg-white p-6 shadow-sm border border-gray-100 space-y-4">
-          <h2 class="text-xl font-bold text-[#1E2A3B] flex items-center gap-2">💳 Phương thức thanh toán</h2>
+        <div class="rounded-[24px] bg-white border border-[#FDD8EE] shadow-sm p-6">
+          <h2 class="text-base font-bold text-[#3D1A2C] flex items-center gap-2 mb-5">
+            <span class="w-6 h-6 rounded-full bg-[#EC4899] text-white text-xs font-black flex items-center justify-center font-sans">2</span>
+            Phương thức thanh toán
+          </h2>
+
+          <div class="space-y-3 font-sans">
+            <label
+              class="flex items-start gap-4 p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200"
+              :class="form.phuongThucThanhToan === 'SEPAY' ? 'border-[#EC4899] bg-[#FFF0F7]' : 'border-[#FDD8EE] bg-white hover:border-[#EC4899]/30'"
+            >
+              <input type="radio" value="SEPAY" v-model="form.phuongThucThanhToan" class="sr-only" />
+              <div class="w-5 h-5 rounded-full border-2 flex-shrink-0 mt-0.5 flex items-center justify-center transition-all" :class="form.phuongThucThanhToan === 'SEPAY' ? 'border-[#EC4899]' : 'border-gray-300'">
+                <div v-if="form.phuongThucThanhToan === 'SEPAY'" class="w-2.5 h-2.5 rounded-full bg-[#EC4899]"></div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-3 flex-wrap">
+                  <div class="w-10 h-10 rounded-xl bg-[#FFF5FA] border border-[#FDD8EE] flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <iconify-icon icon="ph:bank-duotone" class="text-xl text-[#EC4899]"></iconify-icon>
+                  </div>
+                  <div>
+                    <p class="font-bold text-[#3D1A2C] text-sm">Chuyển khoản QR (SePay)</p>
+                    <p class="text-xs text-[#B07090] font-medium">Tự động xác nhận đơn hàng ngay lập tức</p>
+                  </div>
+                  <span class="ml-auto rounded-lg bg-[#FFF5FA] border border-[#F59E0B] text-[#EC4899] text-[10px] font-black uppercase tracking-wider px-2 py-0.5">Khuyên dùng</span>
+                </div>
+              </div>
+            </label>
+
+            <label
+              class="flex items-start gap-4 p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200"
+              :class="form.phuongThucThanhToan === 'COD' ? 'border-[#EC4899] bg-[#FFF0F7]' : 'border-[#FDD8EE] bg-white hover:border-[#EC4899]/30'"
+            >
+              <input type="radio" value="COD" v-model="form.phuongThucThanhToan" class="sr-only" />
+              <div class="w-5 h-5 rounded-full border-2 flex-shrink-0 mt-0.5 flex items-center justify-center transition-all" :class="form.phuongThucThanhToan === 'COD' ? 'border-[#EC4899]' : 'border-gray-300'">
+                <div v-if="form.phuongThucThanhToan === 'COD'" class="w-2.5 h-2.5 rounded-full bg-[#EC4899]"></div>
+              </div>
+              <div class="flex-1">
+                <div class="flex items-center gap-3 flex-wrap">
+                  <div class="w-10 h-10 rounded-xl bg-[#FFF5FA] border border-[#FDD8EE] flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <iconify-icon icon="ph:money-duotone" class="text-xl text-[#EC4899]"></iconify-icon>
+                  </div>
+                  <div>
+                    <p class="font-bold text-[#3D1A2C] text-sm">COD – Thanh toán khi nhận hàng</p>
+                    <p class="text-xs text-[#B07090] font-medium">Trả tiền mặt hoặc chuyển khoản cho shipper</p>
+                  </div>
+                </div>
+                <Transition name="expand">
+                  <div v-if="form.phuongThucThanhToan === 'COD'" class="mt-4 rounded-2xl bg-[#FFF5FA] border border-[#FDD8EE] p-4 text-xs">
+                    <div class="flex items-start gap-3">
+                      <iconify-icon icon="ph:info-duotone" class="text-[#EC4899] text-lg flex-shrink-0 mt-0.5"></iconify-icon>
+                      <div class="text-[#7C3D5C] space-y-1.5 font-bold">
+                        <p>✓ Thanh toán tiện lợi khi giao bánh.</p>
+                        <p>⚠ Chỉ áp dụng cho đơn hàng có tổng trị giá dưới <strong class="text-[#EC4899]">5.000.000đ</strong>.</p>
+                      </div>
+                    </div>
+                  </div>
+                </Transition>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="rounded-[24px] bg-white border border-[#FDD8EE] shadow-sm p-6">
+          <h2 class="text-base font-bold text-[#3D1A2C] flex items-center gap-2 mb-4">
+            <span class="w-6 h-6 rounded-full bg-[#EC4899] text-white text-xs font-black flex items-center justify-center font-sans">3</span>
+            Xem lại đơn hàng của bạn
+          </h2>
+          <div class="space-y-3 font-sans">
+            <div v-for="item in cartStore.items" :key="item.id" class="flex items-center gap-4 p-3 bg-[#FFF5FA] border border-[#FDD8EE] rounded-2xl hover:bg-[#FFF0F7] transition-colors duration-200">
+              <img :src="item.anhSanPham || defaultImage" :alt="item.tenSanPham" class="w-14 h-14 rounded-xl object-cover flex-shrink-0 shadow-sm" @error="e => e.target.src = defaultImage" />
+              <div class="flex-1 min-w-0">
+                <p class="font-bold text-sm text-[#3D1A2C] truncate">{{ item.tenSanPham }}</p>
+                <p class="text-xs text-[#B07090] font-medium">SL: x{{ item.soLuong }}</p>
+              </div>
+              <p class="font-black text-sm text-[#EC4899] whitespace-nowrap">{{ formatCurrency(item.thanhTien) }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-5">
+
+        <div class="rounded-[24px] bg-white border border-[#FDD8EE] shadow-sm p-6 sticky top-24 font-sans">
+          <h3 class="text-base font-bold text-[#3D1A2C] mb-5 flex items-center gap-2 border-b border-[#FFF0F7] pb-3">
+            <iconify-icon icon="ph:receipt-duotone" class="text-[#EC4899] text-lg"></iconify-icon>
+            Hóa đơn thanh toán
+          </h3>
+
+          <div class="space-y-3.5 text-xs font-medium text-[#7C3D5C]">
+            <div class="flex justify-between">
+              <span>Tạm tính ({{ cartStore.items.length }} bánh)</span>
+              <span class="font-bold text-[#3D1A2C]">{{ formatCurrency(cartStore.tongTienHang) }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Phí giao hàng</span>
+              <span class="font-bold text-[#3D1A2C]">{{ cartStore.phiShip === 0 ? 'Miễn phí' : formatCurrency(cartStore.phiShip) }}</span>
+            </div>
+            <div class="h-px bg-[#FFF0F7] my-3"></div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm font-bold text-[#3D1A2C]">Tổng thanh toán</span>
+              <span class="text-2xl font-black text-[#EC4899]">{{ formatCurrency(cartStore.tongThanhToan) }}</span>
+            </div>
+          </div>
+
+          <div class="mt-5 rounded-2xl p-3 border flex items-center gap-2.5 text-xs font-bold"
+            :class="form.phuongThucThanhToan === 'SEPAY' ? 'bg-[#FFF0F7] border-[#FDD8EE]' : 'bg-[#FFF5FA] border-[#FDD8EE]'">
+            <iconify-icon
+              :icon="form.phuongThucThanhToan === 'SEPAY' ? 'ph:bank-duotone' : 'ph:money-duotone'"
+              class="text-lg flex-shrink-0 text-[#EC4899]"
+            ></iconify-icon>
+            <span class="text-[#EC4899]">
+              {{ form.phuongThucThanhToan === 'SEPAY' ? 'Thanh toán SePay QR' : 'Thanh toán COD khi nhận' }}
+            </span>
+          </div>
+
+          <button
+            @click="handleDatHang"
+            :disabled="loading || cartStore.items.length === 0"
+            class="mt-5 w-full rounded-2xl bg-gradient-to-r from-[#EC4899] to-[#D12E7B] px-5 py-4 text-xs font-bold text-white shadow-md shadow-[#EC4899]/15 hover:shadow-[#EC4899]/30 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 disabled:opacity-75 disabled:cursor-wait disabled:translate-y-0 flex items-center justify-center gap-2"
+          >
+            <iconify-icon v-if="!loading" icon="ph:lock-duotone" class="text-sm"></iconify-icon>
+            <svg v-else class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="white" stroke-width="4"></circle>
+              <path class="opacity-75" fill="white" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            {{ loading ? 'Đang xử lý đơn hàng...' : 'Xác nhận & Đặt hàng' }}
+          </button>
+
+          <p class="mt-4 text-center text-[10px] text-gray-400 font-medium">
+            <iconify-icon icon="ph:shield-check-fill" class="mr-1 text-green-600 text-xs"></iconify-icon>
+            Bảo mật thanh toán chuẩn SSL 256-bit
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <Transition name="modal">
+      <div v-if="showQrModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-[32px] p-8 max-w-md w-full shadow-2xl text-center space-y-4 border border-[#FDD8EE] animate-fade-in font-sans relative">
+          <button @click="huyTheoDoiQr" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-[#FFF0F7] text-[#EC4899] hover:bg-[#FDD8EE] transition-colors">
+            ✕
+          </button>
+          <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#EC4899] to-[#831843] flex items-center justify-center mx-auto mb-2 shadow-lg shadow-[#EC4899]/25">
+            <iconify-icon icon="ph:qr-code-duotone" class="text-3xl text-white"></iconify-icon>
+          </div>
+          <h3 class="text-xl font-black text-[#3D1A2C]">Quét mã QR để thanh toán</h3>
+          <p class="text-xs text-[#B07090] font-medium px-4">Hệ thống sẽ tự động chuyển trang sau khi nhận được tiền (Thường mất 5-10s)</p>
           
-          <div class="grid gap-4 sm:grid-cols-2">
-            <div 
-              @click="form.phuongThucThanhToan = 'COD'"
-              :class="form.phuongThucThanhToan === 'COD' ? 'border-[#E8634A] bg-[#FFF4EF]' : 'border-gray-200 hover:border-[#E8634A]'"
-              class="rounded-2xl border p-4 cursor-pointer transition-all flex items-center gap-4"
-            >
-              <div class="text-2xl">💵</div>
-              <div>
-                <h4 class="font-bold text-[#1E2A3B]">Thanh toán khi nhận hàng (COD)</h4>
-                <p class="text-xs text-gray-500">Trả tiền mặt khi Shipper giao bánh</p>
-              </div>
-            </div>
+          <div class="bg-[#FFF0F7] p-4 rounded-2xl inline-block shadow-inner border border-[#FDD8EE]">
+            <img :src="qrImageUrl" alt="Mã QR Thanh Toán SePay" class="w-64 h-64 mx-auto object-contain rounded-xl bg-white p-2" />
+          </div>
 
-            <div 
-              @click="form.phuongThucThanhToan = 'SEPAY'"
-              :class="form.phuongThucThanhToan === 'SEPAY' ? 'border-[#E8634A] bg-[#FFF4EF]' : 'border-gray-200 hover:border-[#E8634A]'"
-              class="rounded-2xl border p-4 cursor-pointer transition-all flex items-center gap-4"
-            >
-              <div class="text-2xl">📱</div>
-              <div>
-                <h4 class="font-bold text-[#1E2A3B]">Chuyển khoản QR</h4>
-                <p class="text-xs text-gray-500">Quét mã QR qua app Ngân hàng</p>
-              </div>
-            </div>
+          <div class="bg-[#FFF5FA] rounded-2xl p-4 text-xs text-[#7C3D5C] font-medium text-left space-y-2 border border-[#FDD8EE]">
+            <p>📌 <strong>Nội dung bắt buộc:</strong> <span class="bg-white border border-[#FDD8EE] px-2 py-1 rounded text-[#EC4899] font-black text-sm ml-1">{{ sePayMemo }}</span></p>
+            <p class="text-[11px] italic">⚠️ Vui lòng không tự ý sửa nội dung chuyển khoản để SePay tự quét đơn.</p>
+          </div>
+
+          <div class="flex items-center justify-center gap-2 text-sm font-bold text-[#EC4899] animate-pulse pt-2">
+            <span class="inline-block w-2.5 h-2.5 rounded-full bg-[#EC4899]"></span>
+            Đang chờ bạn chuyển khoản...
           </div>
         </div>
       </div>
+    </Transition>
 
-      <div class="rounded-[28px] border border-gray-100 bg-white p-6 shadow-sm h-fit sticky top-6">
-        <h2 class="text-xl font-bold text-[#1E2A3B] mb-4">Đơn hàng của bạn</h2>
-        
-        <div class="divide-y divide-gray-100 max-h-60 overflow-y-auto mb-4 pr-2">
-          <div v-for="item in cartStore.items" :key="item.id" class="py-3 flex justify-between items-center text-sm">
-            <div class="flex-1 pr-4">
-              <p class="font-semibold text-[#1E2A3B] line-clamp-1">{{ item.tenSanPham }}</p>
-              <p class="text-xs text-gray-400">SL: {{ item.soLuong }}</p>
-            </div>
-            <span class="font-bold text-gray-700">{{ formatCurrency(item.thanhTien) }}</span>
-          </div>
-        </div>
-
-        <div class="border-t border-gray-100 pt-4 space-y-3 text-sm text-gray-600">
-          <div class="flex justify-between">
-            <span>Tổng tiền hàng</span>
-            <span class="font-semibold text-[#1E2A3B]">{{ formatCurrency(cartStore.tongTienHang) }}</span>
-          </div>
-          <div class="flex justify-between">
-            <span>Phí giao hàng</span>
-            <span class="font-semibold text-[#1E2A3B]">{{ cartStore.phiShip === 0 ? 'Miễn phí' : formatCurrency(cartStore.phiShip) }}</span>
-          </div>
-          <div class="flex justify-between border-t border-dashed pt-3 text-base font-black text-[#1E2A3B]">
-            <span>Tổng thanh toán</span>
-            <span class="text-[#E8634A] text-xl">{{ formatCurrency(cartStore.tongThanhToan) }}</span>
-          </div>
-        </div>
-
-        <button 
-          @click="handleDatHang" 
-          :disabled="loading"
-          class="mt-6 w-full rounded-3xl bg-[#E8634A] px-5 py-4 text-sm font-semibold text-white shadow-lg shadow-[#E8634A]/20 hover:bg-[#f27355] transition disabled:opacity-50 flex justify-center items-center gap-2"
-        >
-          <span v-if="loading">⏳ Đang xử lý đơn...</span>
-          <span v-else>🚀 Xác nhận đặt hàng</span>
-        </button>
-
-        <button 
-          @click="$router.push('/cart')" 
-          :disabled="loading"
-          class="mt-3 w-full rounded-3xl bg-white border border-gray-200 px-5 py-3.5 text-sm font-semibold text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition disabled:opacity-50"
-        >
-          Quay lại giỏ hàng
-        </button>
+    <Transition name="toast">
+      <div
+        v-if="toast.show"
+        class="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl px-5 py-4 shadow-xl text-white text-xs font-bold font-sans"
+        :class="toast.type === 'success' ? 'bg-green-600' : toast.type === 'error' ? 'bg-red-500' : 'bg-yellow-500'"
+      >
+        <iconify-icon :icon="toast.type === 'success' ? 'ph:check-circle-fill' : 'ph:warning-circle-fill'" class="text-lg"></iconify-icon>
+        {{ toast.msg }}
       </div>
-    </div>
-
-    <div v-if="showQrModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="bg-white rounded-[32px] p-6 max-w-md w-full shadow-2xl text-center space-y-4 relative animate-fade-in">
-        <h3 class="text-xl font-black text-[#1E2A3B]">Quét mã QR để thanh toán</h3>
-        <p class="text-xs text-gray-500">Hệ thống sẽ tự động chuyển trang sau khi nhận được tiền (Thường mất 5-10s)</p>
-        
-        <div class="bg-gray-50 p-4 rounded-2xl inline-block shadow-inner border border-gray-100">
-          <img :src="qrImageUrl" alt="Mã QR Thanh Toán SePay" class="w-64 h-64 mx-auto object-contain rounded-xl" />
-        </div>
-
-        <div class="bg-amber-50 rounded-2xl p-3 text-xs text-amber-700 font-medium text-left space-y-1 border border-amber-100">
-          <p>📌 <strong>Nội dung bắt buộc:</strong> <span class="bg-amber-200 px-1.5 py-0.5 rounded text-amber-900 font-bold">{{ sePayMemo }}</span></p>
-          <p>⚠️ Vui lòng không tự ý sửa nội dung chuyển khoản để SePay tự quét đơn.</p>
-        </div>
-
-        <div class="flex items-center justify-center gap-2 text-sm font-semibold text-[#E8634A] animate-pulse">
-          <span class="inline-block w-2 h-2 rounded-full bg-[#E8634A]"></span>
-          Đang chờ bạn chuyển khoản...
-        </div>
-
-        <button @click="huyTheoDoiQr" class="text-xs text-gray-400 hover:text-gray-600 underline transition block mx-auto">
-          Hủy giao dịch & Quay lại
-        </button>
-      </div>
-    </div>
+    </Transition>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cartStore'
 import { orderService } from '@/services/orderService'
-import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 const cartStore = useCartStore()
@@ -163,13 +248,15 @@ const qrImageUrl = ref('')
 const sePayMemo = ref('')
 let checkOrderInterval = null
 
+const defaultImage = 'https://images.unsplash.com/photo-1562440499-64c9a111f713?auto=format&fit=crop&w=800&q=80'
+
 const form = ref({
   tenNguoiNhan: '',
   soDienThoai: '',
   diaChiGiaoHang: '',
   ngayGiaoHang: '', 
   ghiChu: '',
-  phuongThucThanhToan: 'COD' 
+  phuongThucThanhToan: 'SEPAY' // Mặc định là SePay
 })
 
 // Tự động tính toán ngày hôm nay để chặn khách chọn ngày trong quá khứ
@@ -192,46 +279,42 @@ const formatCurrency = (value) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value).replace('₫', 'đ')
 }
 
-// Xử lý logic khi bấm Đặt Hàng
-// Xử lý logic khi bấm Đặt Hàng
+// ===== XỬ LÝ LOGIC ĐẶT HÀNG =====
 const handleDatHang = async () => {
   if (!form.value.tenNguoiNhan || !form.value.soDienThoai || !form.value.diaChiGiaoHang || !form.value.ngayGiaoHang) {
-    ElMessage.warning('Vui lòng điền đầy đủ thông tin giao nhận và ngày nhận bánh nhé!')
+    showToast('Vui lòng điền đầy đủ thông tin giao nhận nhé!', 'error')
     return
   }
 
-  // MỚI: Trích xuất và map lại giỏ hàng cho đúng chuẩn Backend OrderItemRequest DTO
+  // Trích xuất và map lại giỏ hàng cho đúng chuẩn Backend
   const danhSachSanPham = cartStore.items.map(item => {
     return {
-      sanPhamId: item.id || item.sanPhamId, // Tùy thuộc vào store của bạn lưu ID tên là gì
+      sanPhamId: item.id || item.sanPhamId,
       soLuong: item.soLuong,
-      donGia: item.gia || (item.thanhTien / item.soLuong) // Lấy giá 1 sản phẩm
+      donGia: item.gia || (item.thanhTien / item.soLuong)
     }
   })
 
   if (danhSachSanPham.length === 0) {
-    ElMessage.error('Giỏ hàng của bạn đang trống!')
+    showToast('Giỏ hàng của bạn đang trống!', 'error')
     return
   }
 
-  // MỚI: Đóng gói lại Payload trước khi gửi đi
   const payload = {
     diaChiGiaoHang: form.value.diaChiGiaoHang,
     soDienThoai: form.value.soDienThoai,
     ngayGiaoHang: form.value.ngayGiaoHang,
-    // Ghép Tên Người Nhận vào Ghi chú (Vì Backend của bạn không có trường Tên)
     ghiChu: `Người nhận: ${form.value.tenNguoiNhan}. ${form.value.ghiChu}`, 
-    items: danhSachSanPham // <--- NHÉT MẢNG SẢN PHẨM VÀO ĐÂY
+    items: danhSachSanPham
   }
 
   loading.value = true
   try {
-    // Truyền cục 'payload' vào thay vì 'form.value'
     const response = await orderService.createOrder(payload)
     const newOrder = response.data 
 
     if (form.value.phuongThucThanhToan === 'COD') {
-      ElMessage.success('Đặt hàng thành công! Đơn hàng được chọn thanh toán COD.')
+      showToast('Đặt hàng thành công! (Thanh toán COD)', 'success')
       await cartStore.xoaToanBo() 
       router.push(`/orders/${newOrder.id}`)
       
@@ -244,12 +327,13 @@ const handleDatHang = async () => {
 
   } catch (error) {
     console.error('Lỗi đặt hàng:', error)
-    ElMessage.error(error.response?.data || 'Đặt hàng thất bại, vui lòng kiểm tra lại hệ thống.')
+    showToast(error.response?.data || 'Đặt hàng thất bại, vui lòng thử lại.', 'error')
   } finally {
     loading.value = false
   }
 }
 
+// ===== QUÉT KIỂM TRA ĐƠN HÀNG SEPAY =====
 const batDauTheoDoiDonHang = (orderId) => {
   checkOrderInterval = setInterval(async () => {
     try {
@@ -259,7 +343,7 @@ const batDauTheoDoiDonHang = (orderId) => {
       if (orderStatus === 'PAID' || orderStatus === 'DA_THANH_TOAN' || orderStatus === 'CHO_XU_LY') {
         clearInterval(checkOrderInterval)
         showQrModal.value = false
-        ElMessage.success('Hệ thống SePay đã nhận được tiền! Cảm ơn bạn.')
+        showToast('Hệ thống SePay đã nhận được tiền! Cảm ơn bạn.', 'success')
         await cartStore.xoaToanBo() 
         router.push(`/orders/${orderId}`)
       }
@@ -272,17 +356,62 @@ const batDauTheoDoiDonHang = (orderId) => {
 const huyTheoDoiQr = () => {
   if (checkOrderInterval) clearInterval(checkOrderInterval)
   showQrModal.value = false
-  ElMessage.info('Đã đóng biểu mẫu QR. Bạn có thể kiểm tra lại trạng thái ở lịch sử đơn hàng.')
-  router.push('/orders') 
+  showToast('Đã đóng biểu mẫu QR. Bạn có thể thanh toán sau trong chi tiết đơn.', 'info')
+  router.push('/shop/orders') 
+}
+
+// Clear interval khi rời trang
+onBeforeUnmount(() => {
+  if (checkOrderInterval) clearInterval(checkOrderInterval)
+})
+
+// ===== TOAST =====
+const toast = ref({ show: false, msg: '', type: 'info' })
+let toastTimer = null
+const showToast = (msg, type = 'info') => {
+  if (toastTimer) clearTimeout(toastTimer)
+  toast.value = { show: true, msg, type }
+  toastTimer = setTimeout(() => { toast.value.show = false }, 3000)
 }
 </script>
 
 <style scoped>
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+.expand-enter-active, .expand-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+.expand-enter-from, .expand-leave-to {
+  opacity: 0;
+  max-height: 0;
+}
+.expand-enter-to, .expand-leave-from {
+  opacity: 1;
+  max-height: 200px;
+}
+.modal-enter-active, .modal-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.modal-enter-from, .modal-leave-to {
+  opacity: 0;
+}
+.modal-enter-active > div:last-child, .modal-leave-active > div:last-child {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.modal-enter-from > div:last-child, .modal-leave-to > div:last-child {
+  transform: scale(0.85) translateY(20px);
+}
+.toast-enter-active, .toast-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.toast-enter-from, .toast-leave-to {
+  opacity: 0;
+  transform: translateY(16px) scale(0.96);
 }
 .animate-fade-in {
-  animation: fadeIn 0.3s ease-out forwards;
+  animation: fadeIn 0.4s ease-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 </style>

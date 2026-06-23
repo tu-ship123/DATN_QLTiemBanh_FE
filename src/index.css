@@ -1,7 +1,108 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Be+Vietnam+Pro:wght@300;400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Be+Vietnam+Pro:wght@300;400;700;900&family=Cinzel:wght@400;500;600;700;800;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ========================================
+   MIDNIGHT CONFECTIONERY THEME
+   ======================================== */
+.midnight-theme {
+  --c-night: #0C0B14;
+  --c-night-2: #13121F;
+  --c-night-3: #1C1B2E;
+  --c-night-4: #252436;
+  --c-night-5: #2E2D42;
+  --c-gold: #C9A84C;
+  --c-gold-light: #E8C96A;
+  --c-gold-dim: #8A6F32;
+  --c-gold-bg: rgba(201,168,76,0.08);
+  --c-gold-border: rgba(201,168,76,0.2);
+  --c-cream: #F5F0E8;
+  --c-cream-dim: #B8B0A0;
+  --c-primary: #C9A84C;
+  --c-primary-hover: #E8C96A;
+  --c-danger: #E05555;
+  --c-success: #4CAF7D;
+  font-family: 'DM Sans', sans-serif !important;
+  background-color: var(--c-night) !important;
+  color: var(--c-cream) !important;
+}
+
+.midnight-theme h1,
+.midnight-theme h2,
+.midnight-theme h3,
+.midnight-theme .heading-display {
+  font-family: 'Cinzel', serif !important;
+  letter-spacing: 0.05em;
+}
+
+/* ========================================
+   BLOSSOM PATISSERIE THEME
+   ======================================== */
+.blossom-theme {
+  --c-blossom:      #F472B6;   /* Hot pink chính */
+  --c-blossom-mid:  #EC4899;   /* Đậm hơn – hover, active */
+  --c-blossom-soft: #FBCFE8;   /* Hồng nhạt – bg nhẹ */
+  --c-blossom-pale: #FFF0F7;   /* Nền tổng thể */
+  --c-rose:         #FB7185;   /* Hồng đỏ nhẹ – accent phụ */
+  --c-gold:         #F59E0B;   /* Vàng mật ong – stars, giá */
+  --c-peach:        #FDE68A;   /* Vàng pastel – category bg */
+  --c-text:         #3D1A2C;   /* Tím nâu đậm – màu chữ */
+  --c-text-mid:     #7C3D5C;   /* Giữa */
+  --c-text-light:   #B07090;   /* Nhạt – mô tả phụ */
+  --c-white:        #FFFFFF;
+  --c-card:         #FFFFFF;
+  --c-primary:      #EC4899;
+  --c-primary-hover: #DB2777;
+  --c-danger:       #E11D48;
+  --c-success:      #10B981;
+  font-family: 'DM Sans', sans-serif !important;
+  background-color: var(--c-blossom-pale) !important;
+  color: var(--c-text) !important;
+}
+
+.blossom-theme h1,
+.blossom-theme h2,
+.blossom-theme h3,
+.blossom-theme .heading-display {
+  font-family: 'Playfair Display', serif !important;
+}
+
+/* Gold shimmer animation for special elements */
+@keyframes gold-shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.gold-shimmer-text {
+  background: linear-gradient(90deg, #C9A84C 0%, #F5E07A 40%, #C9A84C 60%, #8A6F32 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gold-shimmer 3s linear infinite;
+}
+
+/* Subtle glow hover effect */
+.gold-glow-hover {
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+.gold-glow-hover:hover {
+  box-shadow: 0 0 20px rgba(201,168,76,0.25), 0 4px 24px rgba(0,0,0,0.4);
+  transform: translateY(-2px);
+}
+
+/* midnight-theme nav links */
+.midnight-nav-link {
+  color: #B8B0A0;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.midnight-nav-link:hover { color: #C9A84C; }
+.midnight-nav-active {
+  color: #C9A84C;
+  text-decoration: none;
+}
+
 
 @layer base {
   :root {

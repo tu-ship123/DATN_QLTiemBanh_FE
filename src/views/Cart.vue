@@ -1,193 +1,201 @@
 <template>
-  <div class="space-y-8">
+  <div class="space-y-8 max-w-7xl mx-auto px-4 md:px-12 py-10 animate-fade-in blossom-theme">
 
-    <!-- Header -->
-    <div class="rounded-[32px] bg-white p-6 shadow-sm border border-[var(--color-border)]">
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div class="rounded-[24px] p-8" style="background:#FFFFFF; border:1px solid #FDD8EE;">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 class="text-3xl font-black text-[#1E2A3B]">Giỏ hàng của bạn</h1>
-          <p class="text-sm text-gray-500">Xem lại sản phẩm, cập nhật số lượng và tiến hành thanh toán nhanh chóng.</p>
+          <span style="font-family:'DM Sans',sans-serif;font-size:11px;font-weight:700;color:#EC4899;letter-spacing:3px;text-transform:uppercase;">Giỏ Hàng</span>
+          <h1 style="font-family:'Playfair Display',serif;font-size:32px;font-weight:950;color:#3D1A2C;letter-spacing:1px;margin:4px 0 0;">Của Bạn</h1>
+          <p style="font-family:'DM Sans',sans-serif;font-size:13px;color:#7C3D5C;margin-top:4px;">Xem lại các sản phẩm thơm ngon đã chọn và hoàn tất đơn hàng.</p>
         </div>
-        <RouterLink
-          to="/shop"
-          class="inline-flex items-center rounded-full border border-[#E8634A] bg-[#FFF4EF] px-5 py-3 text-sm font-semibold text-[#E8634A] hover:bg-[#FFE8DB] transition"
+        <RouterLink to="/shop/products"
+          style="display:inline-flex;align-items:center;gap:8px;border:1px solid #FDD8EE;border-radius:14px;padding:10px 20px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;color:#EC4899;text-decoration:none;letter-spacing:1px;transition:all 0.2s;background:#FFF0F7;"
+          onmouseenter="this.style.background='#EC4899';this.style.color='#FFFFFF';this.style.borderColor='#EC4899';"
+          onmouseleave="this.style.background='#FFF0F7';this.style.color='#EC4899';this.style.borderColor='#FDD8EE';"
         >
-          Tiếp tục mua sắm
+          ← Tiếp tục mua sắm
         </RouterLink>
       </div>
     </div>
 
-    <!-- Chưa đăng nhập -->
-    <div v-if="!isAuthenticated" class="rounded-[28px] bg-white border border-[var(--color-border)] p-16 text-center shadow-sm">
+    <div v-if="!isAuthenticated" class="rounded-[24px] p-16 text-center shadow-sm" style="background:#FFFFFF; border:1px solid #FDD8EE;">
       <p class="text-5xl mb-4">🛒</p>
-      <h2 class="text-xl font-bold text-[#1E2A3B] mb-2">Bạn chưa đăng nhập</h2>
-      <p class="text-sm text-gray-500 mb-6">Vui lòng đăng nhập để xem giỏ hàng của bạn.</p>
-      <RouterLink
-        to="/login"
-        class="inline-block rounded-3xl bg-[#E8634A] px-8 py-3 text-sm font-semibold text-white hover:bg-[#f27355] transition"
+      <h2 style="font-family:'Playfair Display',serif;font-size:24px;font-weight:900;color:#3D1A2C;letter-spacing:1px;" class="mb-2">Bạn chưa đăng nhập</h2>
+      <p style="font-family:'DM Sans',sans-serif;font-size:14px;color:#7C3D5C;" class="mb-8">Vui lòng đăng nhập để xem và quản lý giỏ hàng của bạn.</p>
+      <RouterLink to="/login"
+        style="display:inline-block;border-radius:14px;background:linear-gradient(135deg,#EC4899,#F472B6);padding:14px 32px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;color:#FFFFFF;text-decoration:none;letter-spacing:0.5px;transition:all 0.2s;box-shadow:0 4px 20px rgba(236,72,153,0.25);"
+        onmouseenter="this.style.boxShadow='0 6px 28px rgba(236,72,153,0.4)';this.style.transform='translateY(-2px)'"
+        onmouseleave="this.style.boxShadow='0 4px 20px rgba(236,72,153,0.25)';this.style.transform='translateY(0)'"
       >
         Đăng nhập ngay
       </RouterLink>
     </div>
 
-    <!-- Loading skeleton -->
     <div v-else-if="cartStore.loading && !cartStore.gioHang" class="grid gap-6 xl:grid-cols-[2.2fr_1fr]">
       <div class="space-y-4">
-        <div v-for="i in 2" :key="i" class="rounded-[28px] border border-[var(--color-border)] bg-white p-5 shadow-sm animate-pulse flex gap-4">
-          <div class="h-36 w-[180px] rounded-3xl bg-gray-200 flex-shrink-0"></div>
+        <div v-for="i in 2" :key="i" class="rounded-[24px] p-6 animate-pulse flex gap-4" style="background:#FFFFFF; border:1px solid #FDD8EE;">
+          <div class="h-32 w-[160px] rounded-2xl bg-pink-50 flex-shrink-0"></div>
           <div class="flex-1 space-y-3 pt-2">
-            <div class="h-5 bg-gray-200 rounded w-1/2"></div>
-            <div class="h-4 bg-gray-100 rounded w-1/3"></div>
-            <div class="h-4 bg-gray-100 rounded w-1/4"></div>
+            <div class="h-5 bg-pink-100 rounded w-1/2"></div>
+            <div class="h-4 bg-pink-50 rounded w-1/3"></div>
+            <div class="h-4 bg-pink-50 rounded w-1/4"></div>
           </div>
         </div>
       </div>
-      <div class="rounded-[28px] bg-gray-100 h-64 animate-pulse"></div>
+      <div class="rounded-[24px] bg-pink-50 h-64 animate-pulse border border-[#FDD8EE]"></div>
     </div>
 
-    <!-- Giỏ hàng trống -->
-    <div
-      v-else-if="!cartStore.loading && cartStore.items.length === 0"
-      class="rounded-[28px] bg-white border border-[var(--color-border)] p-16 text-center shadow-sm"
-    >
+    <div v-else-if="!cartStore.loading && cartStore.items.length === 0" class="rounded-[24px] p-16 text-center shadow-sm" style="background:#FFFFFF; border:1px solid #FDD8EE;">
       <p class="text-6xl mb-4">🎂</p>
-      <h2 class="text-xl font-bold text-[#1E2A3B] mb-2">Giỏ hàng trống</h2>
-      <p class="text-sm text-gray-500 mb-6">Hãy khám phá cửa hàng và thêm những chiếc bánh yêu thích nhé!</p>
-      <RouterLink
-        to="/shop"
-        class="inline-block rounded-3xl bg-[#E8634A] px-8 py-3 text-sm font-semibold text-white hover:bg-[#f27355] transition"
+      <h2 style="font-family:'Playfair Display',serif;font-size:24px;font-weight:900;color:#3D1A2C;letter-spacing:1px;" class="mb-2">Giỏ hàng trống</h2>
+      <p style="font-family:'DM Sans',sans-serif;font-size:14px;color:#7C3D5C;" class="mb-8">Hãy khám phá cửa hàng và thêm những chiếc bánh yêu thích nhé!</p>
+      <RouterLink to="/shop"
+        style="display:inline-block;border-radius:14px;background:linear-gradient(135deg,#EC4899,#F472B6);padding:14px 32px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;color:#FFFFFF;text-decoration:none;letter-spacing:0.5px;transition:all 0.2s;box-shadow:0 4px 20px rgba(236,72,153,0.25);"
+        onmouseenter="this.style.boxShadow='0 6px 28px rgba(236,72,153,0.4)';this.style.transform='translateY(-2px)'"
+        onmouseleave="this.style.boxShadow='0 4px 20px rgba(236,72,153,0.25)';this.style.transform='translateY(0)'"
       >
         Khám phá cửa hàng
       </RouterLink>
     </div>
 
-    <!-- Có sản phẩm trong giỏ -->
     <div v-else class="grid gap-6 xl:grid-cols-[2.2fr_1fr]">
-
-      <!-- Danh sách sản phẩm -->
       <div class="space-y-4">
-        <div
-          v-for="item in cartStore.items"
-          :key="item.id"
-          class="rounded-[28px] border border-[var(--color-border)] bg-white p-5 shadow-sm flex flex-col gap-4 sm:flex-row sm:items-center"
+        <div v-for="item in cartStore.items" :key="item.id"
+          class="flex flex-col gap-5 sm:flex-row sm:items-center p-6 transition-all duration-200"
+          style="border-radius:20px; background:#FFFFFF; border:1px solid #FDD8EE;"
+          onmouseenter="this.style.borderColor='#F9A8D4';this.style.boxShadow='0 8px 24px rgba(236,72,153,0.05)';"
+          onmouseleave="this.style.borderColor='#FDD8EE';this.style.boxShadow='none';"
         >
-          <!-- Ảnh sản phẩm -->
           <img
             :src="item.anhSanPham || defaultImage"
             :alt="item.tenSanPham"
-            class="h-36 w-full max-w-[180px] rounded-3xl object-cover shadow-sm flex-shrink-0"
+            class="h-32 w-full max-w-[160px] object-cover flex-shrink-0" 
+            style="border-radius:16px;border:1px solid #FDD8EE;"
             @error="e => e.target.src = defaultImage"
           />
 
-          <!-- Thông tin sản phẩm -->
           <div class="flex-1 space-y-3">
-            <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 class="text-xl font-semibold text-[#1E2A3B]">{{ item.tenSanPham }}</h2>
-                <p class="text-sm text-gray-500">{{ item.tenDanhMuc || 'Bánh ngọt' }}</p>
+                <h2 style="font-family:'Playfair Display',serif;font-size:18px;font-weight:900;color:#3D1A2C;letter-spacing:0.5px;">{{ item.tenSanPham }}</h2>
+                <p style="font-family:'DM Sans',sans-serif;font-size:12px;color:#7C3D5C;margin-top:2px;">{{ item.tenDanhMuc || 'Bánh ngọt' }}</p>
               </div>
-              <div class="text-base font-bold text-[#E8634A] whitespace-nowrap">
+              <div style="border-radius:10px;background:#FFF0F7;border:1px solid #FDD8EE;padding:6px 14px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:800;color:#EC4899;white-space:nowrap;align-self:flex-start;">
                 {{ formatCurrency(item.thanhTien) }}
               </div>
             </div>
 
-            <!-- Giá & số lượng -->
-            <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600">
-              <span>Đơn giá: <span class="font-semibold text-[#1E2A3B]">{{ formatCurrency(item.donGia) }}</span></span>
-
-              <!-- Bộ điều chỉnh số lượng -->
+            <div class="flex flex-wrap items-center gap-x-6 gap-y-2" style="font-family:'DM Sans',sans-serif;font-size:13px;color:#7C3D5C;">
+              <span>Đơn giá: <strong style="color:#3D1A2C;font-weight:700;">{{ formatCurrency(item.donGia) }}</strong></span>
+              
               <div class="flex items-center gap-2">
-                <span class="text-gray-500">Số lượng:</span>
-                <div class="flex items-center gap-1 rounded-2xl border border-gray-200 px-2 py-1">
+                <span>Số lượng:</span>
+                <div class="flex items-center gap-1" style="border-radius:20px; border:1px solid #FDD8EE; background:#FFF0F7; padding:2px 4px;">
                   <button
                     @click="giamSoLuong(item)"
-                    class="w-7 h-7 flex items-center justify-center rounded-xl hover:bg-gray-100 transition text-lg font-bold text-gray-600"
                     :disabled="cartStore.loading"
+                    class="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[#F9A8D4] hover:text-white transition-colors text-lg font-bold text-[#EC4899] disabled:opacity-50"
                   >−</button>
-                  <span class="min-w-[28px] text-center font-semibold text-[#1E2A3B]">{{ item.soLuong }}</span>
+                  <span class="min-w-[28px] text-center font-bold text-[#3D1A2C] text-sm">{{ item.soLuong }}</span>
                   <button
                     @click="tangSoLuong(item)"
-                    class="w-7 h-7 flex items-center justify-center rounded-xl hover:bg-gray-100 transition text-lg font-bold text-gray-600"
                     :disabled="cartStore.loading"
+                    class="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[#F9A8D4] hover:text-white transition-colors text-lg font-bold text-[#EC4899] disabled:opacity-50"
                   >+</button>
                 </div>
               </div>
             </div>
 
-            <!-- Actions -->
-            <div class="flex flex-wrap items-center gap-3">
+            <div class="flex flex-wrap items-center gap-3 pt-1">
               <button
                 @click="xacNhanXoa(item)"
-                class="rounded-2xl border border-red-200 px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition"
                 :disabled="cartStore.loading"
-              >
-                Xóa
-              </button>
+                style="border-radius:10px;border:1px solid #FDD8EE;padding:7px 16px;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:700;color:#B07090;background:transparent;cursor:pointer;transition:all 0.2s;"
+                onmouseenter="this.style.color='#E11D48';this.style.borderColor='#E11D48';this.style.background='#FFF0F7';"
+                onmouseleave="this.style.color='#B07090';this.style.borderColor='#FDD8EE';this.style.background='transparent';"
+              >Xóa khỏi giỏ</button>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Tóm tắt đơn hàng -->
       <div class="space-y-4">
-        <div class="rounded-[28px] border border-[var(--color-border)] bg-white p-6 shadow-sm sticky top-6">
-          <h2 class="text-xl font-bold text-[#1E2A3B]">Tổng đơn hàng</h2>
-          <div class="mt-6 space-y-3 text-sm text-gray-600">
+        <div class="p-6 space-y-5 sticky top-6" style="border-radius:20px;background:#FFFFFF;border:1px solid #FDD8EE;">
+          <h2 style="font-family:'Playfair Display',serif;font-size:18px;font-weight:900;color:#3D1A2C;letter-spacing:1px;padding-bottom:12px;border-bottom:1px solid #FFF0F7;">Tổng Đơn Hàng</h2>
+          <div class="space-y-3" style="font-family:'DM Sans',sans-serif;font-size:13px;color:#7C3D5C;">
             <div class="flex justify-between">
               <span>Giá sản phẩm ({{ cartStore.tongSoLuong }} món)</span>
-              <span class="font-semibold text-[#1E2A3B]">{{ formatCurrency(cartStore.tongTienHang) }}</span>
+              <span style="font-weight:700;color:#3D1A2C;">{{ formatCurrency(cartStore.tongTienHang) }}</span>
             </div>
             <div class="flex justify-between">
               <span>Phí giao hàng</span>
-              <span :class="cartStore.phiShip === 0 ? 'text-green-500 font-semibold' : 'font-semibold text-[#1E2A3B]'">
+              <span :style="cartStore.phiShip === 0 ? 'font-weight:700;color:#10B981;' : 'font-weight:700;color:#3D1A2C;'">
                 {{ cartStore.phiShip === 0 ? 'Miễn phí' : formatCurrency(cartStore.phiShip) }}
               </span>
             </div>
-            <p v-if="cartStore.phiShip > 0" class="text-xs text-orange-500">
+            <p v-if="cartStore.phiShip > 0" class="text-xs" style="color:#F59E0B; font-weight:600;">
               🎁 Đặt thêm {{ formatCurrency(500000 - cartStore.tongTienHang) }} để miễn phí ship!
             </p>
           </div>
-          <div class="mt-6 flex items-center justify-between border-t border-[var(--color-border)] pt-4 text-lg font-black text-[#1E2A3B]">
-            <span>Thành tiền</span>
-            <span class="text-[#E8634A]">{{ formatCurrency(cartStore.tongThanhToan) }}</span>
+          
+          <div class="flex items-center justify-between pt-4" style="border-top:1px solid #FFF0F7;">
+            <span style="font-family:'DM Sans',sans-serif;font-size:14px;font-weight:800;color:#7C3D5C;">Thành tiền</span>
+            <span style="font-family:'Playfair Display',serif;font-size:24px;font-weight:950;color:#EC4899;">{{ formatCurrency(cartStore.tongThanhToan) }}</span>
           </div>
+
           <button
             @click="thanhToan"
-            class="mt-6 w-full rounded-3xl bg-[#E8634A] px-5 py-4 text-sm font-semibold text-white shadow-lg shadow-[#E8634A]/20 hover:bg-[#f27355] transition disabled:opacity-60"
             :disabled="cartStore.loading || cartStore.items.length === 0"
+            class="block w-full text-center disabled:opacity-60 disabled:cursor-not-allowed"
+            style="border:none;border-radius:14px;background:linear-gradient(135deg,#EC4899,#F472B6);padding:14px 20px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;color:#FFFFFF;cursor:pointer;letter-spacing:0.5px;transition:all 0.2s;box-shadow:0 4px 20px rgba(236,72,153,0.25);"
+            onmouseenter="if(!this.disabled) {this.style.boxShadow='0 6px 28px rgba(236,72,153,0.4)';this.style.transform='translateY(-1px)'}"
+            onmouseleave="if(!this.disabled) {this.style.boxShadow='0 4px 20px rgba(236,72,153,0.25)';this.style.transform='translateY(0)'}"
           >
-            Thanh toán ngay
+            Tiến hành thanh toán →
           </button>
+
           <button
             @click="xoaToanBo"
-            class="mt-3 w-full rounded-3xl border border-gray-200 px-5 py-3 text-sm text-gray-500 hover:bg-gray-50 transition"
             :disabled="cartStore.loading"
+            class="block w-full text-center disabled:opacity-60"
+            style="border-radius:14px;border:1px solid #FDD8EE;background:transparent;padding:12px 20px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;color:#B07090;cursor:pointer;transition:all 0.2s;"
+            onmouseenter="if(!this.disabled) {this.style.background='#FFF0F7';this.style.color='#E11D48';this.style.borderColor='#F9A8D4'}"
+            onmouseleave="if(!this.disabled) {this.style.background='transparent';this.style.color='#B07090';this.style.borderColor='#FDD8EE'}"
           >
             Xóa toàn bộ giỏ
           </button>
         </div>
 
-        <!-- Lời khuyên -->
-        <div class="rounded-[28px] border border-[var(--color-border)] bg-white p-6 shadow-sm">
-          <h3 class="text-base font-semibold text-[#1E2A3B]">Lời khuyên đặt bánh</h3>
-          <ul class="mt-4 space-y-3 text-sm text-gray-600">
-            <li>• Đặt trước ít nhất 2–3 ngày để nhận giao kịp thời.</li>
-            <li>• Chọn hình ảnh rõ nét khi yêu cầu thiết kế 3D.</li>
-            <li>• Ghi chú kèm theo yêu cầu trang trí nếu cần.</li>
+        <div class="p-6" style="border-radius:20px;background:#FFFFFF;border:1px dashed #FDD8EE;">
+          <h3 style="font-family:'Playfair Display',serif;font-size:13px;font-weight:900;color:#EC4899;letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;">Mẹo đặt bánh</h3>
+          <ul class="space-y-2.5" style="font-family:'DM Sans',sans-serif;font-size:12px;color:#7C3D5C;line-height:1.6;">
+            <li class="flex items-start gap-2">
+              <span style="color:#EC4899;flex-shrink:0;">◆</span>
+              <span>Nên đặt trước <strong style="color:#3D1A2C;">2–3 ngày</strong> với bánh Custom 3D phức tạp.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span style="color:#EC4899;flex-shrink:0;">◆</span>
+              <span>Chọn hình ảnh rõ nét khi yêu cầu thiết kế bánh.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span style="color:#EC4899;flex-shrink:0;">◆</span>
+              <span>Ghi chú dị ứng thực phẩm (nếu có) khi thanh toán.</span>
+            </li>
           </ul>
         </div>
       </div>
     </div>
 
-    <!-- Toast thông báo -->
     <transition name="toast">
       <div
         v-if="toast.show"
         :class="[
-          'fixed bottom-6 right-6 z-50 rounded-2xl px-5 py-3 text-sm font-semibold text-white shadow-xl',
-          toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'
+          'fixed bottom-6 right-6 z-50 rounded-2xl px-6 py-3.5 text-sm font-bold text-white shadow-xl flex items-center gap-3',
+          toast.type === 'success' ? 'bg-[#10B981]' : 'bg-[#E11D48]'
         ]"
+        style="font-family:'DM Sans',sans-serif; letter-spacing:0.5px;"
       >
+        <span class="text-lg">{{ toast.type === 'success' ? '✓' : '⚠' }}</span>
         {{ toast.message }}
       </div>
     </transition>
@@ -277,6 +285,14 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 .toast-enter-active, .toast-leave-active {
   transition: all 0.3s ease;
 }

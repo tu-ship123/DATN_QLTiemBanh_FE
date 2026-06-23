@@ -1,0 +1,24 @@
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff1f2"/>
+      <stop offset="100%" stop-color="#fee2e2"/>
+    </linearGradient>
+    <linearGradient id="cake" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fda4af"/>
+      <stop offset="100%" stop-color="#fb7185"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" rx="40" fill="url(#bg)"/>
+  <rect x="140" y="220" width="520" height="220" rx="48" fill="url(#cake)"/>
+  <rect x="140" y="260" width="520" height="120" rx="40" fill="#fff5f5"/>
+  <path d="M180 250 C240 220 320 220 380 250 C440 280 520 280 580 250" fill="#fef2f2"/>
+  <path d="M260 180 C280 150 320 150 340 180 L340 260 C320 280 280 280 260 260 Z" fill="#fde68a"/>
+  <path d="M350 180 C370 150 410 150 430 180 L430 260 C410 280 370 280 350 260 Z" fill="#fde68a"/>
+  <path d="M445 180 C465 150 505 150 525 180 L525 260 C505 280 465 280 445 260 Z" fill="#fde68a"/>
+  <circle cx="240" cy="320" r="18" fill="#f8b4b4"/>
+  <circle cx="320" cy="360" r="18" fill="#f9a8d4"/>
+  <circle cx="400" cy="340" r="18" fill="#a78bfa"/>
+  <circle cx="520" cy="320" r="18" fill="#6ee7b7"/>
+  <text x="50%" y="540" text-anchor="middle" fill="#9d174d" font-size="48" font-family="Inter, sans-serif" font-weight="700">Ảnh bánh mẫu</text>
+</svg>
