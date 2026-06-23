@@ -43,20 +43,7 @@
           </span>
         </RouterLink>
 
-        <p class="text-[10px] font-bold tracking-widest uppercase text-[#B0A8A3] px-3 pb-2 pt-5">Hỗ trợ</p>
 
-        <RouterLink
-          to="/staff-area/messages"
-          class="flex items-center gap-3 px-3 py-2.5 mb-1 rounded-xl cursor-pointer transition-all duration-200 group relative text-sm font-semibold text-[#5A6474] hover:bg-[#FFF0EC] hover:text-[#E8634A]"
-          :class="{ 'bg-gradient-to-r from-[#E8634A] to-[#F57858] text-white shadow-md shadow-[#E8634A]/20 hover:bg-none hover:text-white': isActive('/staff-area/messages') }"
-          @click="isMobile && (sidebarOpen = false)"
-        >
-          <div class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
-               :class="isActive('/staff-area/messages') ? 'bg-white/20' : 'bg-[#F5F0ED] group-hover:bg-white'">
-            <iconify-icon icon="ph:chat-teardrop-dots-duotone" class="text-[18px]"></iconify-icon>
-          </div>
-          <span class="flex-1">Tin nhắn</span>
-        </RouterLink>
       </nav>
 
       <div class="p-3 border-t border-[#EDE8E3] shrink-0 bg-white">
@@ -112,23 +99,11 @@
         </div>
 
         <div class="flex items-center gap-3">
-          <div class="hidden lg:flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 w-[280px] focus-within:border-[#E8634A] focus-within:ring-2 focus-within:ring-[#E8634A]/20 transition-all">
-            <iconify-icon icon="ph:magnifying-glass" class="text-gray-400 text-lg"></iconify-icon>
-            <input type="text" placeholder="Tìm kiếm mã đơn..." class="bg-transparent border-none outline-none w-full text-sm text-[#1E2A3B] placeholder-gray-400" />
-          </div>
-
-          <el-badge :value="2" :max="9" class="ml-2 mt-1">
+          <el-badge :value="2" :max="9" class="mt-1">
             <button class="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center hover:bg-[#FFF0EC] hover:text-[#E8634A] hover:border-[#E8634A]/30 transition-all text-gray-500 shadow-sm">
               <iconify-icon icon="ph:bell-duotone" class="text-xl"></iconify-icon>
             </button>
           </el-badge>
-
-          <div class="h-6 w-px bg-gray-200 mx-1 hidden sm:block"></div>
-
-          <button class="hidden sm:flex items-center gap-2 bg-gradient-to-r from-[#E8634A] to-[#F07A5E] text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-[#E8634A]/30 hover:shadow-[#E8634A]/50 hover:-translate-y-0.5 transition-all" @click="handleAddNew">
-            <iconify-icon icon="ph:plus-bold" class="text-base"></iconify-icon>
-            <span>Tạo đơn</span>
-          </button>
         </div>
       </header>
 
@@ -154,10 +129,12 @@ const router = useRouter()
 const sidebarOpen = ref(true)
 const isMobile    = ref(false)
 const staffMenu = [
-  { path: '/staff-area/checkin',  icon: 'ph:fingerprint-duotone', label: 'Chấm công' }, // ← THÊM
-  { path: '/staff-area/orders',   icon: 'ph:receipt-duotone', label: 'Quản lý đơn hàng', badge: 12 },
-  { path: '/staff-area/products', icon: 'ph:cake-duotone', label: 'Danh sách bánh' },
-  { path: '/staff-area/pos', icon: 'ph:storefront-duotone', label: 'Bán hàng tại quầy' },
+  { path: '/staff-area/checkin',  icon: 'ph:fingerprint-duotone',  label: 'Chấm công' },
+  { path: '/staff-area/orders',   icon: 'ph:receipt-duotone',      label: 'Quản lý đơn hàng' },
+  { path: '/staff-area/bakery',   icon: 'ph:cake-duotone',         label: 'Tiệm Bánh' },
+  { path: '/staff-area/shipper',  icon: 'ph:motorcycle-duotone',   label: 'Giao Hàng' },
+  { path: '/staff-area/products', icon: 'ph:shopping-bag-duotone', label: 'Danh sách bánh' },
+  { path: '/staff-area/pos',      icon: 'ph:storefront-duotone',   label: 'Bán hàng tại quầy' },
 ]
 
 const currentBreadcrumb = computed(
@@ -166,9 +143,6 @@ const currentBreadcrumb = computed(
 
 const isActive = (path) => route.path.startsWith(path)
 
-function handleAddNew() {
-  window.dispatchEvent(new CustomEvent('open-add-modal'))
-}
 
 function checkMobile() {
   isMobile.value = window.innerWidth < 768

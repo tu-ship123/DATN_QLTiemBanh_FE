@@ -1,82 +1,233 @@
 <template>
-  <div class="p-6 bg-[#FFF8F4] min-h-screen flex flex-col">
-    <div class="mb-6 flex justify-between items-end shrink-0">
+  <div class="p-6 bg-[#FFF8F4] min-h-screen flex flex-col gap-5">
+
+    <!-- HEADER -->
+    <div class="flex flex-wrap justify-between items-end gap-4 shrink-0">
       <div>
-        <h1 class="text-2xl font-black text-[#1E2A3B] font-display">Bảng Kanban Đơn Hàng</h1>
-        <p class="text-sm text-slate-500 mt-1">Kéo thả thẻ để cập nhật tiến trình sản xuất và giao hàng</p>
+        <h1 class="text-2xl font-black text-[#1E2A3B] font-display">Quản lý Đơn Hàng</h1>
+        <p class="text-sm text-slate-500 mt-1">Xem, xử lý và cập nhật trạng thái đơn hàng</p>
       </div>
-      <div class="flex items-center gap-3">
-        <span class="flex items-center gap-1.5 text-xs font-semibold text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
-          <span class="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></span> Đơn 3D Custom
-        </span>
+      <div class="flex items-center gap-2">
+        <button
+          @click="viewMode = 'table'"
+          :class="viewMode === 'table' ? 'bg-[#E8634A] text-white shadow-md shadow-[#E8634A]/30' : 'bg-white text-slate-500 border border-slate-200'"
+          class="px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all"
+        >
+          <el-icon><List /></el-icon> Danh sách
+        </button>
+        <button
+          @click="viewMode = 'kanban'"
+          :class="viewMode === 'kanban' ? 'bg-[#E8634A] text-white shadow-md shadow-[#E8634A]/30' : 'bg-white text-slate-500 border border-slate-200'"
+          class="px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all"
+        >
+          <el-icon><Grid /></el-icon> Kanban
+        </button>
+        <button @click="fetchOrders" class="px-4 py-2 rounded-xl text-sm font-bold bg-white text-slate-500 border border-slate-200 hover:border-[#E8634A]/50 hover:text-[#E8634A] flex items-center gap-2 transition-all">
+          <el-icon :class="loading ? 'animate-spin' : ''"><Refresh /></el-icon> Làm mới
+        </button>
       </div>
     </div>
 
-    <div class="flex gap-5 overflow-x-auto pb-4 flex-1 custom-scrollbar items-start">
-      
-      <div 
-        v-for="column in kanbanColumns" 
-        :key="column.id" 
-        class="flex-shrink-0 w-[340px] flex flex-col max-h-[calc(100vh-160px)]"
+    <!-- STATS CARDS -->
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 shrink-0">
+      <div v-for="s in statusStats" :key="s.key"
+        @click="filterStatus = filterStatus === s.key ? '' : s.key; fetchOrders()"
+        :class="filterStatus === s.key ? 'border-[#E8634A] shadow-md shadow-[#E8634A]/10' : 'border-[#EDE8E3]'"
+        class="bg-white rounded-2xl p-4 border cursor-pointer hover:border-[#E8634A]/50 transition-all group"
+      >
+        <div class="flex items-center gap-2 mb-1">
+          <span class="text-xl">{{ s.icon }}</span>
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">{{ s.label }}</span>
+        </div>
+        <div class="text-2xl font-black text-[#1E2A3B]">{{ s.count }}</div>
+      </div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="bg-white rounded-2xl border border-[#EDE8E3] p-4 flex flex-wrap gap-3 items-center shrink-0">
+      <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 flex-1 min-w-[200px] focus-within:border-[#E8634A] transition-all">
+        <el-icon class="text-slate-400"><Search /></el-icon>
+        <input
+          v-model="searchText"
+          @input="onSearch"
+          type="text"
+          placeholder="Tìm mã đơn, khách hàng, email..."
+          class="bg-transparent border-none outline-none w-full text-sm text-[#1E2A3B] placeholder-slate-400"
+        />
+      </div>
+      <el-select v-model="filterStatus" @change="fetchOrders" placeholder="Tất cả trạng thái" clearable style="width:180px">
+        <el-option v-for="s in statusOptions" :key="s.value" :label="s.label" :value="s.value" />
+      </el-select>
+      <el-select v-model="filterNguon" @change="fetchOrders" placeholder="Nguồn đơn" clearable style="width:140px">
+        <el-option label="Online" value="ONLINE" />
+        <el-option label="POS" value="POS" />
+      </el-select>
+      <el-date-picker
+        v-model="filterDateRange"
+        @change="fetchOrders"
+        type="daterange"
+        range-separator="→"
+        start-placeholder="Từ ngày"
+        end-placeholder="Đến ngày"
+        style="width:260px"
+        value-format="YYYY-MM-DDTHH:mm:ss"
+      />
+    </div>
+
+    <!-- TABLE VIEW -->
+    <div v-if="viewMode === 'table'" class="bg-white rounded-2xl border border-[#EDE8E3] overflow-hidden flex-1">
+      <el-table
+        :data="filteredOrders"
+        v-loading="loading"
+        style="width:100%"
+        row-class-name="cursor-pointer hover:bg-[#FFF8F4]"
+        @row-click="openDetail"
+        empty-text="Chưa có đơn hàng nào"
+      >
+        <el-table-column label="MÃ ĐƠN" width="110">
+          <template #default="{ row }">
+            <span class="text-sm font-black text-[#E8634A]">HD-{{ row.id }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="KHÁCH HÀNG" min-width="180">
+          <template #default="{ row }">
+            <div class="flex items-center gap-2.5 py-1">
+              <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-[#E8634A] to-[#FBB830] text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+                {{ getInitials(row.emailNguoiDung) }}
+              </div>
+              <div>
+                <div class="text-sm font-semibold text-[#1E2A3B]">{{ row.emailNguoiDung }}</div>
+                <div class="text-xs text-slate-400">{{ formatCurrency(row.tongTien) }}</div>
+              </div>
+            </div>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="SẢN PHẨM" min-width="180">
+          <template #default="{ row }">
+            <div v-if="row.items && row.items.length > 0">
+              <div class="text-sm font-medium text-[#1E2A3B] truncate max-w-[160px]">{{ row.items[0].tenSanPham }}</div>
+              <div class="text-xs text-slate-400" v-if="row.items.length > 1">+{{ row.items.length - 1 }} sản phẩm khác</div>
+            </div>
+            <span v-else class="text-xs text-slate-400">—</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="NGUỒN" width="90" align="center">
+          <template #default="{ row }">
+            <span :class="row.nguonDon === 'POS' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'"
+              class="text-xs font-bold px-2 py-1 rounded-lg">
+              {{ row.nguonDon || 'ONLINE' }}
+            </span>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="NGÀY GIAO" width="130">
+          <template #default="{ row }">
+            <div class="text-sm text-[#1E2A3B]">{{ formatDate(row.ngayGiaoHang) }}</div>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="TRẠNG THÁI" width="155" align="center">
+          <template #default="{ row }">
+            <span class="text-xs font-bold px-2.5 py-1.5 rounded-xl" :class="getStatusClass(row.trangThai)">
+              {{ getStatusLabel(row.trangThai) }}
+            </span>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="" width="120" align="center">
+          <template #default="{ row }">
+            <div class="flex items-center justify-center gap-1" @click.stop>
+              <button
+                @click.stop="openDetail(row)"
+                class="w-8 h-8 rounded-lg bg-slate-50 hover:bg-[#FFF0EC] hover:text-[#E8634A] text-slate-400 flex items-center justify-center transition-colors"
+                title="Xem chi tiết"
+              >
+                <el-icon><View /></el-icon>
+              </button>
+              <el-dropdown trigger="click" @command="cmd => handleAction(cmd, row)">
+                <button class="w-8 h-8 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-400 flex items-center justify-center transition-colors">
+                  <el-icon><MoreFilled /></el-icon>
+                </button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="DA_XAC_NHAN">✅ Xác nhận đơn</el-dropdown-item>
+                    <el-dropdown-item command="DANG_LAM">🔧 Đang sản xuất</el-dropdown-item>
+                    <el-dropdown-item command="SAN_SANG">📦 Sẵn sàng giao</el-dropdown-item>
+                    <el-dropdown-item command="DANG_GIAO">🚴 Đang giao hàng</el-dropdown-item>
+                    <el-dropdown-item command="HOAN_THANH">🎉 Hoàn thành</el-dropdown-item>
+                    <el-dropdown-item command="DA_HUY" divided>
+                      <span class="text-red-500">❌ Hủy đơn</span>
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <div class="px-4 py-3 border-t border-[#EDE8E3] flex items-center justify-between">
+        <span class="text-sm text-slate-400">{{ filteredOrders.length }} đơn hàng</span>
+      </div>
+    </div>
+
+    <!-- KANBAN VIEW -->
+    <div v-if="viewMode === 'kanban'" class="flex gap-5 overflow-x-auto pb-4 flex-1 custom-scrollbar items-start">
+      <div
+        v-for="col in kanbanColumns"
+        :key="col.id"
+        class="flex-shrink-0 w-[320px] flex flex-col max-h-[calc(100vh-260px)]"
       >
         <div class="flex justify-between items-center mb-3 px-1 shrink-0">
           <div class="flex items-center gap-2">
-            <h3 class="font-bold text-[#1E2A3B] text-[15px] uppercase tracking-wide">{{ column.title }}</h3>
-            <span class="bg-[#E8634A] text-white text-[11px] font-black px-2 py-0.5 rounded-full shadow-sm shadow-[#E8634A]/30">
-              {{ column.cards.length }}
+            <span class="text-base">{{ col.icon }}</span>
+            <h3 class="font-bold text-[#1E2A3B] text-[14px] uppercase tracking-wide">{{ col.title }}</h3>
+            <span class="bg-[#E8634A] text-white text-[11px] font-black px-2 py-0.5 rounded-full">
+              {{ getKanbanCards(col.id).length }}
             </span>
           </div>
-          <button class="text-slate-400 hover:text-[#E8634A] transition-colors">
-            <el-icon><MoreFilled /></el-icon>
-          </button>
         </div>
 
-        <div class="bg-slate-100/50 backdrop-blur-sm border border-[#EDE8E3] rounded-2xl p-3 flex-1 overflow-y-auto custom-scrollbar flex flex-col">
-          <draggable
-            v-model="column.cards"
-            item-key="id"
-            group="orders"
-            class="flex-1 flex flex-col gap-3 min-h-[100px]"
-            ghost-class="opacity-40"
-            drag-class="rotate-2 scale-105 shadow-2xl cursor-grabbing"
-            @change="onDragChange"
-          >
-            <template #item="{ element }">
-              <div 
-                class="bg-white border border-[#EDE8E3] p-4 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] cursor-grab hover:border-[#E8634A]/40 hover:shadow-[0_8px_20px_rgba(232,99,74,0.08)] hover:-translate-y-0.5 transition-all duration-200 group relative overflow-hidden"
-                @click="openOrderDetail(element)"
-              >
-                <div v-if="element.is3D" class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-purple-500 to-indigo-500"></div>
-                <div v-else class="absolute left-0 top-0 bottom-0 w-1 bg-transparent group-hover:bg-[#E8634A]/50 transition-colors"></div>
-
-                <div class="flex justify-between items-start mb-2.5">
-                  <span class="text-xs font-black text-[#E8634A] bg-[#FFF0EC] px-2 py-1 rounded-md">{{ element.id }}</span>
-                  <span v-if="element.is3D" class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-md shadow-purple-500/30 tracking-wide uppercase">
-                    3D Custom
-                  </span>
-                </div>
-                
-                <h4 class="text-[15px] font-bold text-[#1E2A3B] mb-1.5 leading-snug group-hover:text-[#E8634A] transition-colors">{{ element.product }}</h4>
-                
-                <div class="flex items-center gap-1.5 text-xs text-slate-500 mb-3">
-                  <el-icon><User /></el-icon>
-                  <span class="truncate">{{ element.customer }}</span>
-                </div>
-                
-                <div class="pt-3 border-t border-slate-100 flex justify-between items-center mt-auto">
-                  <div class="flex items-center gap-1.5 text-xs font-semibold" :class="column.id === 'delivered' ? 'text-emerald-600' : 'text-slate-500'">
-                    <el-icon><Clock v-if="column.id !== 'delivered'" /><CircleCheck v-else /></el-icon>
-                    {{ element.deliveryTime }}
-                  </div>
-                  <button class="w-7 h-7 rounded-lg bg-slate-50 text-slate-400 hover:bg-[#E8634A] hover:text-white flex items-center justify-center transition-colors">
-                    <el-icon><View /></el-icon>
+        <div class="bg-slate-100/50 border border-[#EDE8E3] rounded-2xl p-3 flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-3">
+          <template v-if="getKanbanCards(col.id).length > 0">
+            <div
+              v-for="order in getKanbanCards(col.id)"
+              :key="order.id"
+              @click="openDetail(order)"
+              class="bg-white border border-[#EDE8E3] p-4 rounded-xl shadow-sm cursor-pointer hover:border-[#E8634A]/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group"
+            >
+              <div class="flex justify-between items-start mb-2.5">
+                <span class="text-xs font-black text-[#E8634A] bg-[#FFF0EC] px-2 py-1 rounded-md">HD-{{ order.id }}</span>
+                <span class="text-[10px] font-bold px-2 py-1 rounded-lg" :class="order.nguonDon === 'POS' ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'">
+                  {{ order.nguonDon || 'ONLINE' }}
+                </span>
+              </div>
+              <div class="text-xs text-slate-500 mb-2 flex items-center gap-1">
+                <el-icon><User /></el-icon>
+                <span class="truncate">{{ order.emailNguoiDung }}</span>
+              </div>
+              <div v-if="order.items && order.items.length > 0" class="text-sm font-semibold text-[#1E2A3B] mb-2 truncate">
+                {{ order.items[0].tenSanPham }}
+              </div>
+              <div class="pt-2.5 border-t border-slate-100 flex justify-between items-center">
+                <span class="text-xs font-bold text-[#E8634A]">{{ formatCurrency(order.tongTien) }}</span>
+                <div class="flex gap-1">
+                  <button
+                    v-if="getNextStatus(col.id)"
+                    @click.stop="quickUpdateStatus(order, getNextStatus(col.id))"
+                    class="text-xs bg-[#E8634A] text-white px-2 py-1 rounded-lg hover:bg-[#d4543c] transition-colors font-semibold"
+                    :title="'Chuyển sang: ' + getStatusLabel(getNextStatus(col.id))"
+                  >
+                    → Tiếp
                   </button>
                 </div>
               </div>
-            </template>
-          </draggable>
-          
-          <div v-if="column.cards.length === 0" class="flex-1 flex flex-col items-center justify-center text-slate-400 opacity-60 min-h-[120px] pointer-events-none">
+            </div>
+          </template>
+          <div v-else class="flex-1 flex flex-col items-center justify-center text-slate-400 opacity-60 min-h-[120px]">
             <el-icon class="text-3xl mb-2"><Box /></el-icon>
             <p class="text-xs font-medium">Chưa có đơn hàng</p>
           </div>
@@ -84,134 +235,324 @@
       </div>
     </div>
 
-    <el-dialog v-model="showModal" :title="`Chi tiết đơn: ${selectedOrder?.id}`" width="540px" class="rounded-2xl" center>
-      <div v-if="selectedOrder" class="space-y-5 px-2">
-        <div class="text-center pb-2">
-          <el-tag v-if="selectedOrder.is3D" type="warning" effect="dark" round class="mb-3 bg-gradient-to-r from-purple-500 to-indigo-500 border-none">Mô hình 3D Custom</el-tag>
-          <h2 class="text-xl font-bold text-[#1E2A3B]">{{ selectedOrder.product }}</h2>
+    <!-- DETAIL DIALOG -->
+    <el-dialog v-model="showDetail" :title="`Chi tiết đơn hàng HD-${selectedOrder?.id}`" width="620px" class="rounded-2xl" destroy-on-close>
+      <div v-if="selectedOrder" class="space-y-4">
+        <!-- Stepper trạng thái -->
+        <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+          <el-steps :active="getStatusStep(selectedOrder.trangThai)" align-center size="small" finish-status="success">
+            <el-step title="Tiếp nhận" />
+            <el-step title="Xác nhận" />
+            <el-step title="Sản xuất" />
+            <el-step title="Sẵn sàng" />
+            <el-step title="Đang giao" />
+            <el-step title="Hoàn thành" />
+          </el-steps>
         </div>
 
-        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 grid grid-cols-2 gap-4">
-          <div>
-            <p class="text-xs text-slate-400 font-semibold uppercase mb-1">Khách hàng</p>
-            <p class="text-sm font-medium text-[#1E2A3B]">{{ selectedOrder.customer }}</p>
+        <!-- Info 2 cột -->
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-[#FFF8F4] rounded-2xl p-4 border border-[#EDE8E3]">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Thông tin đơn</p>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between"><span class="text-slate-500">Mã đơn</span><span class="font-bold text-[#E8634A]">HD-{{ selectedOrder.id }}</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Nguồn đơn</span><span class="font-semibold">{{ selectedOrder.nguonDon || 'ONLINE' }}</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Tổng tiền</span><span class="font-bold text-[#1E2A3B]">{{ formatCurrency(selectedOrder.tongTien) }}</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Ngày tạo</span><span>{{ formatDate(selectedOrder.ngayTao) }}</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Ngày giao</span><span>{{ formatDate(selectedOrder.ngayGiaoHang) }}</span></div>
+            </div>
           </div>
-          <div>
-            <p class="text-xs text-slate-400 font-semibold uppercase mb-1">Hạn giao</p>
-            <p class="text-sm font-medium text-[#1E2A3B]">{{ selectedOrder.deliveryTime }}</p>
+          <div class="bg-[#FFF8F4] rounded-2xl p-4 border border-[#EDE8E3]">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Khách hàng</p>
+            <div class="space-y-2 text-sm">
+              <div class="font-semibold text-[#1E2A3B]">{{ selectedOrder.emailNguoiDung }}</div>
+              <div class="text-slate-500">{{ selectedOrder.diaChiGiaoHang || '—' }}</div>
+              <div v-if="selectedOrder.tenNhanVienPhuTrach" class="mt-2 pt-2 border-t border-slate-200">
+                <span class="text-xs text-slate-400">Nhân viên:</span>
+                <span class="font-semibold ml-1">{{ selectedOrder.tenNhanVienPhuTrach }}</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="bg-amber-50 p-4 rounded-xl border border-amber-100">
-          <p class="text-xs text-amber-600 font-bold uppercase mb-2 flex items-center gap-1"><el-icon><Warning /></el-icon> Ghi chú đặc biệt</p>
-          <p class="text-sm text-amber-900">{{ selectedOrder.note || 'Không có ghi chú từ khách hàng.' }}</p>
+        <!-- Ghi chú -->
+        <div v-if="selectedOrder.ghiChu" class="bg-amber-50 p-4 rounded-xl border border-amber-100">
+          <p class="text-xs font-bold text-amber-600 uppercase mb-2 flex items-center gap-1"><el-icon><Warning /></el-icon> Ghi chú đặc biệt</p>
+          <p class="text-sm text-amber-900">{{ selectedOrder.ghiChu }}</p>
         </div>
 
-        <div v-if="selectedOrder.is3D" class="flex justify-center pt-2">
-          <button class="w-full h-12 flex items-center justify-center gap-2 text-base font-bold text-white bg-gradient-to-r from-purple-500 to-indigo-500 rounded-xl shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:-translate-y-0.5 transition-all duration-300" @click="open3DViewer">
-            <el-icon class="text-lg"><Monitor /></el-icon> Mở Trình Xem Mô Hình 3D
-          </button>
+        <!-- Lý do hủy -->
+        <div v-if="selectedOrder.lyDoHuy" class="bg-red-50 p-4 rounded-xl border border-red-100">
+          <p class="text-xs font-bold text-red-500 uppercase mb-2">❌ Lý do hủy</p>
+          <p class="text-sm text-red-800">{{ selectedOrder.lyDoHuy }}</p>
+        </div>
+
+        <!-- Danh sách sản phẩm -->
+        <div>
+          <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Sản phẩm đặt</p>
+          <div class="space-y-2">
+            <div v-for="item in selectedOrder.items" :key="item.sanPhamId"
+              class="flex justify-between items-center bg-white border border-[#EDE8E3] rounded-xl px-4 py-3">
+              <div>
+                <div class="text-sm font-semibold text-[#1E2A3B]">{{ item.tenSanPham }}</div>
+                <div class="text-xs text-slate-400">x{{ item.soLuong }}</div>
+              </div>
+              <span class="font-bold text-[#E8634A] text-sm">{{ formatCurrency(item.giaBan * item.soLuong) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cập nhật trạng thái -->
+        <div class="bg-white rounded-2xl border border-[#EDE8E3] p-4">
+          <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Cập nhật trạng thái</p>
+          <div class="flex gap-2 flex-wrap">
+            <el-select v-model="newStatus" placeholder="Chọn trạng thái mới" style="flex:1; min-width:180px">
+              <el-option v-for="s in statusOptions" :key="s.value" :label="s.label" :value="s.value" />
+            </el-select>
+            <el-input v-if="newStatus === 'DA_HUY'" v-model="cancelReason" placeholder="Nhập lý do hủy..." style="flex:1; min-width:180px" />
+            <button
+              @click="submitStatusUpdate"
+              :disabled="!newStatus || updating"
+              class="px-5 py-2 bg-gradient-to-r from-[#E8634A] to-[#F07A5E] text-white rounded-xl font-bold text-sm shadow-md shadow-[#E8634A]/30 hover:shadow-[#E8634A]/50 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            >
+              <span v-if="updating"><el-icon class="animate-spin"><Refresh /></el-icon></span>
+              <span v-else>Cập nhật</span>
+            </button>
+          </div>
         </div>
       </div>
+
       <template #footer>
-        <div class="pb-2">
-          <el-button class="rounded-xl px-6" @click="showModal = false">Đóng</el-button>
-        </div>
+        <el-button @click="showDetail = false" class="rounded-xl">Đóng</el-button>
       </template>
     </el-dialog>
 
-    <el-dialog v-model="show3DViewer" title="Trình Render 3D (Three.js)" width="860px" destroy-on-close class="rounded-2xl">
-      <div class="w-full h-[540px] bg-gradient-to-b from-slate-800 to-slate-900 rounded-xl flex items-center justify-center relative overflow-hidden shadow-inner border border-slate-700">
-        <div class="text-center text-slate-400 z-10">
-          <el-icon class="text-5xl mb-3 text-purple-400/50"><Box /></el-icon>
-          <p class="font-medium text-slate-300">Môi trường giả lập 3D</p>
-          <p class="text-sm mt-2 max-w-sm opacity-60">Thẻ canvas đã được chuẩn bị. Sẵn sàng tích hợp code Three.js ở Task T045 để hiển thị thiết kế bánh của khách.</p>
-        </div>
-        <canvas id="three-canvas" class="absolute inset-0 w-full h-full cursor-move"></canvas>
-      </div>
-    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import draggable from 'vuedraggable'
-import { ElMessage } from 'element-plus'
-// Đã xóa chữ Inbox ở dòng import này để fix lỗi
-import { MoreFilled, User, Clock, View, Warning, Monitor, Box, CircleCheck } from '@element-plus/icons-vue'
+import { ref, computed, onMounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { List, Grid, Refresh, Search, View, MoreFilled, User, Warning, Box } from '@element-plus/icons-vue'
+import apiClient from '@/services/apiService'
 
-const showModal = ref(false)
-const show3DViewer = ref(false)
+// ─── STATE ───────────────────────────────────────────────────────────────────
+const viewMode    = ref('table')
+const loading     = ref(false)
+const updating    = ref(false)
+const orders      = ref([])
+const searchText  = ref('')
+const filterStatus = ref('')
+const filterNguon  = ref('')
+const filterDateRange = ref(null)
+const showDetail  = ref(false)
 const selectedOrder = ref(null)
+const newStatus   = ref('')
+const cancelReason = ref('')
+let searchTimer   = null
 
-const kanbanColumns = ref([
-  {
-    id: 'pending',
-    title: 'Chờ xử lý',
-    cards: [
-      { id: '#DH001', product: 'Bánh Mèo Shiba 3D', customer: 'Anh Tuấn', deliveryTime: '14:00 Hôm nay', note: 'Làm chi tiết mặt mèo, kem ít ngọt', is3D: true },
-      { id: '#DH002', product: 'Cupcake Set 12', customer: 'Chị Mai', deliveryTime: '16:00 Hôm nay', note: 'Giao hỏa tốc trước 4h chiều', is3D: false },
-      { id: '#DH005', product: 'Bánh Kem Vani 20cm', customer: 'Cô Lan', deliveryTime: '10:00 Sáng mai', note: 'Viết chữ: Mừng thọ Ông', is3D: false }
-    ]
-  },
-  {
-    id: 'doing',
-    title: 'Đang sản xuất',
-    cards: [
-      { id: '#DH003', product: 'Bánh Cưới 3 Tầng', customer: 'Hải Đăng', deliveryTime: 'Sáng mai', note: 'Trang trí hoa hồng fondant, tone màu pastel', is3D: true }
-    ]
-  },
-  {
-    id: 'ready',
-    title: 'Sẵn sàng giao',
-    cards: [
-      { id: '#DH004', product: 'Macaron Box (24 viên)', customer: 'Minh Thư', deliveryTime: '18:00 Hôm nay', note: '', is3D: false }
-    ]
-  },
-  {
-    id: 'delivered',
-    title: 'Đã giao',
-    cards: []
+// ─── CONSTANTS ───────────────────────────────────────────────────────────────
+const statusOptions = [
+  { value: 'CHO_XAC_NHAN', label: '⏳ Chờ xác nhận' },
+  { value: 'DA_XAC_NHAN',  label: '✅ Đã xác nhận' },
+  { value: 'DANG_LAM',     label: '🔧 Đang sản xuất' },
+  { value: 'SAN_SANG',     label: '📦 Sẵn sàng giao' },
+  { value: 'DANG_GIAO',    label: '🚴 Đang giao hàng' },
+  { value: 'HOAN_THANH',   label: '🎉 Hoàn thành' },
+  { value: 'DA_HUY',       label: '❌ Đã hủy' },
+]
+
+const statusFlow = ['CHO_XAC_NHAN','DA_XAC_NHAN','DANG_LAM','SAN_SANG','DANG_GIAO','HOAN_THANH']
+
+const kanbanColumns = [
+  { id: 'CHO_XAC_NHAN', title: 'Chờ xác nhận', icon: '⏳' },
+  { id: 'DA_XAC_NHAN',  title: 'Đã xác nhận',  icon: '✅' },
+  { id: 'DANG_LAM',     title: 'Đang sản xuất', icon: '🔧' },
+  { id: 'SAN_SANG',     title: 'Sẵn sàng giao', icon: '📦' },
+  { id: 'DANG_GIAO',    title: 'Đang giao',      icon: '🚴' },
+  { id: 'HOAN_THANH',   title: 'Hoàn thành',     icon: '🎉' },
+]
+
+// ─── COMPUTED ────────────────────────────────────────────────────────────────
+const filteredOrders = computed(() => {
+  if (!searchText.value) return orders.value
+  const q = searchText.value.toLowerCase()
+  return orders.value.filter(o =>
+    String(o.id).includes(q) ||
+    (o.emailNguoiDung || '').toLowerCase().includes(q) ||
+    (o.items || []).some(i => (i.tenSanPham || '').toLowerCase().includes(q))
+  )
+})
+
+const statusStats = computed(() => {
+  const all = orders.value
+  return [
+    { key: '', icon: '📋', label: 'Tất cả',      count: all.length },
+    { key: 'CHO_XAC_NHAN', icon: '⏳', label: 'Chờ xử lý',  count: all.filter(o => o.trangThai === 'CHO_XAC_NHAN').length },
+    { key: 'DANG_LAM',     icon: '🔧', label: 'Đang làm',   count: all.filter(o => o.trangThai === 'DANG_LAM').length },
+    { key: 'SAN_SANG',     icon: '📦', label: 'Sẵn sàng',   count: all.filter(o => o.trangThai === 'SAN_SANG').length },
+    { key: 'HOAN_THANH',   icon: '🎉', label: 'Hoàn thành', count: all.filter(o => o.trangThai === 'HOAN_THANH').length },
+  ]
+})
+
+// ─── METHODS ─────────────────────────────────────────────────────────────────
+async function fetchOrders() {
+  loading.value = true
+  try {
+    const params = {}
+    if (filterStatus.value) params.trangThai = filterStatus.value
+    if (filterNguon.value)  params.nguonDon  = filterNguon.value
+    if (filterDateRange.value && filterDateRange.value[0]) {
+      params.tuNgay  = filterDateRange.value[0]
+      params.denNgay = filterDateRange.value[1]
+    }
+    // Nhân viên dùng endpoint chung (ADMIN + NHAN_VIEN đều được)
+    const res = await apiClient.get('/api/v1/orders', { params })
+    orders.value = res.data || []
+  } catch (err) {
+    // Fallback: nếu endpoint admin filter bị từ chối thì dùng endpoint cơ bản
+    try {
+      const res = await apiClient.get('/api/v1/orders')
+      let data = res.data || []
+      if (filterStatus.value) data = data.filter(o => o.trangThai === filterStatus.value)
+      if (filterNguon.value)  data = data.filter(o => (o.nguonDon || 'ONLINE') === filterNguon.value)
+      orders.value = data
+    } catch (e) {
+      ElMessage.error('Không thể tải danh sách đơn hàng')
+    }
+  } finally {
+    loading.value = false
   }
-])
+}
 
-const onDragChange = (evt) => {
-  if(evt.added) {
-    ElMessage({
-      message: 'Đã cập nhật tiến trình đơn hàng',
-      type: 'success',
-      plain: true,
-      duration: 2000
-    })
+async function submitStatusUpdate() {
+  if (!newStatus.value || !selectedOrder.value) return
+  if (newStatus.value === 'DA_HUY' && !cancelReason.value.trim()) {
+    ElMessage.warning('Vui lòng nhập lý do hủy!')
+    return
+  }
+  try {
+    await ElMessageBox.confirm(
+      `Cập nhật đơn HD-${selectedOrder.value.id} sang "${getStatusLabel(newStatus.value)}"?`,
+      'Xác nhận',
+      { confirmButtonText: 'Cập nhật', cancelButtonText: 'Hủy', type: 'warning' }
+    )
+  } catch { return }
+
+  updating.value = true
+  try {
+    const payload = {
+      trangThai: newStatus.value,
+      lyDoHuy: newStatus.value === 'DA_HUY' ? cancelReason.value : undefined
+    }
+    await apiClient.put(`/api/v1/orders/${selectedOrder.value.id}/process`, payload)
+    ElMessage.success('Đã cập nhật trạng thái thành công!')
+    showDetail.value = false
+    newStatus.value = ''
+    cancelReason.value = ''
+    await fetchOrders()
+  } catch (err) {
+    ElMessage.error(err.response?.data || 'Cập nhật thất bại')
+  } finally {
+    updating.value = false
   }
 }
 
-const openOrderDetail = (order) => {
-  selectedOrder.value = order
-  showModal.value = true
+async function quickUpdateStatus(order, status) {
+  try {
+    await apiClient.put(`/api/v1/orders/${order.id}/process`, { trangThai: status })
+    ElMessage.success(`Đã chuyển HD-${order.id} → ${getStatusLabel(status)}`)
+    await fetchOrders()
+  } catch (err) {
+    ElMessage.error(err.response?.data || 'Cập nhật thất bại')
+  }
 }
 
-const open3DViewer = () => {
-  showModal.value = false
-  show3DViewer.value = true
-  ElMessage.info('Chuẩn bị nạp dữ liệu mesh Three.js...')
+function handleAction(status, row) {
+  if (status === 'DA_HUY') {
+    openDetail(row)
+    newStatus.value = 'DA_HUY'
+  } else {
+    quickUpdateStatus(row, status)
+  }
 }
+
+function openDetail(row) {
+  selectedOrder.value = row
+  newStatus.value = ''
+  cancelReason.value = ''
+  showDetail.value = true
+}
+
+function onSearch() {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {}, 300)
+}
+
+function getKanbanCards(colId) {
+  return orders.value.filter(o => o.trangThai === colId)
+}
+
+function getNextStatus(currentId) {
+  const idx = statusFlow.indexOf(currentId)
+  return idx >= 0 && idx < statusFlow.length - 1 ? statusFlow[idx + 1] : null
+}
+
+function getStatusStep(status) {
+  const steps = ['CHO_XAC_NHAN','DA_XAC_NHAN','DANG_LAM','SAN_SANG','DANG_GIAO','HOAN_THANH']
+  return steps.indexOf(status)
+}
+
+function getStatusLabel(val) {
+  const map = {
+    CHO_XAC_NHAN: 'Chờ xác nhận',
+    DA_XAC_NHAN:  'Đã xác nhận',
+    DANG_LAM:     'Đang sản xuất',
+    SAN_SANG:     'Sẵn sàng giao',
+    DANG_GIAO:    'Đang giao hàng',
+    HOAN_THANH:   'Hoàn thành',
+    DA_HUY:       'Đã hủy',
+    DA_HOAN_TIEN: 'Đã hoàn tiền',
+  }
+  return map[val] || val
+}
+
+function getStatusClass(val) {
+  const map = {
+    CHO_XAC_NHAN: 'bg-yellow-100 text-yellow-700',
+    DA_XAC_NHAN:  'bg-blue-100 text-blue-700',
+    DANG_LAM:     'bg-orange-100 text-orange-700',
+    SAN_SANG:     'bg-cyan-100 text-cyan-700',
+    DANG_GIAO:    'bg-indigo-100 text-indigo-700',
+    HOAN_THANH:   'bg-emerald-100 text-emerald-700',
+    DA_HUY:       'bg-red-100 text-red-600',
+    DA_HOAN_TIEN: 'bg-purple-100 text-purple-600',
+  }
+  return map[val] || 'bg-slate-100 text-slate-600'
+}
+
+function formatCurrency(val) {
+  if (!val && val !== 0) return '—'
+  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val)
+}
+
+function formatDate(val) {
+  if (!val) return '—'
+  return new Date(val).toLocaleDateString('vi-VN')
+}
+
+function getInitials(email) {
+  if (!email) return 'KH'
+  return email.slice(0, 2).toUpperCase()
+}
+
+// ─── LIFECYCLE ────────────────────────────────────────────────────────────────
+onMounted(fetchOrders)
 </script>
 
 <style scoped>
-.custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-  border-radius: 10px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #cbd5e1; 
-  border-radius: 10px;
-}
-.custom-scrollbar:hover::-webkit-scrollbar-thumb {
-  background: #94a3b8; 
-}
+.custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+.custom-scrollbar:hover::-webkit-scrollbar-thumb { background: #94a3b8; }
 </style>

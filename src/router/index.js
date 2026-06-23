@@ -105,10 +105,14 @@ const routes = [
     redirect: '/staff-area/checkin',
     meta: { requiresAuth: true },
     children: [
-      { path: 'checkin', name: 'StaffCheckin', component: () => import('@/views/Checkin.vue'),      meta: { title: 'Chấm công',           breadcrumb: ['Nhân viên', 'Chấm công'] } },
-      { path: 'pos',     name: 'StaffPOS',     component: () => import('@/views/POS.vue'),          meta: { title: 'Bán hàng tại quầy',   breadcrumb: ['Nhân viên', 'Bán hàng'] } },
-      { path: 'orders',  name: 'StaffOrders',  component: () => import('@/views/StaffOrders.vue'),  meta: { title: 'Đơn hàng (Staff)',    breadcrumb: ['Nhân viên', 'Đơn hàng'] } },
-      { path: 'products',name: 'StaffProducts',component: () => import('@/views/Products.vue'),     meta: { title: 'Sản phẩm (Staff)',    breadcrumb: ['Nhân viên', 'Sản phẩm'] } }
+      { path: 'checkin',  name: 'StaffCheckin',  component: () => import('@/views/Checkin.vue'),       meta: { title: 'Chấm công',              breadcrumb: ['Nhân viên', 'Chấm công'] } },
+      { path: 'pos',      name: 'StaffPOS',      component: () => import('@/views/POS.vue'),            meta: { title: 'Bán hàng tại quầy',      breadcrumb: ['Nhân viên', 'Bán hàng'] } },
+      { path: 'orders',   name: 'StaffOrders',   component: () => import('@/views/StaffOrders.vue'),    meta: { title: 'Đơn hàng (Staff)',       breadcrumb: ['Nhân viên', 'Đơn hàng'] } },
+      { path: 'products', name: 'StaffProducts', component: () => import('@/views/Products.vue'),       meta: { title: 'Sản phẩm (Staff)',       breadcrumb: ['Nhân viên', 'Sản phẩm'] } },
+      // ✅ MỚI – Tiệm bánh nhận & xử lý đơn
+      { path: 'bakery',   name: 'BakeryOrders',  component: () => import('@/views/BakeryOrders.vue'),   meta: { title: 'Tiệm bánh – Xử lý đơn', breadcrumb: ['Nhân viên', 'Tiệm Bánh'] } },
+      // ✅ MỚI – Shipper giao hàng
+      { path: 'shipper',  name: 'ShipperView',   component: () => import('@/views/ShipperView.vue'),    meta: { title: 'Shipper – Giao hàng',    breadcrumb: ['Nhân viên', 'Giao Hàng'] } }
     ]
   }
 ];
