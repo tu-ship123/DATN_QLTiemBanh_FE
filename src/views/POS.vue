@@ -90,7 +90,7 @@
           <input
             v-model="emailKhach"
             type="email"
-            placeholder="Email khách hàng (để trống = vãng lai)"
+            placeholder="Email khách hàng (để trống = dùng email nhân viên)"
             class="w-full text-xs border border-[#EDE8E3] rounded-xl pl-8 pr-3 py-2 focus:outline-none focus:border-[#E8634A] focus:ring-1 focus:ring-[#E8634A]/20"
           />
         </div>
