@@ -51,26 +51,25 @@ const routes = [
         component: () => import('@/views/Cart.vue'),
         meta: { title: 'Giỏ hàng', breadcrumb: ['Cửa hàng', 'Giỏ hàng'] }
       },
-      // ✅ THÊM MỚI: Trang thanh toán (Checkout)
+      // Yêu cầu đăng nhập mới được vào checkout
       {
         path: 'checkout',
         name: 'Checkout',
         component: () => import('@/views/Checkout.vue'),
-        meta: { title: 'Thanh toán', breadcrumb: ['Cửa hàng', 'Thanh toán'] }
+        meta: { title: 'Thanh toán', breadcrumb: ['Cửa hàng', 'Thanh toán'], requiresAuth: true, roles: ['ROLE_KHACH_HANG'] }
       },
-      // ✅ THÊM MỚI: Trang danh sách Đơn hàng đã mua (MyOrders)
+      // Yêu cầu đăng nhập mới được xem đơn hàng
       {
         path: 'orders',
         name: 'MyOrders',
         component: () => import('@/views/MyOrders.vue'),
-        meta: { title: 'Đơn hàng của tôi', breadcrumb: ['Cửa hàng', 'Đơn hàng của tôi'] }
+        meta: { title: 'Đơn hàng của tôi', breadcrumb: ['Cửa hàng', 'Đơn hàng của tôi'], requiresAuth: true, roles: ['ROLE_KHACH_HANG'] }
       },
-      // ✅ THÊM MỚI: Trang xem chi tiết một đơn hàng sau khi mua xong
       {
         path: '/orders/:id',
         name: 'OrderDetail',
         component: () => import('@/views/OrderDetail.vue'),
-        meta: { title: 'Chi tiết đơn hàng', breadcrumb: ['Cửa hàng', 'Chi tiết đơn hàng'] }
+        meta: { title: 'Chi tiết đơn hàng', breadcrumb: ['Cửa hàng', 'Chi tiết đơn hàng'], requiresAuth: true }
       }
     ]
   },
@@ -82,7 +81,7 @@ const routes = [
     path: '/admin',
     component: () => import('@/components/AdminLayout.vue'),
     redirect: '/admin/dashboard',
-    meta: { requiresAuth: true, adminOnly: true },
+    meta: { requiresAuth: true, roles: ['ROLE_ADMIN'] },
     children: [
       { path: 'dashboard',  name: 'Dashboard',  component: () => import('@/views/Dashboard.vue'),  meta: { title: 'Tổng quan',               breadcrumb: ['Trang chủ', 'Tổng quan'] } },
       { path: 'orders',     name: 'Orders',     component: () => import('@/views/Orders.vue'),     meta: { title: 'Quản lý đơn hàng',        breadcrumb: ['Trang chủ', 'Đơn hàng'] } },
@@ -103,15 +102,13 @@ const routes = [
     path: '/staff-area',
     component: () => import('@/components/StaffLayout.vue'),
     redirect: '/staff-area/checkin',
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, roles: ['ROLE_NHAN_VIEN', 'ROLE_ADMIN'] },
     children: [
       { path: 'checkin',  name: 'StaffCheckin',  component: () => import('@/views/Checkin.vue'),       meta: { title: 'Chấm công',              breadcrumb: ['Nhân viên', 'Chấm công'] } },
       { path: 'pos',      name: 'StaffPOS',      component: () => import('@/views/POS.vue'),            meta: { title: 'Bán hàng tại quầy',      breadcrumb: ['Nhân viên', 'Bán hàng'] } },
       { path: 'orders',   name: 'StaffOrders',   component: () => import('@/views/StaffOrders.vue'),    meta: { title: 'Đơn hàng (Staff)',       breadcrumb: ['Nhân viên', 'Đơn hàng'] } },
       { path: 'products', name: 'StaffProducts', component: () => import('@/views/Products.vue'),       meta: { title: 'Sản phẩm (Staff)',       breadcrumb: ['Nhân viên', 'Sản phẩm'] } },
-      // ✅ MỚI – Tiệm bánh nhận & xử lý đơn
       { path: 'bakery',   name: 'BakeryOrders',  component: () => import('@/views/BakeryOrders.vue'),   meta: { title: 'Tiệm bánh – Xử lý đơn', breadcrumb: ['Nhân viên', 'Tiệm Bánh'] } },
-      // ✅ MỚI – Shipper giao hàng
       { path: 'shipper',  name: 'ShipperView',   component: () => import('@/views/ShipperView.vue'),    meta: { title: 'Shipper – Giao hàng',    breadcrumb: ['Nhân viên', 'Giao Hàng'] } }
     ]
   }
@@ -123,6 +120,38 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
+  const authStore = useAuthStore();
+
+  // Route không yêu cầu đăng nhập → cho qua
+  if (!to.meta.requiresAuth) {
+    // Nếu đã đăng nhập mà cố vào /login → redirect về đúng trang theo role
+    if (to.path === '/login' && authStore.isAuthenticated) {
+      const role = authStore.userRole;
+      if (role.includes('ADMIN')) return next('/admin/dashboard');
+      if (role.includes('NHAN_VIEN')) return next('/staff-area/checkin');
+      return next('/shop');
+    }
+    return next();
+  }
+
+  // Chưa đăng nhập → về trang login
+  if (!authStore.isAuthenticated) {
+    return next({ path: '/login', query: { redirect: to.fullPath } });
+  }
+
+  // Kiểm tra role nếu route có yêu cầu cụ thể
+  const requiredRoles = to.meta.roles;
+  if (requiredRoles && requiredRoles.length > 0) {
+    const userRole = authStore.userRole; // vd: "ROLE_KHACH_HANG"
+    const hasRole = requiredRoles.some(r => userRole.includes(r.replace('ROLE_', '')));
+    if (!hasRole) {
+      // Có token nhưng sai role → redirect về trang phù hợp
+      if (userRole.includes('ADMIN')) return next('/admin/dashboard');
+      if (userRole.includes('NHAN_VIEN')) return next('/staff-area/checkin');
+      return next('/shop');
+    }
+  }
+
   next();
 });
 
