@@ -233,34 +233,34 @@
     </div>
   </div>
 </template>
-
 <script setup>
 import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import Chart from 'chart.js/auto'
+import { dashboardService } from '../services/dashboardService'
 
-// Helpers
 const today = new Date().toLocaleDateString('vi-VN', { weekday:'long', day:'numeric', month:'long', year:'numeric' })
-const updateTime = new Date().toLocaleTimeString('vi-VN', { hour:'2-digit', minute:'2-digit' })
+const updateTime = ref(new Date().toLocaleTimeString('vi-VN', { hour:'2-digit', minute:'2-digit' }))
 const period = ref('Tháng')
+const isLoading = ref(true)
 
-const stats = [
-  { key:'revenue', icon:'💰', label:'Doanh thu hôm nay', value:'4,250,000đ', trend:'+12.5%', trendUp:true,  bgColor:'#FFF0EC' },
-  { key:'orders',  icon:'📦', label:'Đơn hàng mới',      value:'24',         trend:'+8.2%',  trendUp:true,  bgColor:'#EFF6FF' },
-  { key:'prod',    icon:'⏳', label:'Đang sản xuất',     value:'9',          trend:'-2.1%',  trendUp:false, bgColor:'#FFFBEB' },
-  { key:'rating',  icon:'⭐', label:'Đánh giá TB',       value:'4.9 ★',      trend:'+0.2',   trendUp:true,  bgColor:'#F0FDF4' },
-]
+const stats = ref([
+  { key:'revenue', icon:'💰', label:'Doanh thu hôm nay', value:'--', trend:'--', trendUp:true,  bgColor:'#FFF0EC' },
+  { key:'orders',  icon:'📦', label:'Đơn hàng mới',      value:'--', trend:'--', trendUp:true,  bgColor:'#EFF6FF' },
+  { key:'prod',    icon:'⏳', label:'Đang sản xuất',     value:'--', trend:'--', trendUp:false, bgColor:'#FFFBEB' },
+  { key:'rating',  icon:'👤', label:'Khách mới',          value:'--', trend:'--', trendUp:true,  bgColor:'#F0FDF4' },
+])
 
 const recentOrders = [
-  { id:'#DH2045', product:'Bánh 3D Custom – Mèo Shiba', initials:'NK', avatarBg:'#FFF0EC', avatarColor:'#E8634A', status:'Sản xuất', statusColor:'warning',  amount:'2,500,000đ', time:'2 phút trước' },
-  { id:'#DH2044', product:'Bánh sinh nhật 3 tầng',      initials:'TH', avatarBg:'#F0FDF4', avatarColor:'#22C55E', status:'Hoàn thành',statusColor:'success',  amount:'1,800,000đ', time:'18 phút trước' },
-  { id:'#DH2043', product:'Bánh cưới kem tươi',         initials:'LM', avatarBg:'#EFF6FF', avatarColor:'#3B82F6', status:'Chờ nhận',  statusColor:'info',     amount:'4,200,000đ', time:'45 phút trước' },
-  { id:'#DH2042', product:'Cupcake set 12 cái',         initials:'PT', avatarBg:'#F5F3FF', avatarColor:'#7C3AED', status:'Sản xuất',  statusColor:'warning',  amount:'350,000đ',   time:'1 giờ trước' },
-  { id:'#DH2041', product:'Bánh mousse chanh leo',      initials:'BL', avatarBg:'#FFF0EC', avatarColor:'#E8634A', status:'Hoàn thành',statusColor:'success',  amount:'520,000đ',   time:'2 giờ trước' },
+  { id:'#DH2045', product:'Bánh 3D Custom – Mèo Shiba', initials:'NK', avatarBg:'#FFF0EC', avatarColor:'#E8634A', status:'Sản xuất',   statusColor:'warning', amount:'2,500,000đ', time:'2 phút trước' },
+  { id:'#DH2044', product:'Bánh sinh nhật 3 tầng',      initials:'TH', avatarBg:'#F0FDF4', avatarColor:'#22C55E', status:'Hoàn thành', statusColor:'success', amount:'1,800,000đ', time:'18 phút trước' },
+  { id:'#DH2043', product:'Bánh cưới kem tươi',         initials:'LM', avatarBg:'#EFF6FF', avatarColor:'#3B82F6', status:'Chờ nhận',   statusColor:'info',    amount:'4,200,000đ', time:'45 phút trước' },
+  { id:'#DH2042', product:'Cupcake set 12 cái',         initials:'PT', avatarBg:'#F5F3FF', avatarColor:'#7C3AED', status:'Sản xuất',   statusColor:'warning', amount:'350,000đ',   time:'1 giờ trước' },
+  { id:'#DH2041', product:'Bánh mousse chanh leo',      initials:'BL', avatarBg:'#FFF0EC', avatarColor:'#E8634A', status:'Hoàn thành', statusColor:'success', amount:'520,000đ',   time:'2 giờ trước' },
 ]
 
 const topProducts = [
-  { name:'Bánh sinh nhật 3D',     emoji:'🎂', qty:'128 cái', revenue:'64M đ',  pct:100 },
+  { name:'Bánh sinh nhật 3D',     emoji:'🎂', qty:'128 cái', revenue:'64M đ',   pct:100 },
   { name:'Cupcake nhiều màu',     emoji:'🧁', qty:'96 cái',  revenue:'28.8M đ', pct:75  },
   { name:'Bánh mousse chanh leo', emoji:'🍰', qty:'72 cái',  revenue:'37.4M đ', pct:56  },
   { name:'Macaron hỗn hợp',      emoji:'🍬', qty:'64 hộp',  revenue:'16M đ',   pct:50  },
@@ -268,22 +268,25 @@ const topProducts = [
 ]
 
 const productionOrders = [
-  { id:'#DH2045', product:'Bánh 3D Mèo Shiba',    customer:'Nguyễn Khoa', deadline:'14:00', progress:60, status:'Đang làm',  color:'warning' },
-  { id:'#DH2042', product:'Cupcake set 12',        customer:'Phạm Thu',    deadline:'15:30', progress:30, status:'Chuẩn bị',  color:'info'    },
-  { id:'#DH2048', product:'Bánh cưới 5 tầng',     customer:'Lê Minh',     deadline:'17:00', progress:90, status:'Hoàn thiện',color:'success' },
-  { id:'#DH2050', product:'Bánh mousse dâu',       customer:'Cao Lan',     deadline:'11:00', progress:100,status:'Xong',       color:'success' },
-  { id:'#DH2047', product:'Macaron hộp 24',        customer:'Bùi Lan',     deadline:'16:00', progress:15, status:'Chờ',       color:'gray'    },
+  { id:'#DH2045', product:'Bánh 3D Mèo Shiba',  customer:'Nguyễn Khoa', deadline:'14:00', progress:60,  status:'Đang làm',   color:'warning' },
+  { id:'#DH2042', product:'Cupcake set 12',      customer:'Phạm Thu',    deadline:'15:30', progress:30,  status:'Chuẩn bị',   color:'info'    },
+  { id:'#DH2048', product:'Bánh cưới 5 tầng',   customer:'Lê Minh',     deadline:'17:00', progress:90,  status:'Hoàn thiện', color:'success' },
+  { id:'#DH2050', product:'Bánh mousse dâu',     customer:'Cao Lan',     deadline:'11:00', progress:100, status:'Xong',       color:'success' },
+  { id:'#DH2047', product:'Macaron hộp 24',      customer:'Bùi Lan',     deadline:'16:00', progress:15,  status:'Chờ',        color:'gray'    },
 ]
 
 let revenueChart = null
-const monthData  = [42000000, 55000000, 48000000, 65000000, 72000000, 68000000, 85000000, 78000000, 92000000, 86000000, 98000000, 105000000]
-const quarterData = [145000000, 201000000, 256000000, 312000000]
-const yearData    = [890000000, 1020000000, 1150000000]
+const monthData    = ref([42,55,48,65,72,68,85,78,92,86,98,105].map(v => v * 1_000_000))
+const quarterData  = ref([145_000_000, 201_000_000, 256_000_000, 312_000_000])
+const yearData     = ref([890_000_000, 1_020_000_000, 1_150_000_000])
+const monthLabels  = ['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12']
+const quarterLabels = ['Q1','Q2','Q3','Q4']
+const yearLabels    = ['2022','2023','2024']
 
 function buildChartData() {
-  if (period.value === 'Tháng') return { labels: ['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'], data: monthData }
-  if (period.value === 'Quý')   return { labels: ['Q1','Q2','Q3','Q4'], data: quarterData }
-  return { labels: ['2022','2023','2024'], data: yearData }
+  if (period.value === 'Tháng') return { labels: monthLabels,   data: monthData.value }
+  if (period.value === 'Quý')   return { labels: quarterLabels, data: quarterData.value }
+  return { labels: yearLabels, data: yearData.value }
 }
 
 function updateChart() {
@@ -294,54 +297,104 @@ function updateChart() {
   revenueChart.update()
 }
 
-onMounted(() => {
-  // Revenue chart
-  const ctx = document.getElementById('revenue-chart')?.getContext('2d')
-  if (ctx) {
-    const { labels, data } = buildChartData()
-    const grad = ctx.createLinearGradient(0, 0, 0, 260)
-    grad.addColorStop(0, 'rgba(232,99,74,0.18)')
-    grad.addColorStop(1, 'rgba(232,99,74,0.0)')
-    revenueChart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [{
-          label: 'Doanh thu',
-          data,
-          borderColor: '#E8634A',
-          backgroundColor: grad,
-          borderWidth: 2.5,
-          fill: true,
-          tension: 0.4,
-          pointRadius: 4,
-          pointBackgroundColor: '#E8634A',
-          pointBorderColor: '#fff',
-          pointBorderWidth: 2,
-        }]
+// ── KPI: tongDoanhThu, tongDon, khachMoi, tangTruongDoanhThu, tangTruongDon ──
+async function loadKPI() {
+  try {
+    const res = await dashboardService.getKPI()
+    const d = res.data
+    stats.value = [
+      {
+        key: 'revenue', icon: '💰', label: 'Doanh thu hôm nay',
+        value: d.tongDoanhThu != null ? Number(d.tongDoanhThu).toLocaleString('vi-VN') + 'đ' : '0đ',
+        trend: d.tangTruongDoanhThu != null ? `${d.tangTruongDoanhThu > 0 ? '+' : ''}${d.tangTruongDoanhThu}%` : '0%',
+        trendUp: (d.tangTruongDoanhThu ?? 0) >= 0, bgColor: '#FFF0EC',
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: '#1E2A3B',
-            titleFont: { family: 'Nunito', weight: '700' },
-            bodyFont: { family: 'Be Vietnam Pro' },
-            padding: 12,
-            cornerRadius: 12,
-            callbacks: {
-              label: context => `${Number(context.parsed.y).toLocaleString('vi-VN')} đ`
-            }
-          }
-        },
-        scales: {
-          x: { grid: { display: false }, ticks: { font: { family: 'Be Vietnam Pro', size: 11 }, color: '#B0A8A3' } },
-          y: { grid: { color: '#F5EFEa', lineWidth: 1 }, ticks: { font: { family: 'Be Vietnam Pro', size: 11 }, color: '#B0A8A3', callback: v => Number(v).toLocaleString('vi-VN') + ' đ' } }
-        }
-      }
-    })
+      {
+        key: 'orders', icon: '📦', label: 'Đơn hàng mới',
+        value: d.tongDon ?? 0,
+        trend: d.tangTruongDon != null ? `${d.tangTruongDon > 0 ? '+' : ''}${d.tangTruongDon}%` : '0%',
+        trendUp: (d.tangTruongDon ?? 0) >= 0, bgColor: '#EFF6FF',
+      },
+      {
+        key: 'prod', icon: '⏳', label: 'Đang sản xuất',
+        value: '--', trend: '--', trendUp: false, bgColor: '#FFFBEB',
+      },
+      {
+        key: 'customers', icon: '👤', label: 'Khách mới',
+        value: d.khachMoi ?? 0, trend: '--', trendUp: true, bgColor: '#F0FDF4',
+      },
+    ]
+  } catch (err) {
+    console.warn('Không load được KPI:', err.message)
   }
+}
+
+// ── Revenue: [{ date: 'YYYY-MM-DD', revenue: number }] ───────────────────────
+async function loadRevenue() {
+  try {
+    const res = await dashboardService.getRevenue()
+    const arr = res.data
+    if (Array.isArray(arr) && arr.length > 0) {
+      const labels = arr.map(item => {
+        const d = new Date(item.date)
+        return `T${d.getMonth() + 1}`
+      })
+      const data = arr.map(item => Number(item.revenue) || 0)
+      monthData.value = data
+      if (revenueChart) {
+        revenueChart.data.labels = labels
+        revenueChart.data.datasets[0].data = data
+        revenueChart.update()
+      }
+    }
+  } catch (err) {
+    console.warn('Không load được doanh thu:', err.message)
+  }
+}
+
+function initChart() {
+  const ctx = document.getElementById('revenue-chart')?.getContext('2d')
+  if (!ctx) return
+  const { labels, data } = buildChartData()
+  const grad = ctx.createLinearGradient(0, 0, 0, 260)
+  grad.addColorStop(0, 'rgba(232,99,74,0.18)')
+  grad.addColorStop(1, 'rgba(232,99,74,0.0)')
+  revenueChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Doanh thu', data,
+        borderColor: '#E8634A', backgroundColor: grad,
+        borderWidth: 2.5, fill: true, tension: 0.4,
+        pointRadius: 4, pointBackgroundColor: '#E8634A',
+        pointBorderColor: '#fff', pointBorderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1E2A3B',
+          titleFont: { family: 'Nunito', weight: '700' },
+          bodyFont: { family: 'Be Vietnam Pro' },
+          padding: 12, cornerRadius: 12,
+          callbacks: { label: context => `${Number(context.parsed.y).toLocaleString('vi-VN')} đ` }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { family: 'Be Vietnam Pro', size: 11 }, color: '#B0A8A3' } },
+        y: { grid: { color: '#F5EFEa', lineWidth: 1 }, ticks: { font: { family: 'Be Vietnam Pro', size: 11 }, color: '#B0A8A3', callback: v => Number(v).toLocaleString('vi-VN') + ' đ' } }
+      }
+    }
+  })
+}
+
+onMounted(async () => {
+  initChart()
+  isLoading.value = true
+  await Promise.all([loadKPI(), loadRevenue()])
+  isLoading.value = false
 })
 </script>

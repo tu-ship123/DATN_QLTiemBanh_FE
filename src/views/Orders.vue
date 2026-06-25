@@ -301,133 +301,270 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Plus, Download, MoreFilled } from '@element-plus/icons-vue'
+import apiClient from '../services/apiService'
 
 const search = ref(''), filterStatus = ref(''), filterDate = ref(null), sortBy = ref('newest')
 const page = ref(1), tableLoading = ref(false)
 const showDetail = ref(false), showAddOrder = ref(false)
 const selectedOrder = ref(null)
 
-// State mới thêm cho Refund và Override
 const showRefund = ref(false)
 const refundData = ref({ amount: '', reason: '' })
 const showOverride = ref(false)
 const overrideData = ref({ status: 'Hoàn thành', pin: '' })
 
-const newOrder = ref({ customer:'', phone:'', product:'', deliveryDate:null, deliveryTime:null, total:'', deposit:'', address:'', note:'', urgent:false })
+const newOrder = ref({
+  customer: '', phone: '', product: '', deliveryDate: null,
+  deliveryTime: null, total: '', deposit: '', address: '', note: '', urgent: false
+})
 
-const productList = ['Bánh sinh nhật 3D','Bánh cưới nhiều tầng','Cupcake set 12','Macaron hộp 24','Bánh mousse','Bánh tiramisu','Bánh crepe','Bánh su kem']
+const productList = ref([])
+const orders = ref([])
 
-const orders = ref([
-  { id:'#DH2045', customer:'Nguyễn Khoa',  initials:'NK', avatarBg:'#FFF0EC', avatarColor:'#E8634A', phone:'0901 234 567', product:'Bánh 3D Custom – Mèo Shiba', variant:'Fondant, 20cm', deliveryDate:'08/06', deliveryTime:'14:00', total:'2,500,000đ', deposit:'1,000,000đ', status:'Đang sản xuất', statusKey:'production', urgent:true,  address:'123 Nguyễn Huệ, Q1', note:'Chữ: Happy Birthday Bé Cam' },
-  { id:'#DH2044', customer:'Trần Hương',   initials:'TH', avatarBg:'#F0FDF4', avatarColor:'#22C55E', phone:'0912 345 678', product:'Bánh sinh nhật 3 tầng',        variant:'Kem tươi, 25cm', deliveryDate:'08/06', deliveryTime:'15:30', total:'1,800,000đ', deposit:'500,000đ',   status:'Hoàn thành',    statusKey:'done',       urgent:false, address:'45 Lê Lợi, Q1', note:'' },
-  { id:'#DH2043', customer:'Lê Minh',      initials:'LM', avatarBg:'#EFF6FF', avatarColor:'#3B82F6', phone:'0923 456 789', product:'Bánh cưới kem tươi',            variant:'5 tầng, fondant', deliveryDate:'09/06', deliveryTime:'10:00', total:'4,200,000đ', deposit:'2,000,000đ', status:'Chờ nhận',      statusKey:'pending',    urgent:false, address:'78 Trần Hưng Đạo, Q5', note:'Màu hồng pastel, hoa cưới' },
-  { id:'#DH2042', customer:'Phạm Thu',     initials:'PT', avatarBg:'#F5F3FF', avatarColor:'#7C3AED', phone:'0934 567 890', product:'Cupcake set 12 cái',            variant:'Kem bơ mix',     deliveryDate:'08/06', deliveryTime:'16:00', total:'350,000đ',   deposit:'150,000đ',   status:'Đang sản xuất', statusKey:'production', urgent:false, address:'22 Nguyễn Trãi, Q5', note:'6 vị socola, 6 vị vani' },
-  { id:'#DH2041', customer:'Bùi Lan',      initials:'BL', avatarBg:'#FFFBEB', avatarColor:'#F59E0B', phone:'0945 678 901', product:'Bánh mousse chanh leo',         variant:'Khuôn tròn 18cm', deliveryDate:'07/06', deliveryTime:'09:00', total:'520,000đ',   deposit:'200,000đ',   status:'Đã giao',       statusKey:'delivered',  urgent:false, address:'30 Nguyễn Du, Q1',   note:'' },
-  { id:'#DH2040', customer:'Cao Tú',       initials:'CT', avatarBg:'#FFF0EC', avatarColor:'#E8634A', phone:'0956 789 012', product:'Macaron hỗn hợp hộp 24',       variant:'12 hương vị',    deliveryDate:'07/06', deliveryTime:'14:00', total:'480,000đ',   deposit:'200,000đ',   status:'Đã giao',       statusKey:'delivered',  urgent:false, address:'55 Cách Mạng Tháng 8, Q3', note:'' },
-  { id:'#DH2039', customer:'Vũ Hà',        initials:'VH', avatarBg:'#F0FDF4', avatarColor:'#22C55E', phone:'0967 890 123', product:'Bánh tiramisu',                 variant:'Khay 30x20cm',   deliveryDate:'10/06', deliveryTime:'11:00', total:'380,000đ',   deposit:'0',          status:'Chờ xác nhận',  statusKey:'new',        urgent:false, address:'18 Hoàng Diệu, Q4',  note:'Thêm cà phê mạnh hơn' },
-  { id:'#DH2038', customer:'Đỗ Hải',       initials:'DH', avatarBg:'#FFF4F1', avatarColor:'#E8634A', phone:'0978 901 234', product:'Bánh crepe 20 lớp',            variant:'Kem trứng, dâu',  deliveryDate:'06/06', deliveryTime:'10:00', total:'290,000đ',   deposit:'0',          status:'Đã huỷ',        statusKey:'cancelled',  urgent:false, address:'', note:'' },
-])
+// ── Map response backend → format hiển thị ───────────────────────────────────
+function mapOrder(o) {
+  const name = o.tenKhachHang || o.nguoiDung?.hoTen || 'Khách'
+  const initials = name.split(' ').map(w => w[0]).join('').slice(-2).toUpperCase()
+  const colors = [
+    { bg: '#FFF0EC', color: '#E8634A' }, { bg: '#F0FDF4', color: '#22C55E' },
+    { bg: '#EFF6FF', color: '#3B82F6' }, { bg: '#F5F3FF', color: '#7C3AED' },
+    { bg: '#FFFBEB', color: '#F59E0B' },
+  ]
+  const c = colors[Math.abs(o.id) % colors.length]
 
+  // Map trạng thái backend → hiển thị
+  const statusMap = {
+    'CHO_XAC_NHAN': 'Chờ xác nhận',
+    'DANG_SAN_XUAT': 'Đang sản xuất',
+    'HOAN_THANH': 'Hoàn thành',
+    'DA_GIAO': 'Đã giao',
+    'DA_HUY': 'Đã huỷ',
+    'CHO_NHAN': 'Chờ nhận',
+  }
+  const statusKeyMap = {
+    'CHO_XAC_NHAN': 'new', 'DANG_SAN_XUAT': 'production',
+    'HOAN_THANH': 'done', 'DA_GIAO': 'delivered',
+    'DA_HUY': 'cancelled', 'CHO_NHAN': 'pending',
+  }
+
+  const deliveryDate = o.ngayNhan ? new Date(o.ngayNhan).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) : '--'
+  const deliveryTime = o.ngayNhan ? new Date(o.ngayNhan).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : ''
+
+  return {
+    id: `#DH${o.id}`,
+    _id: o.id,
+    customer: name,
+    initials,
+    avatarBg: c.bg,
+    avatarColor: c.color,
+    phone: o.soDienThoai || o.nguoiDung?.soDienThoai || '--',
+    product: o.chiTietDonHangs?.[0]?.sanPham?.tenSanPham || o.tenSanPham || 'Sản phẩm',
+    variant: o.chiTietDonHangs?.[0]?.ghiChu || '',
+    deliveryDate,
+    deliveryTime,
+    total: o.tongTien ? Number(o.tongTien).toLocaleString('vi-VN') + 'đ' : '--',
+    deposit: o.datCoc ? Number(o.datCoc).toLocaleString('vi-VN') + 'đ' : '',
+    status: statusMap[o.trangThai] || o.trangThai || '--',
+    statusKey: statusKeyMap[o.trangThai] || 'new',
+    urgent: o.khẩnCấp || o.khanCap || false,
+    address: o.diaChiGiao || '',
+    note: o.ghiChu || '',
+  }
+}
+
+// ── Fetch danh sách đơn hàng ──────────────────────────────────────────────────
+async function fetchOrders() {
+  tableLoading.value = true
+  try {
+    const res = await apiClient.get('/api/v1/admin/orders')
+    const data = res.data
+    // Backend có thể trả array hoặc { content: [], totalElements: n }
+    const list = Array.isArray(data) ? data : (data.content || data.data || [])
+    orders.value = list.map(mapOrder)
+  } catch (err) {
+    ElMessage.error('Không thể tải danh sách đơn hàng')
+    console.error(err)
+  } finally {
+    tableLoading.value = false
+  }
+}
+
+// ── Fetch danh sách sản phẩm cho dropdown tạo đơn ────────────────────────────
+async function fetchProducts() {
+  try {
+    const res = await apiClient.get('/api/v1/products')
+    const list = Array.isArray(res.data) ? res.data : (res.data.content || [])
+    productList.value = list.map(p => p.tenSanPham)
+  } catch (err) {
+    console.error('Không load được sản phẩm:', err)
+  }
+}
+
+onMounted(() => {
+  fetchOrders()
+  fetchProducts()
+})
+
+// ── Stats ─────────────────────────────────────────────────────────────────────
 const orderStats = computed(() => [
-  { icon:'📬', count: orders.value.filter(o=>o.statusKey==='new').length,        label:'Chờ xác nhận' },
-  { icon:'⚙️', count: orders.value.filter(o=>o.statusKey==='production').length,  label:'Đang sản xuất' },
-  { icon:'✅', count: orders.value.filter(o=>o.statusKey==='done').length,        label:'Hoàn thành' },
-  { icon:'🚚', count: orders.value.filter(o=>o.statusKey==='delivered').length,   label:'Đã giao' },
+  { icon: '📬', count: orders.value.filter(o => o.statusKey === 'new').length,        label: 'Chờ xác nhận' },
+  { icon: '⚙️', count: orders.value.filter(o => o.statusKey === 'production').length,  label: 'Đang sản xuất' },
+  { icon: '✅', count: orders.value.filter(o => o.statusKey === 'done').length,        label: 'Hoàn thành' },
+  { icon: '🚚', count: orders.value.filter(o => o.statusKey === 'delivered').length,   label: 'Đã giao' },
 ])
 
+// ── Filter ────────────────────────────────────────────────────────────────────
 const filteredOrders = computed(() => {
   let result = orders.value
   if (search.value) {
     const q = search.value.toLowerCase()
-    result = result.filter(o => o.id.toLowerCase().includes(q) || o.customer.toLowerCase().includes(q) || o.product.toLowerCase().includes(q))
+    result = result.filter(o =>
+      o.id.toLowerCase().includes(q) ||
+      o.customer.toLowerCase().includes(q) ||
+      o.product.toLowerCase().includes(q)
+    )
   }
   if (filterStatus.value) {
-    const map = { pending:'Chờ nhận', production:'Đang sản xuất', done:'Hoàn thành', delivered:'Đã giao', cancelled:'Đã huỷ' }
+    const map = {
+      pending: 'Chờ nhận', production: 'Đang sản xuất',
+      done: 'Hoàn thành', delivered: 'Đã giao', cancelled: 'Đã huỷ'
+    }
     result = result.filter(o => o.status === map[filterStatus.value])
   }
   return result
 })
 
 const statusColor = (s) => {
-  const m = { 'Chờ xác nhận':'info','Chờ nhận':'info','Đang sản xuất':'warning','Hoàn thành':'success','Đã giao':'primary','Đã huỷ':'danger' }
+  const m = {
+    'Chờ xác nhận': 'info', 'Chờ nhận': 'info', 'Đang sản xuất': 'warning',
+    'Hoàn thành': 'success', 'Đã giao': 'primary', 'Đã huỷ': 'danger'
+  }
   return m[s] || 'gray'
 }
 
 const statusStep = (s) => {
-  const m = { 'Chờ xác nhận':0,'Chờ nhận':0,'Đang sản xuất':1,'Hoàn thành':2,'Đã giao':3 }
+  const m = { 'Chờ xác nhận': 0, 'Chờ nhận': 0, 'Đang sản xuất': 1, 'Hoàn thành': 2, 'Đã giao': 3 }
   return m[s] ?? 0
 }
 
 function openDetail(row) { selectedOrder.value = row; showDetail.value = true }
 
-// Hàm xử lý Menu thả xuống (Đã cập nhật logic mới)
+// ── Đổi trạng thái đơn hàng ──────────────────────────────────────────────────
+async function updateOrderStatus(orderId, newStatus) {
+  try {
+    await apiClient.put(`/api/v1/admin/orders/${orderId}/status`, { trangThai: newStatus })
+    await fetchOrders()
+    ElMessage.success('Cập nhật trạng thái thành công!')
+  } catch (err) {
+    ElMessage.error(err.response?.data?.message || 'Cập nhật thất bại')
+  }
+}
+
+// ── Xóa đơn hàng ─────────────────────────────────────────────────────────────
+async function deleteOrder(row) {
+  try {
+    await ElMessageBox.confirm(`Xoá đơn ${row.id}?`, 'Xác nhận', { type: 'warning' })
+    await apiClient.delete(`/api/v1/admin/orders/${row._id}`)
+    await fetchOrders()
+    ElMessage.success('Đã xoá đơn hàng')
+  } catch (err) {
+    if (err !== 'cancel') ElMessage.error(err.response?.data?.message || 'Xoá thất bại')
+  }
+}
+
+// ── Row actions ───────────────────────────────────────────────────────────────
 function handleRowAction(cmd, row) {
-  selectedOrder.value = row;
-  
+  selectedOrder.value = row
   if (cmd === 'view') {
     openDetail(row)
-  } 
-  else if (cmd === 'refund') {
+  } else if (cmd === 'refund') {
     refundData.value.amount = row.deposit || row.total
     refundData.value.reason = ''
     showRefund.value = true
-  } 
-  else if (cmd === 'override') {
+  } else if (cmd === 'override') {
     overrideData.value.status = 'Hoàn thành'
     overrideData.value.pin = ''
     showOverride.value = true
-  } 
-  else if (cmd === 'delete') {
-    ElMessageBox.confirm(`Xoá đơn ${row.id}?`, 'Xác nhận', { type:'warning' })
-      .then(() => { orders.value = orders.value.filter(o => o.id !== row.id); ElMessage.success('Đã xoá đơn hàng') })
-      .catch(() => {})
-  } 
-  else {
+  } else if (cmd === 'delete') {
+    deleteOrder(row)
+  } else if (cmd === 'status') {
+    ElMessage.info('Chọn trạng thái mới trong dialog chi tiết')
+    openDetail(row)
+  } else {
     ElMessage.info('Tính năng đang phát triển')
   }
 }
 
-// Hàm xử lý Hoàn tiền (Mới thêm)
-function processRefund() {
+// ── Hoàn tiền ────────────────────────────────────────────────────────────────
+async function processRefund() {
   if (!refundData.value.amount || !refundData.value.reason) {
     return ElMessage.warning('Vui lòng nhập đủ thông tin hoàn tiền!')
   }
-  
-  selectedOrder.value.status = 'Đã huỷ'
-  selectedOrder.value.statusKey = 'cancelled'
-  selectedOrder.value.note = `[Đã hoàn tiền: ${refundData.value.amount}] Lý do: ${refundData.value.reason}`
-  
-  showRefund.value = false
-  ElMessage.success(`Hoàn tất lệnh trả tiền cho đơn ${selectedOrder.value.id}`)
-}
-
-// Hàm xử lý Ghi đè (Mới thêm)
-function processOverride() {
-  if (overrideData.value.pin !== '1234') { // Mock PIN
-    return ElMessage.error('Mã PIN xác thực không hợp lệ!')
+  try {
+    await apiClient.post(`/api/v1/admin/orders/${selectedOrder.value._id}/refund`, {
+      soTien: refundData.value.amount,
+      lyDo: refundData.value.reason,
+    })
+    showRefund.value = false
+    await fetchOrders()
+    ElMessage.success(`Hoàn tất lệnh trả tiền cho đơn ${selectedOrder.value.id}`)
+  } catch (err) {
+    ElMessage.error(err.response?.data?.message || 'Hoàn tiền thất bại')
   }
-
-  const statusMap = { 'Hoàn thành': 'done', 'Đã giao': 'delivered', 'Đã huỷ': 'cancelled' }
-  const newStatus = overrideData.value.status
-  
-  selectedOrder.value.status = newStatus
-  selectedOrder.value.statusKey = statusMap[newStatus]
-  selectedOrder.value.note = `[SYSTEM OVERRIDE] Trạng thái được ép chuyển thành: ${newStatus}`
-  
-  showOverride.value = false
-  ElMessage.success(`Ghi đè thành công đơn ${selectedOrder.value.id}`)
 }
 
-function saveOrder() {
-  if (!newOrder.value.customer || !newOrder.value.product) return ElMessage.warning('Vui lòng điền đầy đủ thông tin')
-  const id = '#DH' + (2046 + Math.floor(Math.random() * 100))
-  orders.value.unshift({ ...newOrder.value, id, initials: newOrder.value.customer.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(), avatarBg:'#FFF0EC', avatarColor:'#E8634A', statusKey:'new', status:'Chờ xác nhận' })
-  showAddOrder.value = false
-  newOrder.value = { customer:'', phone:'', product:'', deliveryDate:null, deliveryTime:null, total:'', deposit:'', address:'', note:'', urgent:false }
-  ElMessage.success('Tạo đơn hàng thành công! 🎉')
+// ── Override ─────────────────────────────────────────────────────────────────
+async function processOverride() {
+  if (!overrideData.value.pin) return ElMessage.warning('Vui lòng nhập mã PIN!')
+  try {
+    const statusBackendMap = {
+      'Hoàn thành': 'HOAN_THANH',
+      'Đã giao': 'DA_GIAO',
+      'Đã huỷ': 'DA_HUY',
+    }
+    await apiClient.put(`/api/v1/admin/orders/${selectedOrder.value._id}/status`, {
+      trangThai: statusBackendMap[overrideData.value.status],
+      pin: overrideData.value.pin,
+      override: true,
+    })
+    showOverride.value = false
+    await fetchOrders()
+    ElMessage.success(`Ghi đè thành công đơn ${selectedOrder.value.id}`)
+  } catch (err) {
+    ElMessage.error(err.response?.data?.message || 'Mã PIN không hợp lệ hoặc thao tác thất bại')
+  }
+}
+
+// ── Tạo đơn mới ──────────────────────────────────────────────────────────────
+async function saveOrder() {
+  if (!newOrder.value.customer || !newOrder.value.product) {
+    return ElMessage.warning('Vui lòng điền đầy đủ thông tin')
+  }
+  try {
+    await apiClient.post('/api/v1/admin/orders', {
+      tenKhachHang: newOrder.value.customer,
+      soDienThoai: newOrder.value.phone,
+      tenSanPham: newOrder.value.product,
+      ngayNhan: newOrder.value.deliveryDate,
+      tongTien: newOrder.value.total,
+      datCoc: newOrder.value.deposit,
+      diaChiGiao: newOrder.value.address,
+      ghiChu: newOrder.value.note,
+      khanCap: newOrder.value.urgent,
+    })
+    showAddOrder.value = false
+    newOrder.value = {
+      customer: '', phone: '', product: '', deliveryDate: null,
+      deliveryTime: null, total: '', deposit: '', address: '', note: '', urgent: false
+    }
+    await fetchOrders()
+    ElMessage.success('Tạo đơn hàng thành công! 🎉')
+  } catch (err) {
+    ElMessage.error(err.response?.data?.message || 'Tạo đơn thất bại')
+  }
 }
 
 function exportExcel() { ElMessage.info('Đang xuất file...') }

@@ -6,13 +6,14 @@
     width="640px"
     @close="resetForm"
   >
-    <el-form :model="form" label-position="top">
+    <el-form :model="form" label-position="top" v-loading="saving">
       <div class="grid grid-cols-2 gap-4">
+
         <!-- Upload ảnh -->
         <el-form-item label="Ảnh sản phẩm" class="col-span-2">
           <div class="flex items-center gap-4">
             <div class="w-24 h-24 rounded-xl overflow-hidden bg-slate-100 border border-dashed border-gray-300 flex items-center justify-center shrink-0">
-              <img v-if="form.image && !isPlaceholder" :src="form.image" class="w-full h-full object-cover" alt="Xem trước ảnh sản phẩm" />
+              <img v-if="form.anhSanPham && !isPlaceholder" :src="form.anhSanPham" class="w-full h-full object-cover" alt="Xem trước ảnh" />
               <span v-else class="text-gray-300 text-3xl">🎂</span>
             </div>
             <div class="flex flex-col gap-2">
@@ -20,54 +21,78 @@
                 <el-icon><Upload /></el-icon> Tải ảnh lên
                 <input type="file" accept="image/*" class="hidden" @change="handleFileChange" />
               </label>
-              <button
-                v-if="form.image && !isPlaceholder"
-                type="button"
+              <button v-if="form.anhSanPham && !isPlaceholder" type="button"
                 class="text-xs text-red-400 hover:text-red-500 text-left w-fit"
-                @click="removeImage"
-              >
+                @click="form.anhSanPham = defaultImage">
                 Xóa ảnh
               </button>
-              <p class="text-xs text-muted">PNG, JPG tối đa 5MB · ảnh đang lưu tạm trên trình duyệt (mock, chưa nối API upload thật)</p>
+              <p class="text-xs text-muted">PNG, JPG tối đa 5MB</p>
             </div>
           </div>
         </el-form-item>
 
-        <el-form-item label="Tên sản phẩm" required class="col-span-2">
-          <el-input v-model="form.name" placeholder="VD: Bánh sinh nhật 3D Custom" />
+        <!-- Tên sản phẩm -->
+        <el-form-item label="Tên sản phẩm *" class="col-span-2">
+          <el-input v-model="form.tenSanPham" placeholder="VD: Bánh sinh nhật 3D Custom" />
         </el-form-item>
-        <el-form-item label="Danh mục" required>
-          <el-select v-model="form.category" style="width:100%">
-            <el-option v-for="c in categoryOptions" :key="c" :label="c" :value="c" />
+
+        <!-- Danh mục -->
+        <el-form-item label="Danh mục *">
+          <el-select v-model="form.danhMucId" style="width:100%" placeholder="Chọn danh mục">
+            <el-option
+              v-for="cat in categoryStore.categories"
+              :key="cat.id"
+              :label="cat.tenDanhMuc"
+              :value="cat.id"
+            />
           </el-select>
         </el-form-item>
-        <el-form-item label="Giá bán (đ)" required>
-          <el-input v-model="form.price" placeholder="500,000" />
+
+        <!-- Giá bán -->
+        <el-form-item label="Giá bán (đ) *">
+          <el-input v-model.number="form.donGia" type="number" placeholder="500000" :min="0" />
         </el-form-item>
-        <el-form-item label="Giá gốc (đ)">
-          <el-input v-model="form.originalPrice" placeholder="Để trống nếu không có khuyến mãi" />
+
+        <!-- Số lượng tồn -->
+        <el-form-item label="Số lượng tồn">
+          <el-input-number v-model="form.soLuongTon" :min="0" style="width:100%" />
         </el-form-item>
+
+        <!-- Thời gian làm -->
         <el-form-item label="Thời gian làm (giờ)">
-          <el-input-number v-model="form.makeTime" :min="1" :max="72" style="width:100%" />
+          <el-input-number v-model="form.thoiGianLam" :min="1" :max="72" style="width:100%" />
         </el-form-item>
+
+        <!-- Mô tả -->
         <el-form-item label="Mô tả" class="col-span-2">
-          <el-input v-model="form.description" type="textarea" :rows="3" placeholder="Mô tả chi tiết về sản phẩm..." />
+          <el-input v-model="form.moTa" type="textarea" :rows="3" placeholder="Mô tả chi tiết sản phẩm..." />
         </el-form-item>
+
+        <!-- Thành phần -->
         <el-form-item label="Thành phần / Nguyên liệu" class="col-span-2">
-          <el-input v-model="form.ingredients" placeholder="Bột mì, trứng, đường, kem tươi..." />
+          <el-input v-model="form.thanhPhan" placeholder="Bột mì, trứng, đường, kem tươi..." />
         </el-form-item>
+
+        <!-- Trạng thái -->
         <el-form-item class="col-span-2">
           <div class="flex gap-6">
-            <el-checkbox v-model="form.active" label="Đang bán" />
+            <el-checkbox v-model="form.trangThaiActive" label="Đang bán" />
             <el-checkbox v-model="form.isBestseller" label="🔥 Gắn nhãn Bán chạy" />
-            <el-checkbox v-model="form.canCustomize" label="Cho phép tuỳ chỉnh" />
+            <el-checkbox v-model="form.choPhepTuyChinh" label="Cho phép tuỳ chỉnh" />
           </div>
         </el-form-item>
+
       </div>
     </el-form>
+
     <template #footer>
-      <el-button @click="emit('update:visible', false)">Huỷ</el-button>
-      <el-button type="primary" :style="{ background: '#E8634A', borderColor: '#E8634A' }" @click="handleSave">
+      <el-button @click="emit('update:visible', false)" :disabled="saving">Huỷ</el-button>
+      <el-button
+        type="primary"
+        :style="{ background: '#E8634A', borderColor: '#E8634A' }"
+        :loading="saving"
+        @click="handleSave"
+      >
         {{ editingProduct ? 'Cập nhật' : 'Thêm sản phẩm' }}
       </el-button>
     </template>
@@ -78,77 +103,139 @@
 import { ref, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Upload } from '@element-plus/icons-vue'
+import { productService } from '../services/productService'
+import { useCategoryStore } from '../stores/categoryStore'
 
 const props = defineProps({
-  visible: { type: Boolean, default: false },
-  editingProduct: { type: Object, default: null }
+  visible:        { type: Boolean, default: false },
+  editingProduct: { type: Object,  default: null  }
 })
 const emit = defineEmits(['update:visible', 'save'])
 
-const defaultProductImage = '/cake-placeholder.svg'
-const categoryOptions = ['Bánh sinh nhật', 'Bánh cưới', 'Cupcake', 'Mousse', 'Macaron', 'Bánh kem']
+const categoryStore = useCategoryStore()
+const saving = ref(false)
+
+// Fetch categories nếu chưa có
+if (!categoryStore.categories.length) {
+  categoryStore.fetchAdminCategories()
+}
+
+const defaultImage = 'https://placehold.co/400x300?text=Polycake'
 
 const emptyForm = () => ({
-  name: '',
-  category: '',
-  price: '',
-  originalPrice: '',
-  makeTime: 4,
-  description: '',
-  ingredients: '',
-  active: true,
-  isBestseller: false,
-  canCustomize: false,
-  image: defaultProductImage
+  tenSanPham:      '',
+  danhMucId:       null,
+  donGia:          0,
+  soLuongTon:      0,
+  thoiGianLam:     4,
+  moTa:            '',
+  thanhPhan:       '',
+  anhSanPham:      defaultImage,
+  trangThaiActive: true,
+  isBestseller:    false,
+  choPhepTuyChinh: false,
 })
 
 const form = ref(emptyForm())
-const isPlaceholder = computed(() => form.value.image === defaultProductImage)
 
-// Mỗi khi dialog mở, nạp lại data: sửa thì lấy từ editingProduct, thêm mới thì form trống.
-watch(
-  () => props.visible,
-  (val) => {
-    if (val) {
-      form.value = props.editingProduct ? { ...emptyForm(), ...props.editingProduct } : emptyForm()
-    }
-  }
+// isPlaceholder: ảnh đang là ảnh mặc định
+const isPlaceholder = computed(() =>
+  !form.value.anhSanPham || form.value.anhSanPham === defaultImage
 )
 
+// Khi dialog mở: nếu sửa thì map data vào form, nếu thêm thì form trống
+watch(() => props.visible, (val) => {
+  if (val) {
+    if (props.editingProduct) {
+      const p = props.editingProduct
+      form.value = {
+        tenSanPham:      p.tenSanPham      || '',
+        danhMucId:       p.danhMucId       || null,
+        donGia:          p.donGia          || 0,
+        soLuongTon:      p.soLuongTon      || 0,
+        thoiGianLam:     p.thoiGianLam     || 4,
+        moTa:            p.moTa            || '',
+        thanhPhan:       p.thanhPhan       || '',
+        anhSanPham:      p.anhSanPham      || defaultImage,
+        trangThaiActive: p.trangThai !== false,  // DANG_BAN = true, TAM_AN = false
+        isBestseller:    p.isBestseller    || false,
+        choPhepTuyChinh: p.choPhepTuyChinh || false,
+      }
+    } else {
+      form.value = emptyForm()
+    }
+  }
+})
+
+// Upload ảnh — đọc base64 để preview, gán vào form.anhSanPham
 function handleFileChange(e) {
   const file = e.target.files?.[0]
   if (!file) return
-  if (!file.type.startsWith('image/')) {
-    ElMessage.warning('Vui lòng chọn file ảnh')
-    return
-  }
-  if (file.size > 5 * 1024 * 1024) {
-    ElMessage.warning('Ảnh tối đa 5MB')
-    return
-  }
-  // Mock: đọc file thành base64 để preview ngay, chưa upload lên server/storage thật.
-  // Khi đấu API: đổi đoạn này thành gọi service upload, rồi gán URL trả về cho form.image.
+  if (!file.type.startsWith('image/')) { ElMessage.warning('Vui lòng chọn file ảnh'); return }
+  if (file.size > 5 * 1024 * 1024)    { ElMessage.warning('Ảnh tối đa 5MB'); return }
   const reader = new FileReader()
-  reader.onload = () => {
-    form.value.image = reader.result
-  }
+  reader.onload = () => { form.value.anhSanPham = reader.result }
   reader.readAsDataURL(file)
   e.target.value = ''
-}
-
-function removeImage() {
-  form.value.image = defaultProductImage
 }
 
 function resetForm() {
   form.value = emptyForm()
 }
 
-function handleSave() {
-  if (!form.value.name || !form.value.price) {
-    ElMessage.warning('Vui lòng điền tên và giá')
+// Build payload đúng field name backend nhận
+function buildPayload() {
+  return {
+    tenSanPham:      form.value.tenSanPham,
+    danhMucId:       form.value.danhMucId,
+    donGia:          Number(form.value.donGia),
+    soLuongTon:      Number(form.value.soLuongTon),
+    thoiGianLam:     Number(form.value.thoiGianLam),
+    moTa:            form.value.moTa,
+    thanhPhan:       form.value.thanhPhan,
+    anhSanPham:      isPlaceholder.value ? null : form.value.anhSanPham,
+    trangThai:       form.value.trangThaiActive ? 'DANG_BAN' : 'TAM_AN',
+    isBestseller:    form.value.isBestseller,
+    choPhepTuyChinh: form.value.choPhepTuyChinh,
+  }
+}
+
+async function handleSave() {
+  // Validate
+  if (!form.value.tenSanPham?.trim()) {
+    ElMessage.warning('Vui lòng nhập tên sản phẩm')
     return
   }
-  emit('save', { ...form.value })
+  if (!form.value.donGia || form.value.donGia <= 0) {
+    ElMessage.warning('Vui lòng nhập giá bán hợp lệ')
+    return
+  }
+  if (!form.value.danhMucId) {
+    ElMessage.warning('Vui lòng chọn danh mục')
+    return
+  }
+
+  saving.value = true
+  try {
+    const payload = buildPayload()
+
+    if (props.editingProduct) {
+      // CẬP NHẬT
+      await productService.admin.update(props.editingProduct.id, payload)
+      ElMessage.success('Cập nhật sản phẩm thành công!')
+    } else {
+      // THÊM MỚI
+      await productService.admin.create(payload)
+      ElMessage.success('Thêm sản phẩm thành công!')
+    }
+
+    emit('save')
+    emit('update:visible', false)
+  } catch (err) {
+    const msg = err.response?.data?.message || err.response?.data || 'Có lỗi xảy ra, vui lòng thử lại!'
+    ElMessage.error(typeof msg === 'string' ? msg : 'Lỗi khi lưu sản phẩm')
+  } finally {
+    saving.value = false
+  }
 }
 </script>

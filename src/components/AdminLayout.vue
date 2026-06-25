@@ -182,6 +182,7 @@ const mainMenu = [
   { path: '/admin/reviews',   icon: 'ph:star-duotone', label: 'Đánh giá' },
   { path: '/admin/analytics', icon: 'ph:chart-line-up-duotone', label: 'Phân tích' },
   { path: '/admin/messages',  icon: 'ph:chat-teardrop-dots-duotone', label: 'Tin nhắn', badge: 3 },
+  { path: '/admin/categories', icon: 'ph:tag-duotone', label: 'Danh mục' }
 ]
 
 // Đã thêm tiền tố /admin vào toàn bộ đường dẫn

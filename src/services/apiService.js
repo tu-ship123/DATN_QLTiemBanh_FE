@@ -29,8 +29,11 @@ apiClient.interceptors.request.use(
   (config) => {
     const authStore = useAuthStore();
     // Ưu tiên lấy token từ Pinia, dự phòng bằng sessionStorage
-    const token = authStore.accessToken || sessionStorage.getItem('accessToken');
+    let token = authStore.accessToken || sessionStorage.getItem('accessToken');
+    
     if (token) {
+      // [ĐÃ THÊM]: Dọn dẹp dấu ngoặc kép thừa nếu lỡ lưu dạng chuỗi JSON
+      token = token.replace(/['"]/g, ''); 
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
