@@ -201,6 +201,10 @@
             <iconify-icon icon="ph:qr-code-duotone" class="text-3xl text-white"></iconify-icon>
           </div>
           <h3 class="text-xl font-black text-[#3D1A2C]">Quét mã QR để thanh toán</h3>
+          <div class="flex items-center justify-center gap-2">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-white bg-[#EC4899] px-2 py-0.5 rounded-lg">SePay</span>
+            <span class="text-xs text-[#B07090] font-medium">Xác nhận tự động qua hệ thống SePay</span>
+          </div>
           <p class="text-xs text-[#B07090] font-medium px-4">Hệ thống sẽ tự động chuyển trang sau khi nhận được tiền (Thường mất 5-10s)</p>
           
           <div class="bg-[#FFF0F7] p-4 rounded-2xl inline-block shadow-inner border border-[#FDD8EE]">
@@ -237,10 +241,12 @@
 import { ref, computed, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cartStore'
+import { useAuthStore } from '@/stores/authStore'
 import { orderService } from '@/services/orderService'
 
 const router = useRouter()
 const cartStore = useCartStore()
+const authStore = useAuthStore()
 
 const loading = ref(false)
 const showQrModal = ref(false)
@@ -254,12 +260,11 @@ const form = ref({
   tenNguoiNhan: '',
   soDienThoai: '',
   diaChiGiaoHang: '',
-  ngayGiaoHang: '', 
+  ngayGiaoHang: '',
   ghiChu: '',
-  phuongThucThanhToan: 'SEPAY' // Mặc định là SePay
+  phuongThucThanhToan: 'SEPAY'
 })
 
-// Tự động tính toán ngày hôm nay để chặn khách chọn ngày trong quá khứ
 const minDate = computed(() => {
   const today = new Date()
   const yyyy = today.getFullYear()
@@ -269,9 +274,8 @@ const minDate = computed(() => {
 })
 
 const BANK_CONFIG = {
-  bankId: 'MB',            
-  accountNo: '0123456789', 
-  accountName: 'NGUYEN NGOC TU' 
+  bank: 'MBBank',
+  accountNo: '0353292517',
 }
 
 const formatCurrency = (value) => {
@@ -281,19 +285,23 @@ const formatCurrency = (value) => {
 
 // ===== XỬ LÝ LOGIC ĐẶT HÀNG =====
 const handleDatHang = async () => {
+  // Kiểm tra đăng nhập trước (guard phòng trường hợp session hết hạn giữa chừng)
+  if (!authStore.isAuthenticated) {
+    showToast('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 'error')
+    setTimeout(() => router.push({ path: '/login', query: { redirect: '/shop/checkout' } }), 1500)
+    return
+  }
+
   if (!form.value.tenNguoiNhan || !form.value.soDienThoai || !form.value.diaChiGiaoHang || !form.value.ngayGiaoHang) {
     showToast('Vui lòng điền đầy đủ thông tin giao nhận nhé!', 'error')
     return
   }
 
-  // Trích xuất và map lại giỏ hàng cho đúng chuẩn Backend
-  const danhSachSanPham = cartStore.items.map(item => {
-    return {
-      sanPhamId: item.id || item.sanPhamId,
-      soLuong: item.soLuong,
-      donGia: item.gia || (item.thanhTien / item.soLuong)
-    }
-  })
+  const danhSachSanPham = cartStore.items.map(item => ({
+    sanPhamId: item.id || item.sanPhamId,
+    soLuong: item.soLuong,
+    donGia: item.gia || (item.thanhTien / item.soLuong)
+  }))
 
   if (danhSachSanPham.length === 0) {
     showToast('Giỏ hàng của bạn đang trống!', 'error')
@@ -304,30 +312,40 @@ const handleDatHang = async () => {
     diaChiGiaoHang: form.value.diaChiGiaoHang,
     soDienThoai: form.value.soDienThoai,
     ngayGiaoHang: form.value.ngayGiaoHang,
-    ghiChu: `Người nhận: ${form.value.tenNguoiNhan}. ${form.value.ghiChu}`, 
+    ghiChu: `Người nhận: ${form.value.tenNguoiNhan}. ${form.value.ghiChu}`,
     items: danhSachSanPham
   }
 
   loading.value = true
   try {
     const response = await orderService.createOrder(payload)
-    const newOrder = response.data 
+    const newOrder = response.data
 
     if (form.value.phuongThucThanhToan === 'COD') {
       showToast('Đặt hàng thành công! (Thanh toán COD)', 'success')
-      await cartStore.xoaToanBo() 
+      await cartStore.xoaToanBo()
       router.push(`/orders/${newOrder.id}`)
-      
+
     } else if (form.value.phuongThucThanhToan === 'SEPAY') {
       sePayMemo.value = `DH${newOrder.id}`
-      qrImageUrl.value = `https://img.vietqr.io/image/${BANK_CONFIG.bankId}-${BANK_CONFIG.accountNo}-compact2.png?amount=${cartStore.tongThanhToan}&addInfo=${sePayMemo.value}&accountName=${BANK_CONFIG.accountName}`
-      showQrModal.value = true 
+      qrImageUrl.value = `https://qr.sepay.vn/img?acc=${BANK_CONFIG.accountNo}&bank=${BANK_CONFIG.bank}&amount=${cartStore.tongThanhToan}&des=${encodeURIComponent(sePayMemo.value)}`
+      showQrModal.value = true
       batDauTheoDoiDonHang(newOrder.id)
     }
 
   } catch (error) {
     console.error('Lỗi đặt hàng:', error)
-    showToast(error.response?.data || 'Đặt hàng thất bại, vui lòng thử lại.', 'error')
+    const status = error.response?.status
+    // Phân biệt lỗi rõ ràng cho user
+    if (status === 401) {
+      showToast('Phiên đăng nhập đã hết hạn. Đang chuyển về trang đăng nhập...', 'error')
+      setTimeout(() => router.push({ path: '/login', query: { redirect: '/shop/checkout' } }), 1500)
+    } else if (status === 403) {
+      showToast('Tài khoản không có quyền đặt hàng. Vui lòng đăng nhập lại bằng tài khoản khách hàng.', 'error')
+    } else {
+      const msg = error.response?.data?.message || error.response?.data || 'Đặt hàng thất bại, vui lòng thử lại.'
+      showToast(msg, 'error')
+    }
   } finally {
     loading.value = false
   }
@@ -338,29 +356,29 @@ const batDauTheoDoiDonHang = (orderId) => {
   checkOrderInterval = setInterval(async () => {
     try {
       const response = await orderService.getOrderById(orderId)
-      const orderStatus = response.data.trangThai 
+      const orderStatus = response.data.trangThai
 
-      if (orderStatus === 'PAID' || orderStatus === 'DA_THANH_TOAN' || orderStatus === 'CHO_XU_LY') {
+      // SePay webhook sẽ cập nhật đơn sang DA_XAC_NHAN khi nhận tiền thành công
+      if (orderStatus === 'DA_XAC_NHAN') {
         clearInterval(checkOrderInterval)
         showQrModal.value = false
-        showToast('Hệ thống SePay đã nhận được tiền! Cảm ơn bạn.', 'success')
-        await cartStore.xoaToanBo() 
+        showToast('🎉 Thanh toán thành công! SePay đã xác nhận. Cảm ơn bạn!', 'success')
+        await cartStore.xoaToanBo()
         router.push(`/orders/${orderId}`)
       }
     } catch (err) {
-      console.warn('Đang quét kiểm tra hóa đơn...', err)
+      console.warn('Đang chờ xác nhận thanh toán...', err)
     }
-  }, 3000) 
+  }, 3000)
 }
 
 const huyTheoDoiQr = () => {
   if (checkOrderInterval) clearInterval(checkOrderInterval)
   showQrModal.value = false
   showToast('Đã đóng biểu mẫu QR. Bạn có thể thanh toán sau trong chi tiết đơn.', 'info')
-  router.push('/shop/orders') 
+  router.push('/shop/orders')
 }
 
-// Clear interval khi rời trang
 onBeforeUnmount(() => {
   if (checkOrderInterval) clearInterval(checkOrderInterval)
 })
@@ -371,7 +389,7 @@ let toastTimer = null
 const showToast = (msg, type = 'info') => {
   if (toastTimer) clearTimeout(toastTimer)
   toast.value = { show: true, msg, type }
-  toastTimer = setTimeout(() => { toast.value.show = false }, 3000)
+  toastTimer = setTimeout(() => { toast.value.show = false }, 3500)
 }
 </script>
 

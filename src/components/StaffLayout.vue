@@ -62,7 +62,7 @@
             <template #dropdown>
               <el-dropdown-menu class="w-48 rounded-xl font-sans">
                 <el-dropdown-item><iconify-icon icon="ph:user-circle" class="mr-2 text-lg"></iconify-icon>Hồ sơ cá nhân</el-dropdown-item>
-                <el-dropdown-item divided @click="$router.push('/login')" class="text-red-500 font-semibold hover:bg-red-50">
+                <el-dropdown-item divided @click="handleLogout" class="text-red-500 font-semibold hover:bg-red-50">
                   <iconify-icon icon="ph:sign-out" class="mr-2 text-lg"></iconify-icon>Đăng xuất
                 </el-dropdown-item>
               </el-dropdown-menu>
@@ -122,9 +122,16 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter, RouterLink, RouterView } from 'vue-router'
 import { MoreFilled } from '@element-plus/icons-vue'
+import { useAuthStore } from '@/stores/authStore'
 
-const route  = useRoute()
-const router = useRouter()
+const route     = useRoute()
+const router    = useRouter()
+const authStore = useAuthStore()
+
+const handleLogout = async () => {
+  await authStore.logout()
+  router.push('/login')
+}
 
 const sidebarOpen = ref(true)
 const isMobile    = ref(false)

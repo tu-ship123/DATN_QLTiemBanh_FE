@@ -6,11 +6,9 @@
         <p class="text-sm text-muted mt-0.5">Theo dõi và xử lý {{ orders.length }} đơn hàng</p>
       </div>
       <div class="flex gap-2">
-        <button class="btn-secondary" @click="exportExcel">
-          <el-icon><Download /></el-icon> Xuất Excel
-        </button>
-        <button class="btn-primary" @click="showAddOrder = true">
-          <el-icon><Plus /></el-icon> Đơn mới
+        <button class="btn-secondary" @click="exportExcel" :disabled="exporting">
+          <el-icon :class="exporting ? 'animate-spin' : ''"><Download /></el-icon>
+          {{ exporting ? 'Đang xuất...' : 'Xuất Excel' }}
         </button>
       </div>
     </div>
@@ -107,7 +105,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="ƯU TIÊN" width="90" align="center">
+        <el-table-column label="ƯU TIÊN" width="90" align="center" v-if="false">
           <template #default="{ row }">
             <el-tag v-if="row.urgent" type="danger" size="small" round>Khẩn</el-tag>
             <span v-else class="text-xs text-muted">Thường</span>
@@ -126,12 +124,10 @@
                   <el-dropdown-item command="edit">✏️ Chỉnh sửa</el-dropdown-item>
                   <el-dropdown-item command="status">🔄 Đổi trạng thái</el-dropdown-item>
                   <el-dropdown-item command="print">🖨️ In đơn</el-dropdown-item>
-                  
                   <el-dropdown-item command="override" divided>⚡ Ghi đè (Override)</el-dropdown-item>
                   <el-dropdown-item command="refund">💸 Hoàn tiền (Refund)</el-dropdown-item>
-
                   <el-dropdown-item command="delete" divided>
-                    <span style="color:#EF4444">🗑 Xoá đơn</span>
+                    <span style="color:#EF4444">🗑 Huỷ đơn + hoàn kho</span>
                   </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
@@ -191,15 +187,7 @@
         </div>
       </div>
       <template #footer>
-        <div class="flex justify-between">
-          <el-button @click="showDetail = false">Đóng</el-button>
-          <div class="flex gap-2">
-            <el-button type="warning" plain>🖨️ In đơn</el-button>
-            <el-button type="primary" :style="{ background: '#E8634A', borderColor: '#E8634A' }">
-              ✏️ Chỉnh sửa
-            </el-button>
-          </div>
-        </div>
+        <el-button @click="showDetail = false">Đóng</el-button>
       </template>
     </el-dialog>
 
@@ -297,6 +285,160 @@
       </template>
     </el-dialog>
 
+    <!-- ── DIALOG: CHỈNH SỬA ĐƠN ──────────────────────────────────────────── -->
+    <el-dialog v-model="showEdit" title="✏️ Chỉnh sửa đơn hàng" width="500px">
+      <div v-if="selectedOrder" class="mb-4 text-sm text-slate-500 bg-slate-50 px-3 py-2 rounded-lg">
+        Đơn <strong class="text-[#E8634A]">{{ selectedOrder.id }}</strong> — {{ selectedOrder.customer }}
+      </div>
+      <el-form :model="editData" label-position="top">
+        <el-form-item label="Địa chỉ giao hàng">
+          <el-input v-model="editData.diaChiGiaoHang" placeholder="Số nhà, đường, phường, quận..." />
+        </el-form-item>
+        <el-form-item label="Số điện thoại">
+          <el-input v-model="editData.soDienThoai" placeholder="0901 234 567" />
+        </el-form-item>
+        <el-form-item label="Ngày giao hàng">
+          <el-date-picker v-model="editData.ngayGiaoHang" type="date" placeholder="Chọn ngày" style="width:100%" />
+        </el-form-item>
+        <el-form-item label="Ghi chú">
+          <el-input v-model="editData.ghiChu" type="textarea" :rows="3"
+            placeholder="Yêu cầu đặc biệt, màu sắc, chữ trên bánh..." />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showEdit = false">Hủy</el-button>
+        <el-button type="primary" :style="{ background:'#E8634A', borderColor:'#E8634A' }"
+          :loading="saving" @click="saveEdit">
+          Lưu thay đổi
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- ── DIALOG: ĐỔI TRẠNG THÁI ──────────────────────────────────────────── -->
+    <el-dialog v-model="showStatus" title="🔄 Đổi trạng thái đơn hàng" width="420px">
+      <div v-if="selectedOrder" class="mb-4 text-sm">
+        <div class="bg-slate-50 px-3 py-2 rounded-lg mb-3">
+          Đơn <strong class="text-[#E8634A]">{{ selectedOrder.id }}</strong> — hiện tại:
+          <span class="badge ml-1" :class="`badge-${statusColor(selectedOrder.status)}`">
+            {{ selectedOrder.status }}
+          </span>
+        </div>
+        <div class="text-xs text-slate-400 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+          💡 Chỉ được chuyển sang bước kế tiếp trong quy trình. Muốn bỏ qua bước hãy dùng <strong>Ghi đè</strong>.
+        </div>
+      </div>
+      <el-form label-position="top">
+        <el-form-item label="Chuyển sang trạng thái" required>
+          <el-select v-model="statusData.trangThaiMoi" style="width:100%">
+            <el-option label="✅ Đã xác nhận"   value="DA_XAC_NHAN" />
+            <el-option label="🔧 Đang làm"      value="DANG_LAM" />
+            <el-option label="📦 Sẵn sàng"      value="SAN_SANG" />
+            <el-option label="🚴 Đang giao"     value="DANG_GIAO" />
+            <el-option label="✅ Hoàn thành"    value="HOAN_THANH" />
+            <el-option label="❌ Huỷ đơn"       value="DA_HUY" />
+          </el-select>
+        </el-form-item>
+        <el-form-item v-if="statusData.trangThaiMoi === 'DA_HUY'" label="Lý do huỷ" required>
+          <el-input v-model="statusData.lyDoHuy" type="textarea" :rows="2" placeholder="Nhập lý do..." />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showStatus = false">Hủy</el-button>
+        <el-button type="primary" :style="{ background:'#E8634A', borderColor:'#E8634A' }"
+          :loading="saving" @click="saveStatus">
+          Xác nhận chuyển
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- ── DIALOG: IN ĐƠN ──────────────────────────────────────────────────── -->
+    <el-dialog v-model="showPrint" title="🖨️ Phiếu đơn hàng" width="560px">
+      <div v-if="printLoading" class="flex justify-center py-10">
+        <div class="w-8 h-8 border-4 border-[#E8634A] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+      <div v-else-if="printData" id="print-area" class="text-sm text-slate-700 font-sans">
+        <!-- Header phiếu -->
+        <div class="text-center mb-5">
+          <div class="text-lg font-black text-[#E8634A]">🎂 TIỆM BÁNH</div>
+          <div class="text-xs text-slate-400 mt-0.5">Phiếu đơn hàng</div>
+          <div class="text-xl font-black text-[#1E2A3B] mt-1">{{ printData.maDonHang }}</div>
+          <div class="text-xs text-slate-400">Ngày tạo: {{ formatDateTime(printData.ngayTao) }}</div>
+        </div>
+
+        <hr class="border-dashed border-slate-300 mb-4" />
+
+        <!-- Thông tin khách -->
+        <div class="mb-4">
+          <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Thông tin khách hàng</div>
+          <div class="grid grid-cols-2 gap-1 text-sm">
+            <span class="text-slate-500">Họ tên:</span>       <span class="font-medium">{{ printData.tenKhachHang }}</span>
+            <span class="text-slate-500">Email:</span>        <span>{{ printData.emailKhachHang }}</span>
+            <span class="text-slate-500">Điện thoại:</span>   <span>{{ printData.sdtKhachHang || '—' }}</span>
+            <span class="text-slate-500">Địa chỉ giao:</span> <span>{{ printData.diaChiGiaoHang || '—' }}</span>
+            <span class="text-slate-500">Ngày giao:</span>    <span class="font-medium text-[#E8634A]">{{ printData.ngayGiaoHang || '—' }}</span>
+          </div>
+        </div>
+
+        <!-- Sản phẩm -->
+        <div class="mb-4">
+          <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Sản phẩm</div>
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-slate-200 text-xs text-slate-400">
+                <th class="text-left pb-1">Tên sản phẩm</th>
+                <th class="text-center pb-1">SL</th>
+                <th class="text-right pb-1">Đơn giá</th>
+                <th class="text-right pb-1">Thành tiền</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in printData.items" :key="item.tenSanPham"
+                class="border-b border-slate-100">
+                <td class="py-1.5 font-medium text-[#1E2A3B]">{{ item.tenSanPham }}</td>
+                <td class="py-1.5 text-center">{{ item.soLuong }}</td>
+                <td class="py-1.5 text-right">{{ formatVND(item.donGia) }}</td>
+                <td class="py-1.5 text-right font-semibold">{{ formatVND(item.thanhTien) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Tổng tiền -->
+        <div class="bg-slate-50 rounded-xl p-3 space-y-1 text-sm">
+          <div class="flex justify-between">
+            <span class="text-slate-500">Tổng tiền hàng</span>
+            <span class="font-semibold">{{ formatVND(printData.tongTien) }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">Đã cọc</span>
+            <span class="text-green-600">- {{ formatVND(printData.soTienCoc) }}</span>
+          </div>
+          <div class="flex justify-between pt-1 border-t border-slate-200">
+            <span class="font-bold text-[#1E2A3B]">Còn lại</span>
+            <span class="font-black text-[#E8634A] text-base">{{ formatVND(printData.conLai) }}</span>
+          </div>
+        </div>
+
+        <!-- Ghi chú -->
+        <div v-if="printData.ghiChu" class="mt-3 bg-amber-50 border border-amber-200 rounded-xl p-3">
+          <div class="text-xs font-bold text-amber-700 mb-1">📝 Ghi chú</div>
+          <div class="text-amber-800 whitespace-pre-line">{{ printData.ghiChu }}</div>
+        </div>
+
+        <!-- NV phụ trách -->
+        <div v-if="printData.tenNhanVien" class="mt-3 text-xs text-slate-400 text-right">
+          NV phụ trách: {{ printData.tenNhanVien }}
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="showPrint = false">Đóng</el-button>
+        <el-button type="primary" :style="{ background:'#E8634A', borderColor:'#E8634A' }"
+          @click="triggerBrowserPrint">
+          🖨️ In ngay
+        </el-button>
+      </template>
+    </el-dialog>
+
   </div>
 </template>
 
@@ -306,15 +448,22 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Plus, Download, MoreFilled } from '@element-plus/icons-vue'
 import apiClient from '../services/apiService'
 
-const search = ref(''), filterStatus = ref(''), filterDate = ref(null), sortBy = ref('newest')
-const page = ref(1), tableLoading = ref(false)
-const showDetail = ref(false), showAddOrder = ref(false)
+// ── STATE ──────────────────────────────────────────────────────────────────────
+const search = ref('')
+const filterStatus = ref('')
+const filterDate = ref(null)
+const sortBy = ref('newest')
+const page = ref(1)
+const tableLoading = ref(false)
+const exporting = ref(false)
+const showDetail = ref(false)
+const showAddOrder = ref(false)
 const selectedOrder = ref(null)
 
 const showRefund = ref(false)
-const refundData = ref({ amount: '', reason: '' })
+const refundData = ref({ reason: '' })
 const showOverride = ref(false)
-const overrideData = ref({ status: 'Hoàn thành', pin: '' })
+const overrideData = ref({ trangThaiMoi: 'HOAN_THANH', lyDo: '' })
 
 const newOrder = ref({
   customer: '', phone: '', product: '', deliveryDate: null,
@@ -450,7 +599,11 @@ const statusStep = (s) => {
   return m[s] ?? 0
 }
 
-function openDetail(row) { selectedOrder.value = row; showDetail.value = true }
+// ── ACTIONS ────────────────────────────────────────────────────────────────────
+function openDetail(row) {
+  selectedOrder.value = row
+  showDetail.value = true
+}
 
 // ── Đổi trạng thái đơn hàng ──────────────────────────────────────────────────
 async function updateOrderStatus(orderId, newStatus) {
@@ -567,5 +720,142 @@ async function saveOrder() {
   }
 }
 
-function exportExcel() { ElMessage.info('Đang xuất file...') }
+// ── CHỈNH SỬA ĐƠN ─────────────────────────────────────────────────────────────
+async function saveEdit() {
+  saving.value = true
+  try {
+    // Chỉ gửi các trường đã thực sự có giá trị
+    const payload = {}
+    if (editData.value.diaChiGiaoHang.trim()) payload.diaChiGiaoHang = editData.value.diaChiGiaoHang.trim()
+    if (editData.value.soDienThoai.trim())    payload.soDienThoai    = editData.value.soDienThoai.trim()
+    if (editData.value.ghiChu.trim())         payload.ghiChu         = editData.value.ghiChu.trim()
+    if (editData.value.ngayGiaoHang)          payload.ngayGiaoHang   = editData.value.ngayGiaoHang
+
+    const res = await orderService.updateOrderInfo(selectedOrder.value._id, payload)
+    const updated = mapOrder(res.data)
+    const idx = orders.value.findIndex(o => o._id === selectedOrder.value._id)
+    if (idx !== -1) orders.value[idx] = updated
+    if (showDetail.value) selectedOrder.value = updated
+
+    showEdit.value = false
+    ElMessage.success(`Đã cập nhật đơn ${selectedOrder.value.id}!`)
+  } catch (err) {
+    ElMessage.error(err.response?.data || 'Cập nhật thất bại!')
+  } finally {
+    saving.value = false
+  }
+}
+
+// ── ĐỔI TRẠNG THÁI ─────────────────────────────────────────────────────────────
+async function saveStatus() {
+  if (!statusData.value.trangThaiMoi) return ElMessage.warning('Vui lòng chọn trạng thái!')
+  if (statusData.value.trangThaiMoi === 'DA_HUY' && !statusData.value.lyDoHuy)
+    return ElMessage.warning('Vui lòng nhập lý do huỷ!')
+
+  saving.value = true
+  try {
+    const res = await orderService.changeOrderStatus(
+      selectedOrder.value._id,
+      statusData.value.trangThaiMoi,
+      statusData.value.lyDoHuy || undefined
+    )
+    const updated = mapOrder(res.data)
+    const idx = orders.value.findIndex(o => o._id === selectedOrder.value._id)
+    if (idx !== -1) orders.value[idx] = updated
+    if (showDetail.value) selectedOrder.value = updated
+
+    showStatus.value = false
+    ElMessage.success(`Đã chuyển trạng thái đơn ${selectedOrder.value.id}!`)
+  } catch (err) {
+    ElMessage.error(err.response?.data || 'Đổi trạng thái thất bại!')
+  } finally {
+    saving.value = false
+  }
+}
+
+// ── IN ĐƠN ─────────────────────────────────────────────────────────────────────
+async function openPrint(row) {
+  showPrint.value = true
+  printLoading.value = true
+  printData.value = null
+  try {
+    const res = await orderService.getPrintData(row._id)
+    printData.value = res.data
+  } catch (err) {
+    ElMessage.error('Không thể tải dữ liệu in đơn!')
+    showPrint.value = false
+  } finally {
+    printLoading.value = false
+  }
+}
+
+function triggerBrowserPrint() {
+  // Ẩn mọi thứ, chỉ in phần #print-area
+  const style = document.createElement('style')
+  style.id = '__print_style__'
+  style.innerHTML = `@media print { body * { visibility: hidden !important; }
+    #print-area, #print-area * { visibility: visible !important; }
+    #print-area { position: fixed; top: 0; left: 0; width: 100%; } }`
+  document.head.appendChild(style)
+  window.print()
+  setTimeout(() => document.getElementById('__print_style__')?.remove(), 1000)
+}
+
+// ── HELPERS HIỂN THỊ ───────────────────────────────────────────────────────────
+function formatVND(n) {
+  return n != null ? n.toLocaleString('vi-VN') + 'đ' : '—'
+}
+
+function formatDateTime(dt) {
+  if (!dt) return '—'
+  return new Date(dt).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })
+}
+
+// ── XUẤT EXCEL ────────────────────────────────────────────────────────────────
+async function exportExcel() {
+  if (exporting.value) return
+  exporting.value = true
+  try {
+    // Lấy toàn bộ đơn hàng (không lọc) để xuất đầy đủ
+    const res = await orderService.filterOrders({})
+    const data = res.data || []
+
+    // Map sang hàng Excel dễ đọc
+    const rows = data.map((dto) => ({
+      'Mã đơn':         `HD-${dto.id}`,
+      'Email khách':    dto.emailNguoiDung || '',
+      'Số điện thoại':  dto.soDienThoai || '',
+      'Địa chỉ':        dto.diaChiGiaoHang || '',
+      'Trạng thái':     STATUS_LABEL[dto.trangThai] || dto.trangThai,
+      'Nguồn đơn':      dto.nguonDon || '',
+      'Sản phẩm':       dto.items?.map(i => `${i.tenSanPham} x${i.soLuong}`).join('; ') || '',
+      'Tổng tiền (đ)':  dto.tongTien ?? 0,
+      'Ngày tạo':       dto.ngayTao ? new Date(dto.ngayTao).toLocaleString('vi-VN') : '',
+      'Ngày giao':      dto.ngayGiaoHang ? new Date(dto.ngayGiaoHang).toLocaleString('vi-VN') : '',
+      'Ghi chú':        dto.ghiChu || '',
+    }))
+
+    const ws = XLSX.utils.json_to_sheet(rows)
+
+    // Tự động căn độ rộng cột
+    const colWidths = Object.keys(rows[0] || {}).map((key) => ({
+      wch: Math.max(key.length, ...rows.map(r => String(r[key] ?? '').length)) + 2
+    }))
+    ws['!cols'] = colWidths
+
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Đơn hàng')
+
+    // Tên file có timestamp
+    const ts = new Date().toLocaleDateString('vi-VN').replace(/\//g, '-')
+    XLSX.writeFile(wb, `don-hang-${ts}.xlsx`)
+
+    ElMessage.success(`Đã xuất ${rows.length} đơn hàng ra file Excel!`)
+  } catch (err) {
+    console.error('Lỗi xuất Excel:', err)
+    ElMessage.error('Xuất Excel thất bại!')
+  } finally {
+    exporting.value = false
+  }
+}
 </script>

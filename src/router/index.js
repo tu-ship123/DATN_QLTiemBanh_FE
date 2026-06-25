@@ -55,19 +55,19 @@ const routes = [
         path: 'checkout',
         name: 'Checkout',
         component: () => import('@/views/Checkout.vue'),
-        meta: { title: 'Thanh toán', breadcrumb: ['Cửa hàng', 'Thanh toán'] }
+        meta: { title: 'Thanh toán', breadcrumb: ['Cửa hàng', 'Thanh toán'], requiresAuth: true, roles: ['ROLE_KHACH_HANG'] }
       },
       {
         path: 'orders',
         name: 'MyOrders',
         component: () => import('@/views/MyOrders.vue'),
-        meta: { title: 'Đơn hàng của tôi', breadcrumb: ['Cửa hàng', 'Đơn hàng của tôi'] }
+        meta: { title: 'Đơn hàng của tôi', breadcrumb: ['Cửa hàng', 'Đơn hàng của tôi'], requiresAuth: true, roles: ['ROLE_KHACH_HANG'] }
       },
       {
         path: '/orders/:id',
         name: 'OrderDetail',
         component: () => import('@/views/OrderDetail.vue'),
-        meta: { title: 'Chi tiết đơn hàng', breadcrumb: ['Cửa hàng', 'Chi tiết đơn hàng'] }
+        meta: { title: 'Chi tiết đơn hàng', breadcrumb: ['Cửa hàng', 'Chi tiết đơn hàng'], requiresAuth: true }
       }
     ]
   },
@@ -79,7 +79,7 @@ const routes = [
     path: '/admin',
     component: () => import('@/components/AdminLayout.vue'),
     redirect: '/admin/dashboard',
-    meta: { requiresAuth: true, adminOnly: true },
+    meta: { requiresAuth: true, roles: ['ROLE_ADMIN'] },
     children: [
       { path: 'dashboard',   name: 'Dashboard',   component: () => import('@/views/Dashboard.vue'),       meta: { title: 'Tổng quan',               breadcrumb: ['Trang chủ', 'Tổng quan'] } },
       { path: 'orders',      name: 'Orders',      component: () => import('@/views/Orders.vue'),          meta: { title: 'Quản lý đơn hàng',        breadcrumb: ['Trang chủ', 'Đơn hàng'] } },
@@ -101,7 +101,7 @@ const routes = [
     path: '/staff-area',
     component: () => import('@/components/StaffLayout.vue'),
     redirect: '/staff-area/checkin',
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, roles: ['ROLE_NHAN_VIEN', 'ROLE_ADMIN'] },
     children: [
       { path: 'checkin',  name: 'StaffCheckin',  component: () => import('@/views/Checkin.vue'),       meta: { title: 'Chấm công',              breadcrumb: ['Nhân viên', 'Chấm công'] } },
       { path: 'pos',      name: 'StaffPOS',      component: () => import('@/views/POS.vue'),            meta: { title: 'Bán hàng tại quầy',      breadcrumb: ['Nhân viên', 'Bán hàng'] } },
