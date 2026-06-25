@@ -121,7 +121,7 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
 
-  // Route công khai → cho qua
+
   if (to.meta.public) {
     return next();
   }
