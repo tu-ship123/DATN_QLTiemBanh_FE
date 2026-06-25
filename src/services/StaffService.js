@@ -1,64 +1,124 @@
 import apiClient from './apiService';
 
-const BASE = '/api/v1/admin/staff';
+const STAFF_BASE     = '/api/v1/admin/staff';
+const SCHEDULE_BASE  = '/api/v1/admin/schedules';
+const CA_BASE        = '/api/v1/admin/ca-lam-viec';
+const MY_SCHED_BASE  = '/api/v1/staff/my-schedules';
 
 export const staffService = {
-  /**
-   * Lấy danh sách nhân viên (có thể truyền page/size để phân trang)
-   * GET /api/v1/admin/staff
-   */
+
+  // ── Quản lý nhân viên ──────────────────────────────────────────────────────
+
   getAll(params = {}) {
-    return apiClient.get(BASE, { params });
+    return apiClient.get(STAFF_BASE, { params });
   },
 
-  /**
-   * Xem chi tiết 1 nhân viên
-   * GET /api/v1/admin/staff/{id}
-   */
   getById(id) {
-    return apiClient.get(`${BASE}/${id}`);
+    return apiClient.get(`${STAFF_BASE}/${id}`);
   },
 
-  /**
-   * Tạo nhân viên mới — BE tự tạo mật khẩu ngẫu nhiên và gửi email First Login
-   * POST /api/v1/admin/staff
-   * @param {{ hoTen: string, email: string, soDienThoai: string, [key: string]: any }} data
-   */
   create(data) {
-    return apiClient.post(BASE, data);
+    return apiClient.post(STAFF_BASE, data);
   },
 
-  /**
-   * Cập nhật thông tin nhân viên
-   * PUT /api/v1/admin/staff/{id}
-   */
   update(id, data) {
-    return apiClient.put(`${BASE}/${id}`, data);
+    return apiClient.put(`${STAFF_BASE}/${id}`, data);
   },
 
-  /**
-   * Vô hiệu hoá (khoá) nhân viên
-   * DELETE /api/v1/admin/staff/{id}
-   */
   deactivate(id) {
-    return apiClient.delete(`${BASE}/${id}`);
+    return apiClient.delete(`${STAFF_BASE}/${id}`);
+  },
+
+  // ── Quản lý Ca Làm Việc (Admin CRUD) ──────────────────────────────────────
+
+  /**
+   * Lấy danh sách tất cả ca làm việc.
+   * GET /api/v1/admin/ca-lam-viec
+   * @returns {Promise} Array of CaLamViecResponse
+   */
+  getAllCaLamViec() {
+    return apiClient.get(CA_BASE);
   },
 
   /**
-   * Tạo phân ca làm việc
+   * Tạo ca làm việc mới.
+   * POST /api/v1/admin/ca-lam-viec
+   * @param {{ tenCa: string, gioBatDau: string, gioKetThuc: string }} data
+   */
+  createCaLamViec(data) {
+    return apiClient.post(CA_BASE, data);
+  },
+
+  /**
+   * Cập nhật ca làm việc.
+   * PUT /api/v1/admin/ca-lam-viec/{id}
+   */
+  updateCaLamViec(id, data) {
+    return apiClient.put(`${CA_BASE}/${id}`, data);
+  },
+
+  /**
+   * Vô hiệu hoá ca làm việc.
+   * DELETE /api/v1/admin/ca-lam-viec/{id}
+   */
+  deleteCaLamViec(id) {
+    return apiClient.delete(`${CA_BASE}/${id}`);
+  },
+
+  // ── Phân Ca (Admin) ────────────────────────────────────────────────────────
+
+  /**
+   * Tạo phân ca cho nhân viên.
    * POST /api/v1/admin/schedules
-   * @param {{ ngayLamViec: string, caId: number, danhSachNhanVienId: number[] }} data
+   * @param {{ nhanVienId: number, caLamViecId: number, ngayLamViec: string, ghiChu?: string }} data
    */
   createSchedule(data) {
-    return apiClient.post('/api/v1/admin/schedules', data);
+    return apiClient.post(SCHEDULE_BASE, data);
   },
 
   /**
-   * Xem bảng chấm công
+   * Lấy lịch phân ca theo ngày (admin quản lý).
+   * GET /api/v1/admin/schedules?date=2025-06-25
+   * @param {string|null} date - định dạng YYYY-MM-DD, null = hôm nay
+   */
+  getSchedulesByDate(date = null) {
+    const params = date ? { date } : {};
+    return apiClient.get(SCHEDULE_BASE, { params });
+  },
+
+  /**
+   * Huỷ phân ca.
+   * DELETE /api/v1/admin/schedules/{id}
+   */
+  cancelSchedule(id) {
+    return apiClient.delete(`${SCHEDULE_BASE}/${id}`);
+  },
+
+  /**
+   * Lấy bảng chấm công tổng hợp (admin).
    * GET /api/v1/admin/attendances
-   * @param {{ thang: number, nam: number, nhanVienId?: number }} params
    */
   getAttendances(params = {}) {
     return apiClient.get('/api/v1/admin/attendances', { params });
+  },
+
+  // ── Lịch ca của nhân viên (Staff view) ───────────────────────────────────
+
+  /**
+   * Nhân viên xem ca hôm nay của mình.
+   * GET /api/v1/staff/my-schedules?date=2025-06-25
+   * @param {string|null} date - YYYY-MM-DD, null = hôm nay
+   */
+  getMySchedules(date = null) {
+    const params = date ? { date } : {};
+    return apiClient.get(MY_SCHED_BASE, { params });
+  },
+
+  /**
+   * Nhân viên xem lịch ca cả tuần.
+   * GET /api/v1/staff/my-schedules/week?tuNgay=...&denNgay=...
+   */
+  getMySchedulesInRange(tuNgay, denNgay) {
+    return apiClient.get(`${MY_SCHED_BASE}/week`, { params: { tuNgay, denNgay } });
   },
 };

@@ -148,6 +148,7 @@
       </div>
     </div>
 
+    <!-- ── DIALOG: CHI TIẾT ────────────────────────────────────────────────────── -->
     <el-dialog v-model="showDetail" :title="`Chi tiết đơn hàng ${selectedOrder?.id}`" width="660px">
       <div v-if="selectedOrder">
         <el-steps :active="statusStep(selectedOrder.status)" align-center class="mb-6">
@@ -191,6 +192,7 @@
       </template>
     </el-dialog>
 
+    <!-- ── DIALOG: TẠO ĐƠN MỚI ────────────────────────────────────────────────── -->
     <el-dialog v-model="showAddOrder" title="Tạo đơn hàng mới" width="600px">
       <el-form :model="newOrder" label-position="top">
         <div class="grid grid-cols-2 gap-4">
@@ -240,6 +242,7 @@
       </template>
     </el-dialog>
 
+    <!-- ── DIALOG: HOÀN TIỀN ──────────────────────────────────────────────────── -->
     <el-dialog v-model="showRefund" title="Xử lý hoàn tiền" width="450px">
       <div class="mb-5 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-200">
         Đang xử lý hoàn tiền cho đơn hàng <strong class="text-[#E8634A]">{{ selectedOrder?.id }}</strong>.<br>
@@ -261,25 +264,26 @@
       </template>
     </el-dialog>
 
+    <!-- ── DIALOG: OVERRIDE ───────────────────────────────────────────────────── -->
     <el-dialog v-model="showOverride" title="Ghi đè hệ thống (Override)" width="450px">
       <div class="mb-5 text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-200">
         <strong>⚠️ Cảnh báo:</strong> Thao tác này sẽ ép buộc chuyển đổi trạng thái đơn <strong class="text-[#E8634A]">{{ selectedOrder?.id }}</strong>, bỏ qua quy trình thông thường.
       </div>
       <el-form label-position="top">
         <el-form-item label="Ép chuyển sang trạng thái" required>
-          <el-select v-model="overrideData.status" class="w-full">
-            <el-option label="Hoàn thành" value="Hoàn thành" />
-            <el-option label="Đã giao" value="Đã giao" />
-            <el-option label="Đã huỷ" value="Đã huỷ" />
+          <el-select v-model="overrideData.trangThaiMoi" class="w-full">
+            <el-option label="Hoàn thành" value="HOAN_THANH" />
+            <el-option label="Đã giao" value="DANG_GIAO" />
+            <el-option label="Đã huỷ" value="DA_HUY" />
           </el-select>
         </el-form-item>
-        <el-form-item label="Mã PIN Admin" required>
-          <el-input v-model="overrideData.pin" type="password" placeholder="Nhập mã PIN xác nhận..." show-password />
+        <el-form-item label="Lý do ghi đè">
+          <el-input v-model="overrideData.lyDo" type="textarea" :rows="2" placeholder="Nhập lý do ghi đè..." />
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="showOverride = false">Hủy</el-button>
-        <el-button type="danger" @click="processOverride">
+        <el-button type="danger" :loading="saving" @click="processOverride">
           Thực thi Ghi đè
         </el-button>
       </template>
@@ -357,7 +361,6 @@
         <div class="w-8 h-8 border-4 border-[#E8634A] border-t-transparent rounded-full animate-spin"></div>
       </div>
       <div v-else-if="printData" id="print-area" class="text-sm text-slate-700 font-sans">
-        <!-- Header phiếu -->
         <div class="text-center mb-5">
           <div class="text-lg font-black text-[#E8634A]">🎂 TIỆM BÁNH</div>
           <div class="text-xs text-slate-400 mt-0.5">Phiếu đơn hàng</div>
@@ -367,7 +370,6 @@
 
         <hr class="border-dashed border-slate-300 mb-4" />
 
-        <!-- Thông tin khách -->
         <div class="mb-4">
           <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Thông tin khách hàng</div>
           <div class="grid grid-cols-2 gap-1 text-sm">
@@ -379,7 +381,6 @@
           </div>
         </div>
 
-        <!-- Sản phẩm -->
         <div class="mb-4">
           <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Sản phẩm</div>
           <table class="w-full text-sm">
@@ -403,7 +404,6 @@
           </table>
         </div>
 
-        <!-- Tổng tiền -->
         <div class="bg-slate-50 rounded-xl p-3 space-y-1 text-sm">
           <div class="flex justify-between">
             <span class="text-slate-500">Tổng tiền hàng</span>
@@ -419,13 +419,11 @@
           </div>
         </div>
 
-        <!-- Ghi chú -->
         <div v-if="printData.ghiChu" class="mt-3 bg-amber-50 border border-amber-200 rounded-xl p-3">
           <div class="text-xs font-bold text-amber-700 mb-1">📝 Ghi chú</div>
           <div class="text-amber-800 whitespace-pre-line">{{ printData.ghiChu }}</div>
         </div>
 
-        <!-- NV phụ trách -->
         <div v-if="printData.tenNhanVien" class="mt-3 text-xs text-slate-400 text-right">
           NV phụ trách: {{ printData.tenNhanVien }}
         </div>
@@ -443,10 +441,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Plus, Download, MoreFilled } from '@element-plus/icons-vue'
-import apiClient from '../services/apiService'
+import { Search, Download, MoreFilled } from '@element-plus/icons-vue'
+import { orderService } from '@/services/orderService'
+import * as XLSX from 'xlsx'
 
 // ── STATE ──────────────────────────────────────────────────────────────────────
 const search = ref('')
@@ -460,112 +459,147 @@ const showDetail = ref(false)
 const showAddOrder = ref(false)
 const selectedOrder = ref(null)
 
+// Refund & Override dialogs
 const showRefund = ref(false)
-const refundData = ref({ reason: '' })
+const refundData = ref({ amount: '', reason: '' })
 const showOverride = ref(false)
 const overrideData = ref({ trangThaiMoi: 'HOAN_THANH', lyDo: '' })
 
-const newOrder = ref({
-  customer: '', phone: '', product: '', deliveryDate: null,
-  deliveryTime: null, total: '', deposit: '', address: '', note: '', urgent: false
-})
+// Edit dialog
+const showEdit = ref(false)
+const editData = ref({ diaChiGiaoHang: '', soDienThoai: '', ngayGiaoHang: null, ghiChu: '' })
 
-const productList = ref([])
+// Status dialog
+const showStatus = ref(false)
+const statusData = ref({ trangThaiMoi: '', lyDoHuy: '' })
+
+// Print dialog
+const showPrint = ref(false)
+const printData = ref(null)
+const printLoading = ref(false)
+
+const saving = ref(false)
+
+// Form tạo đơn mới
+const newOrder = ref({ customer: '', phone: '', product: '', deliveryDate: null, deliveryTime: null, total: '', deposit: '', address: '', note: '', urgent: false })
+const productList = ['Bánh sinh nhật 3D', 'Bánh cưới nhiều tầng', 'Cupcake set 12', 'Macaron hộp 24', 'Bánh mousse', 'Bánh tiramisu', 'Bánh crepe', 'Bánh su kem']
+
+// Danh sách đơn hàng từ API
 const orders = ref([])
 
-// ── Map response backend → format hiển thị ───────────────────────────────────
-function mapOrder(o) {
-  const name = o.tenKhachHang || o.nguoiDung?.hoTen || 'Khách'
-  const initials = name.split(' ').map(w => w[0]).join('').slice(-2).toUpperCase()
-  const colors = [
-    { bg: '#FFF0EC', color: '#E8634A' }, { bg: '#F0FDF4', color: '#22C55E' },
-    { bg: '#EFF6FF', color: '#3B82F6' }, { bg: '#F5F3FF', color: '#7C3AED' },
-    { bg: '#FFFBEB', color: '#F59E0B' },
-  ]
-  const c = colors[Math.abs(o.id) % colors.length]
+// ── MAPPING helpers ────────────────────────────────────────────────────────────
+const STATUS_LABEL = {
+  CHO_XAC_NHAN: 'Chờ xác nhận',
+  DA_XAC_NHAN:  'Đã xác nhận',
+  DANG_LAM:     'Đang sản xuất',
+  SAN_SANG:     'Sẵn sàng',
+  DANG_GIAO:    'Đang giao',
+  HOAN_THANH:   'Hoàn thành',
+  DA_HUY:       'Đã huỷ',
+}
 
-  // Map trạng thái backend → hiển thị
-  const statusMap = {
-    'CHO_XAC_NHAN': 'Chờ xác nhận',
-    'DANG_SAN_XUAT': 'Đang sản xuất',
-    'HOAN_THANH': 'Hoàn thành',
-    'DA_GIAO': 'Đã giao',
-    'DA_HUY': 'Đã huỷ',
-    'CHO_NHAN': 'Chờ nhận',
-  }
-  const statusKeyMap = {
-    'CHO_XAC_NHAN': 'new', 'DANG_SAN_XUAT': 'production',
-    'HOAN_THANH': 'done', 'DA_GIAO': 'delivered',
-    'DA_HUY': 'cancelled', 'CHO_NHAN': 'pending',
-  }
+const STATUS_KEY = {
+  CHO_XAC_NHAN: 'new',
+  DA_XAC_NHAN:  'new',
+  DANG_LAM:     'production',
+  SAN_SANG:     'production',
+  DANG_GIAO:    'delivered',
+  HOAN_THANH:   'done',
+  DA_HUY:       'cancelled',
+}
 
-  const deliveryDate = o.ngayNhan ? new Date(o.ngayNhan).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) : '--'
-  const deliveryTime = o.ngayNhan ? new Date(o.ngayNhan).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : ''
+const FILTER_MAP = {
+  pending:    'CHO_XAC_NHAN',
+  production: 'DANG_LAM',
+  done:       'HOAN_THANH',
+  delivered:  'DANG_GIAO',
+  cancelled:  'DA_HUY',
+}
+
+const AVATAR_COLORS = [
+  { bg: '#FFF0EC', color: '#E8634A' },
+  { bg: '#F0FDF4', color: '#22C55E' },
+  { bg: '#EFF6FF', color: '#3B82F6' },
+  { bg: '#F5F3FF', color: '#7C3AED' },
+  { bg: '#FFFBEB', color: '#F59E0B' },
+]
+
+function mapOrder(dto, index = 0) {
+  const ac = AVATAR_COLORS[index % AVATAR_COLORS.length]
+  const email = dto.emailNguoiDung || ''
+  const initials = email.slice(0, 2).toUpperCase()
+  const statusLabel = STATUS_LABEL[dto.trangThai] || dto.trangThai
+  const statusKey   = STATUS_KEY[dto.trangThai]   || 'new'
+
+  const firstItem = dto.items?.[0]
+  const product = firstItem?.tenSanPham || '—'
+  const variant = firstItem ? `x${firstItem.soLuong}` : ''
+
+  const ngayGiao = dto.ngayGiaoHang ? new Date(dto.ngayGiaoHang) : null
+  const deliveryDate = ngayGiao ? `${String(ngayGiao.getDate()).padStart(2,'0')}/${String(ngayGiao.getMonth()+1).padStart(2,'0')}` : '—'
+  const deliveryTime = ngayGiao ? `${String(ngayGiao.getHours()).padStart(2,'0')}:${String(ngayGiao.getMinutes()).padStart(2,'0')}` : ''
+
+  const fmt = (n) => n != null ? n.toLocaleString('vi-VN') + 'đ' : '—'
 
   return {
-    id: `#DH${o.id}`,
-    _id: o.id,
-    customer: name,
+    _id: dto.id,
+    id:           `HD-${dto.id}`,
+    customer:     email,
     initials,
-    avatarBg: c.bg,
-    avatarColor: c.color,
-    phone: o.soDienThoai || o.nguoiDung?.soDienThoai || '--',
-    product: o.chiTietDonHangs?.[0]?.sanPham?.tenSanPham || o.tenSanPham || 'Sản phẩm',
-    variant: o.chiTietDonHangs?.[0]?.ghiChu || '',
+    avatarBg:     ac.bg,
+    avatarColor:  ac.color,
+    phone:        dto.soDienThoai || '',
+    product,
+    variant,
     deliveryDate,
     deliveryTime,
-    total: o.tongTien ? Number(o.tongTien).toLocaleString('vi-VN') + 'đ' : '--',
-    deposit: o.datCoc ? Number(o.datCoc).toLocaleString('vi-VN') + 'đ' : '',
-    status: statusMap[o.trangThai] || o.trangThai || '--',
-    statusKey: statusKeyMap[o.trangThai] || 'new',
-    urgent: o.khẩnCấp || o.khanCap || false,
-    address: o.diaChiGiao || '',
-    note: o.ghiChu || '',
+    total:        fmt(dto.tongTien),
+    deposit:      '',
+    status:       statusLabel,
+    statusKey,
+    urgent:       false,
+    address:      dto.diaChiGiaoHang || '',
+    note:         dto.ghiChu || '',
+    nguonDon:     dto.nguonDon || '',
+    trangThai:    dto.trangThai,
+    _raw: dto,
   }
 }
 
-// ── Fetch danh sách đơn hàng ──────────────────────────────────────────────────
+// ── FETCH ────────────────────────────────────────────────────────────────────
 async function fetchOrders() {
   tableLoading.value = true
   try {
-    const res = await apiClient.get('/api/v1/admin/orders')
-    const data = res.data
-    // Backend có thể trả array hoặc { content: [], totalElements: n }
-    const list = Array.isArray(data) ? data : (data.content || data.data || [])
-    orders.value = list.map(mapOrder)
+    const params = {}
+    if (filterStatus.value)  params.trangThai = FILTER_MAP[filterStatus.value] || filterStatus.value
+    if (filterDate.value?.[0]) params.tuNgay  = new Date(filterDate.value[0]).toISOString()
+    if (filterDate.value?.[1]) params.denNgay = new Date(filterDate.value[1]).toISOString()
+
+    const res = await orderService.filterOrders(params)
+    orders.value = (res.data || []).map(mapOrder)
   } catch (err) {
-    ElMessage.error('Không thể tải danh sách đơn hàng')
-    console.error(err)
+    console.error('Lỗi tải đơn hàng:', err)
+    ElMessage.error('Không thể tải danh sách đơn hàng từ server!')
   } finally {
     tableLoading.value = false
   }
 }
 
-// ── Fetch danh sách sản phẩm cho dropdown tạo đơn ────────────────────────────
-async function fetchProducts() {
-  try {
-    const res = await apiClient.get('/api/v1/products')
-    const list = Array.isArray(res.data) ? res.data : (res.data.content || [])
-    productList.value = list.map(p => p.tenSanPham)
-  } catch (err) {
-    console.error('Không load được sản phẩm:', err)
-  }
-}
-
-onMounted(() => {
+watch([filterStatus, filterDate], () => {
+  page.value = 1
   fetchOrders()
-  fetchProducts()
 })
 
-// ── Stats ─────────────────────────────────────────────────────────────────────
+onMounted(fetchOrders)
+
+// ── COMPUTED ──────────────────────────────────────────────────────────────────
 const orderStats = computed(() => [
   { icon: '📬', count: orders.value.filter(o => o.statusKey === 'new').length,        label: 'Chờ xác nhận' },
-  { icon: '⚙️', count: orders.value.filter(o => o.statusKey === 'production').length,  label: 'Đang sản xuất' },
+  { icon: '⚙️',  count: orders.value.filter(o => o.statusKey === 'production').length, label: 'Đang sản xuất' },
   { icon: '✅', count: orders.value.filter(o => o.statusKey === 'done').length,        label: 'Hoàn thành' },
   { icon: '🚚', count: orders.value.filter(o => o.statusKey === 'delivered').length,   label: 'Đã giao' },
 ])
 
-// ── Filter ────────────────────────────────────────────────────────────────────
 const filteredOrders = computed(() => {
   let result = orders.value
   if (search.value) {
@@ -576,155 +610,140 @@ const filteredOrders = computed(() => {
       o.product.toLowerCase().includes(q)
     )
   }
-  if (filterStatus.value) {
-    const map = {
-      pending: 'Chờ nhận', production: 'Đang sản xuất',
-      done: 'Hoàn thành', delivered: 'Đã giao', cancelled: 'Đã huỷ'
-    }
-    result = result.filter(o => o.status === map[filterStatus.value])
+  if (sortBy.value === 'newest') {
+    result = [...result].reverse()
   }
   return result
 })
 
 const statusColor = (s) => {
-  const m = {
-    'Chờ xác nhận': 'info', 'Chờ nhận': 'info', 'Đang sản xuất': 'warning',
-    'Hoàn thành': 'success', 'Đã giao': 'primary', 'Đã huỷ': 'danger'
-  }
+  const m = { 'Chờ xác nhận': 'info', 'Đã xác nhận': 'info', 'Đang sản xuất': 'warning', 'Sẵn sàng': 'warning', 'Hoàn thành': 'success', 'Đang giao': 'primary', 'Đã huỷ': 'danger' }
   return m[s] || 'gray'
 }
 
 const statusStep = (s) => {
-  const m = { 'Chờ xác nhận': 0, 'Chờ nhận': 0, 'Đang sản xuất': 1, 'Hoàn thành': 2, 'Đã giao': 3 }
+  const m = { 'Chờ xác nhận': 0, 'Đã xác nhận': 0, 'Đang sản xuất': 1, 'Sẵn sàng': 1, 'Hoàn thành': 2, 'Đang giao': 3 }
   return m[s] ?? 0
 }
 
-// ── ACTIONS ────────────────────────────────────────────────────────────────────
+// ── ACTIONS ───────────────────────────────────────────────────────────────────
 function openDetail(row) {
   selectedOrder.value = row
   showDetail.value = true
 }
 
-// ── Đổi trạng thái đơn hàng ──────────────────────────────────────────────────
-async function updateOrderStatus(orderId, newStatus) {
-  try {
-    await apiClient.put(`/api/v1/admin/orders/${orderId}/status`, { trangThai: newStatus })
-    await fetchOrders()
-    ElMessage.success('Cập nhật trạng thái thành công!')
-  } catch (err) {
-    ElMessage.error(err.response?.data?.message || 'Cập nhật thất bại')
-  }
-}
-
-// ── Xóa đơn hàng ─────────────────────────────────────────────────────────────
-async function deleteOrder(row) {
-  try {
-    await ElMessageBox.confirm(`Xoá đơn ${row.id}?`, 'Xác nhận', { type: 'warning' })
-    await apiClient.delete(`/api/v1/admin/orders/${row._id}`)
-    await fetchOrders()
-    ElMessage.success('Đã xoá đơn hàng')
-  } catch (err) {
-    if (err !== 'cancel') ElMessage.error(err.response?.data?.message || 'Xoá thất bại')
-  }
-}
-
-// ── Row actions ───────────────────────────────────────────────────────────────
 function handleRowAction(cmd, row) {
   selectedOrder.value = row
   if (cmd === 'view') {
     openDetail(row)
+  } else if (cmd === 'edit') {
+    editData.value = {
+      diaChiGiaoHang: row.address || '',
+      soDienThoai:    row.phone   || '',
+      ngayGiaoHang:   null,
+      ghiChu:         row.note    || '',
+    }
+    showEdit.value = true
+  } else if (cmd === 'status') {
+    statusData.value = { trangThaiMoi: '', lyDoHuy: '' }
+    showStatus.value = true
+  } else if (cmd === 'print') {
+    openPrint(row)
   } else if (cmd === 'refund') {
-    refundData.value.amount = row.deposit || row.total
-    refundData.value.reason = ''
+    refundData.value = { amount: '', reason: '' }
     showRefund.value = true
   } else if (cmd === 'override') {
-    overrideData.value.status = 'Hoàn thành'
-    overrideData.value.pin = ''
+    overrideData.value = { trangThaiMoi: 'HOAN_THANH', lyDo: '' }
     showOverride.value = true
   } else if (cmd === 'delete') {
-    deleteOrder(row)
-  } else if (cmd === 'status') {
-    ElMessage.info('Chọn trạng thái mới trong dialog chi tiết')
-    openDetail(row)
+    confirmCancelRollback(row)
   } else {
     ElMessage.info('Tính năng đang phát triển')
   }
 }
 
-// ── Hoàn tiền ────────────────────────────────────────────────────────────────
-async function processRefund() {
-  if (!refundData.value.amount || !refundData.value.reason) {
-    return ElMessage.warning('Vui lòng nhập đủ thông tin hoàn tiền!')
-  }
-  try {
-    await apiClient.post(`/api/v1/admin/orders/${selectedOrder.value._id}/refund`, {
-      soTien: refundData.value.amount,
-      lyDo: refundData.value.reason,
-    })
-    showRefund.value = false
-    await fetchOrders()
-    ElMessage.success(`Hoàn tất lệnh trả tiền cho đơn ${selectedOrder.value.id}`)
-  } catch (err) {
-    ElMessage.error(err.response?.data?.message || 'Hoàn tiền thất bại')
-  }
-}
-
-// ── Override ─────────────────────────────────────────────────────────────────
+// ── OVERRIDE ─────────────────────────────────────────────────────────────────
 async function processOverride() {
-  if (!overrideData.value.pin) return ElMessage.warning('Vui lòng nhập mã PIN!')
+  if (!overrideData.value.trangThaiMoi) {
+    return ElMessage.warning('Vui lòng chọn trạng thái muốn ép chuyển!')
+  }
+  saving.value = true
   try {
-    const statusBackendMap = {
-      'Hoàn thành': 'HOAN_THANH',
-      'Đã giao': 'DA_GIAO',
-      'Đã huỷ': 'DA_HUY',
-    }
-    await apiClient.put(`/api/v1/admin/orders/${selectedOrder.value._id}/status`, {
-      trangThai: statusBackendMap[overrideData.value.status],
-      pin: overrideData.value.pin,
-      override: true,
-    })
+    const res = await orderService.overrideOrderStatus(
+      selectedOrder.value._id,
+      overrideData.value.trangThaiMoi,
+      overrideData.value.lyDo
+    )
+    const updated = mapOrder(res.data)
+    const idx = orders.value.findIndex(o => o._id === selectedOrder.value._id)
+    if (idx !== -1) orders.value[idx] = updated
     showOverride.value = false
-    await fetchOrders()
-    ElMessage.success(`Ghi đè thành công đơn ${selectedOrder.value.id}`)
+    ElMessage.success(`Ghi đè thành công đơn ${selectedOrder.value.id}!`)
+    if (showDetail.value) selectedOrder.value = updated
   } catch (err) {
-    ElMessage.error(err.response?.data?.message || 'Mã PIN không hợp lệ hoặc thao tác thất bại')
+    ElMessage.error(err.response?.data || 'Ghi đè thất bại!')
+  } finally {
+    saving.value = false
   }
 }
 
-// ── Tạo đơn mới ──────────────────────────────────────────────────────────────
-async function saveOrder() {
+// ── HOÀN TIỀN ────────────────────────────────────────────────────────────────
+async function processRefund() {
+  if (!refundData.value.reason) {
+    return ElMessage.warning('Vui lòng nhập lý do hoàn tiền!')
+  }
+  try {
+    const res = await orderService.refundOrder(
+      selectedOrder.value._id,
+      refundData.value.reason
+    )
+    const updated = mapOrder(res.data)
+    const idx = orders.value.findIndex(o => o._id === selectedOrder.value._id)
+    if (idx !== -1) orders.value[idx] = updated
+    showRefund.value = false
+    ElMessage.success(`Hoàn tiền đơn ${selectedOrder.value.id} thành công!`)
+    if (showDetail.value) selectedOrder.value = updated
+  } catch (err) {
+    ElMessage.error(err.response?.data || 'Hoàn tiền thất bại!')
+  }
+}
+
+// ── HỦY ĐƠN + ROLLBACK KHO ───────────────────────────────────────────────────
+async function confirmCancelRollback(row) {
+  try {
+    const { value: lyDo } = await ElMessageBox.prompt(
+      `Nhập lý do huỷ đơn <strong>${row.id}</strong>. Kho hàng sẽ được hoàn trả tự động.`,
+      'Huỷ đơn bắt buộc (Admin)',
+      {
+        confirmButtonText: 'Xác nhận huỷ',
+        cancelButtonText: 'Đóng',
+        inputPlaceholder: 'Lý do huỷ...',
+        dangerouslyUseHTMLString: true,
+        type: 'warning',
+      }
+    )
+    await orderService.cancelAndRollback(row._id, lyDo || 'Admin huỷ')
+    await fetchOrders()
+    ElMessage.success(`Đã huỷ đơn ${row.id} và hoàn kho thành công!`)
+  } catch (err) {
+    if (err === 'cancel') return
+    ElMessage.error(err.response?.data || 'Huỷ đơn thất bại!')
+  }
+}
+
+// ── TẠO ĐƠN MỚI ─────────────────────────────────────────────────────────────
+function saveOrder() {
   if (!newOrder.value.customer || !newOrder.value.product) {
     return ElMessage.warning('Vui lòng điền đầy đủ thông tin')
   }
-  try {
-    await apiClient.post('/api/v1/admin/orders', {
-      tenKhachHang: newOrder.value.customer,
-      soDienThoai: newOrder.value.phone,
-      tenSanPham: newOrder.value.product,
-      ngayNhan: newOrder.value.deliveryDate,
-      tongTien: newOrder.value.total,
-      datCoc: newOrder.value.deposit,
-      diaChiGiao: newOrder.value.address,
-      ghiChu: newOrder.value.note,
-      khanCap: newOrder.value.urgent,
-    })
-    showAddOrder.value = false
-    newOrder.value = {
-      customer: '', phone: '', product: '', deliveryDate: null,
-      deliveryTime: null, total: '', deposit: '', address: '', note: '', urgent: false
-    }
-    await fetchOrders()
-    ElMessage.success('Tạo đơn hàng thành công! 🎉')
-  } catch (err) {
-    ElMessage.error(err.response?.data?.message || 'Tạo đơn thất bại')
-  }
+  ElMessage.info('Chức năng tạo đơn qua Admin API đang phát triển')
+  showAddOrder.value = false
 }
 
-// ── CHỈNH SỬA ĐƠN ─────────────────────────────────────────────────────────────
+// ── CHỈNH SỬA ĐƠN ────────────────────────────────────────────────────────────
 async function saveEdit() {
   saving.value = true
   try {
-    // Chỉ gửi các trường đã thực sự có giá trị
     const payload = {}
     if (editData.value.diaChiGiaoHang.trim()) payload.diaChiGiaoHang = editData.value.diaChiGiaoHang.trim()
     if (editData.value.soDienThoai.trim())    payload.soDienThoai    = editData.value.soDienThoai.trim()
@@ -746,7 +765,7 @@ async function saveEdit() {
   }
 }
 
-// ── ĐỔI TRẠNG THÁI ─────────────────────────────────────────────────────────────
+// ── ĐỔI TRẠNG THÁI ───────────────────────────────────────────────────────────
 async function saveStatus() {
   if (!statusData.value.trangThaiMoi) return ElMessage.warning('Vui lòng chọn trạng thái!')
   if (statusData.value.trangThaiMoi === 'DA_HUY' && !statusData.value.lyDoHuy)
@@ -773,7 +792,7 @@ async function saveStatus() {
   }
 }
 
-// ── IN ĐƠN ─────────────────────────────────────────────────────────────────────
+// ── IN ĐƠN ───────────────────────────────────────────────────────────────────
 async function openPrint(row) {
   showPrint.value = true
   printLoading.value = true
@@ -790,7 +809,6 @@ async function openPrint(row) {
 }
 
 function triggerBrowserPrint() {
-  // Ẩn mọi thứ, chỉ in phần #print-area
   const style = document.createElement('style')
   style.id = '__print_style__'
   style.innerHTML = `@media print { body * { visibility: hidden !important; }
@@ -801,7 +819,7 @@ function triggerBrowserPrint() {
   setTimeout(() => document.getElementById('__print_style__')?.remove(), 1000)
 }
 
-// ── HELPERS HIỂN THỊ ───────────────────────────────────────────────────────────
+// ── HELPERS ──────────────────────────────────────────────────────────────────
 function formatVND(n) {
   return n != null ? n.toLocaleString('vi-VN') + 'đ' : '—'
 }
@@ -816,11 +834,9 @@ async function exportExcel() {
   if (exporting.value) return
   exporting.value = true
   try {
-    // Lấy toàn bộ đơn hàng (không lọc) để xuất đầy đủ
     const res = await orderService.filterOrders({})
     const data = res.data || []
 
-    // Map sang hàng Excel dễ đọc
     const rows = data.map((dto) => ({
       'Mã đơn':         `HD-${dto.id}`,
       'Email khách':    dto.emailNguoiDung || '',
@@ -836,8 +852,6 @@ async function exportExcel() {
     }))
 
     const ws = XLSX.utils.json_to_sheet(rows)
-
-    // Tự động căn độ rộng cột
     const colWidths = Object.keys(rows[0] || {}).map((key) => ({
       wch: Math.max(key.length, ...rows.map(r => String(r[key] ?? '').length)) + 2
     }))
@@ -846,7 +860,6 @@ async function exportExcel() {
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Đơn hàng')
 
-    // Tên file có timestamp
     const ts = new Date().toLocaleDateString('vi-VN').replace(/\//g, '-')
     XLSX.writeFile(wb, `don-hang-${ts}.xlsx`)
 

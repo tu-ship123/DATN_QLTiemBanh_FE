@@ -191,20 +191,47 @@
     </el-dialog>
 
     <!-- ── DIALOG: PHÂN CA ─────────────────────────────────────────────────────── -->
-    <el-dialog v-model="showScheduleDialog" title="Phân ca làm việc" width="420px">
-      <el-form :model="scheduleForm" label-position="top">
+    <el-dialog v-model="showScheduleDialog" title="Phân ca làm việc" width="420px" @open="loadCaLamViec">
+      <div v-if="loadingCa" class="flex justify-center py-6">
+        <iconify-icon icon="ph:spinner-gap" class="text-3xl animate-spin text-[#E8634A]"></iconify-icon>
+      </div>
+      <el-form v-else :model="scheduleForm" label-position="top">
         <el-form-item label="Nhân viên">
           <el-input :value="scheduleForm.staffName" disabled />
         </el-form-item>
         <el-form-item label="Ngày làm việc" required>
-          <el-date-picker v-model="scheduleForm.ngayLamViec" type="date" style="width:100%" placeholder="Chọn ngày" format="DD/MM/YYYY" value-format="YYYY-MM-DD" />
+          <el-date-picker
+            v-model="scheduleForm.ngayLamViec"
+            type="date"
+            style="width:100%"
+            placeholder="Chọn ngày"
+            format="DD/MM/YYYY"
+            value-format="YYYY-MM-DD"
+            :disabled-date="disablePastDates"
+          />
         </el-form-item>
         <el-form-item label="Ca làm việc" required>
-          <el-select v-model="scheduleForm.caId" style="width:100%">
-            <el-option :value="1" label="Ca sáng (07:00 – 13:00)" />
-            <el-option :value="2" label="Ca chiều (13:00 – 19:00)" />
-            <el-option :value="3" label="Ca tối (19:00 – 23:00)" />
+          <el-select v-model="scheduleForm.caLamViecId" style="width:100%" placeholder="Chọn ca làm việc">
+            <el-option
+              v-for="ca in caLamViecList"
+              :key="ca.id"
+              :value="ca.id"
+              :disabled="!ca.hoatDong"
+            >
+              <div class="flex items-center justify-between w-full">
+                <span class="font-semibold">{{ ca.tenCa }}</span>
+                <span class="text-xs text-gray-400 ml-3">
+                  {{ formatCaTime(ca.gioBatDau) }} – {{ formatCaTime(ca.gioKetThuc) }}
+                </span>
+              </div>
+            </el-option>
           </el-select>
+          <p v-if="caLamViecList.length === 0 && !loadingCa" class="text-xs text-red-500 mt-1">
+            Chưa có ca làm việc nào. Admin cần tạo ca trước.
+          </p>
+        </el-form-item>
+        <el-form-item label="Ghi chú (tuỳ chọn)">
+          <el-input v-model="scheduleForm.ghiChu" type="textarea" :rows="2" placeholder="Ghi chú thêm..." />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -212,7 +239,8 @@
         <el-button
           type="primary"
           :style="{ background:'#E8634A', borderColor:'#E8634A' }"
-          :loading="staffStore.submitting"
+          :loading="submittingSchedule"
+          :disabled="loadingCa || caLamViecList.length === 0"
           @click="submitSchedule"
         >Lưu phân ca</el-button>
       </template>
@@ -287,33 +315,82 @@ async function submitStaffForm() {
   }
 }
 
-// ── Dialog: Phân ca ───────────────────────────────────────────────────────────
+// ── Dialog: Phân ca (load ca từ API) ──────────────────────────────────────────
 const showScheduleDialog = ref(false)
-const scheduleForm = ref({ staffId: null, staffName: '', ngayLamViec: '', caId: null })
+const submittingSchedule = ref(false)
+const loadingCa          = ref(false)
+const caLamViecList      = ref([])
+
+const scheduleForm = ref({
+  staffId:      null,
+  staffName:    '',
+  ngayLamViec:  '',
+  caLamViecId:  null,
+  ghiChu:       ''
+})
 
 function openScheduleDialog(s) {
-  scheduleForm.value = { staffId: s.id, staffName: s.name, ngayLamViec: '', caId: null }
+  scheduleForm.value = {
+    staffId:     s.id,
+    staffName:   s.name,
+    ngayLamViec: '',
+    caLamViecId: null,
+    ghiChu:      ''
+  }
   showScheduleDialog.value = true
+  // loadCaLamViec() được gọi qua @open trên el-dialog
 }
+
+async function loadCaLamViec() {
+  loadingCa.value = true
+  try {
+    const res = await staffService.getAllCaLamViec()
+    caLamViecList.value = (res.data || []).filter(ca => ca.hoatDong !== false)
+  } catch (err) {
+    ElMessage.error('Không tải được danh sách ca làm việc. Vui lòng thử lại.')
+    caLamViecList.value = []
+  } finally {
+    loadingCa.value = false
+  }
+}
+
 async function submitSchedule() {
-  if (!scheduleForm.value.ngayLamViec || !scheduleForm.value.caId) {
-    return ElMessage.warning('Vui lòng chọn ngày và ca làm việc')
+  if (!scheduleForm.value.ngayLamViec) {
+    return ElMessage.warning('Vui lòng chọn ngày làm việc')
+  }
+  if (!scheduleForm.value.caLamViecId) {
+    return ElMessage.warning('Vui lòng chọn ca làm việc')
   }
   if (!scheduleForm.value.staffId) {
     return ElMessage.error('Không xác định được nhân viên, vui lòng thử lại')
   }
+
+  submittingSchedule.value = true
   try {
-    // Đã đổi tên biến cho khớp 100% với DTO của Backend
     await staffService.createSchedule({
+      nhanVienId:  scheduleForm.value.staffId,
+      caLamViecId: scheduleForm.value.caLamViecId,
       ngayLamViec: scheduleForm.value.ngayLamViec,
-      caLamViecId: scheduleForm.value.caId, 
-      nhanVienId:  scheduleForm.value.staffId 
+      ghiChu:      scheduleForm.value.ghiChu || null
     })
     ElMessage.success('Phân ca thành công!')
     showScheduleDialog.value = false
   } catch (err) {
-    ElMessage.error(err.response?.data?.message ?? 'Phân ca thất bại, thử lại sau.')
+    const msg = err.response?.data || err.response?.data?.message || 'Phân ca thất bại, thử lại sau.'
+    ElMessage.error(typeof msg === 'string' ? msg : 'Phân ca thất bại, thử lại sau.')
+  } finally {
+    submittingSchedule.value = false
   }
+}
+
+function formatCaTime(t) {
+  if (!t) return '--:--'
+  if (Array.isArray(t)) return `${String(t[0]).padStart(2,'0')}:${String(t[1]).padStart(2,'0')}`
+  return String(t).slice(0, 5)
+}
+
+function disablePastDates(date) {
+  return date < new Date(new Date().setHours(0, 0, 0, 0))
 }
 
 // ── Vô hiệu hoá ──────────────────────────────────────────────────────────────
