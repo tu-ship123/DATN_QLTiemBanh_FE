@@ -1,28 +1,28 @@
 <template>
-  <div class="p-6 bg-[#FFF8F4] min-h-screen flex flex-col gap-5">
+  <div class="p-6 bg-[#FFFBF5] min-h-screen flex flex-col gap-5">
 
     <!-- HEADER -->
     <div class="flex flex-wrap justify-between items-end gap-4 shrink-0">
       <div>
-        <h1 class="text-2xl font-black text-[#1E2A3B] font-display">Quản lý Đơn Hàng</h1>
+        <h1 class="text-2xl font-black text-[#5C4428] font-display">Quản lý Đơn Hàng</h1>
         <p class="text-sm text-slate-500 mt-1">Xem, xử lý và cập nhật trạng thái đơn hàng</p>
       </div>
       <div class="flex items-center gap-2">
         <button
           @click="viewMode = 'table'"
-          :class="viewMode === 'table' ? 'bg-[#E8634A] text-white shadow-md shadow-[#E8634A]/30' : 'bg-white text-slate-500 border border-slate-200'"
+          :class="viewMode === 'table' ? 'bg-[#7A5C3A] text-white shadow-md shadow-[#7A5C3A]/30' : 'bg-white text-slate-500 border border-slate-200'"
           class="px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all"
         >
           <el-icon><List /></el-icon> Danh sách
         </button>
         <button
           @click="viewMode = 'kanban'"
-          :class="viewMode === 'kanban' ? 'bg-[#E8634A] text-white shadow-md shadow-[#E8634A]/30' : 'bg-white text-slate-500 border border-slate-200'"
+          :class="viewMode === 'kanban' ? 'bg-[#7A5C3A] text-white shadow-md shadow-[#7A5C3A]/30' : 'bg-white text-slate-500 border border-slate-200'"
           class="px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all"
         >
           <el-icon><Grid /></el-icon> Kanban
         </button>
-        <button @click="fetchOrders" class="px-4 py-2 rounded-xl text-sm font-bold bg-white text-slate-500 border border-slate-200 hover:border-[#E8634A]/50 hover:text-[#E8634A] flex items-center gap-2 transition-all">
+        <button @click="fetchOrders" class="px-4 py-2 rounded-xl text-sm font-bold bg-white text-slate-500 border border-slate-200 hover:border-[#7A5C3A]/50 hover:text-[#7A5C3A] flex items-center gap-2 transition-all">
           <el-icon :class="loading ? 'animate-spin' : ''"><Refresh /></el-icon> Làm mới
         </button>
       </div>
@@ -32,27 +32,27 @@
     <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 shrink-0">
       <div v-for="s in statusStats" :key="s.key"
         @click="filterStatus = filterStatus === s.key ? '' : s.key; fetchOrders()"
-        :class="filterStatus === s.key ? 'border-[#E8634A] shadow-md shadow-[#E8634A]/10' : 'border-[#EDE8E3]'"
-        class="bg-white rounded-2xl p-4 border cursor-pointer hover:border-[#E8634A]/50 transition-all group"
+        :class="filterStatus === s.key ? 'border-[#7A5C3A] shadow-md shadow-[#7A5C3A]/10' : 'border-[#EDE0CC]'"
+        class="bg-white rounded-2xl p-4 border cursor-pointer hover:border-[#7A5C3A]/50 transition-all group"
       >
         <div class="flex items-center gap-2 mb-1">
-          <span class="text-xl">{{ s.icon }}</span>
+          <span class="text-xl text-[#7A5C3A]"><iconify-icon :icon="s.icon"></iconify-icon></span>
           <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">{{ s.label }}</span>
         </div>
-        <div class="text-2xl font-black text-[#1E2A3B]">{{ s.count }}</div>
+        <div class="text-2xl font-black text-[#5C4428]">{{ s.count }}</div>
       </div>
     </div>
 
     <!-- FILTERS -->
-    <div class="bg-white rounded-2xl border border-[#EDE8E3] p-4 flex flex-wrap gap-3 items-center shrink-0">
-      <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 flex-1 min-w-[200px] focus-within:border-[#E8634A] transition-all">
+    <div class="bg-white rounded-2xl border border-[#EDE0CC] p-4 flex flex-wrap gap-3 items-center shrink-0">
+      <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 flex-1 min-w-[200px] focus-within:border-[#7A5C3A] transition-all">
         <el-icon class="text-slate-400"><Search /></el-icon>
         <input
           v-model="searchText"
           @input="onSearch"
           type="text"
           placeholder="Tìm mã đơn, khách hàng, email..."
-          class="bg-transparent border-none outline-none w-full text-sm text-[#1E2A3B] placeholder-slate-400"
+          class="bg-transparent border-none outline-none w-full text-sm text-[#5C4428] placeholder-slate-400"
         />
       </div>
       <el-select v-model="filterStatus" @change="fetchOrders" placeholder="Tất cả trạng thái" clearable style="width:180px">
@@ -75,29 +75,29 @@
     </div>
 
     <!-- TABLE VIEW -->
-    <div v-if="viewMode === 'table'" class="bg-white rounded-2xl border border-[#EDE8E3] overflow-hidden flex-1">
+    <div v-if="viewMode === 'table'" class="bg-white rounded-2xl border border-[#EDE0CC] overflow-hidden flex-1">
       <el-table
         :data="filteredOrders"
         v-loading="loading"
         style="width:100%"
-        row-class-name="cursor-pointer hover:bg-[#FFF8F4]"
+        row-class-name="cursor-pointer hover:bg-[#FFFBF5]"
         @row-click="openDetail"
         empty-text="Chưa có đơn hàng nào"
       >
         <el-table-column label="MÃ ĐƠN" width="110">
           <template #default="{ row }">
-            <span class="text-sm font-black text-[#E8634A]">HD-{{ row.id }}</span>
+            <span class="text-sm font-black text-[#7A5C3A]">HD-{{ row.id }}</span>
           </template>
         </el-table-column>
 
         <el-table-column label="KHÁCH HÀNG" min-width="180">
           <template #default="{ row }">
             <div class="flex items-center gap-2.5 py-1">
-              <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-[#E8634A] to-[#FBB830] text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+              <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-[#7A5C3A] to-[#FBB830] text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
                 {{ getInitials(row.emailNguoiDung) }}
               </div>
               <div>
-                <div class="text-sm font-semibold text-[#1E2A3B]">{{ row.emailNguoiDung }}</div>
+                <div class="text-sm font-semibold text-[#5C4428]">{{ row.emailNguoiDung }}</div>
                 <div class="text-xs text-slate-400">{{ formatCurrency(row.tongTien) }}</div>
               </div>
             </div>
@@ -107,7 +107,7 @@
         <el-table-column label="SẢN PHẨM" min-width="180">
           <template #default="{ row }">
             <div v-if="row.items && row.items.length > 0">
-              <div class="text-sm font-medium text-[#1E2A3B] truncate max-w-[160px]">{{ row.items[0].tenSanPham }}</div>
+              <div class="text-sm font-medium text-[#5C4428] truncate max-w-[160px]">{{ row.items[0].tenSanPham }}</div>
               <div class="text-xs text-slate-400" v-if="row.items.length > 1">+{{ row.items.length - 1 }} sản phẩm khác</div>
             </div>
             <span v-else class="text-xs text-slate-400">—</span>
@@ -125,7 +125,7 @@
 
         <el-table-column label="NGÀY GIAO" width="130">
           <template #default="{ row }">
-            <div class="text-sm text-[#1E2A3B]">{{ formatDate(row.ngayGiaoHang) }}</div>
+            <div class="text-sm text-[#5C4428]">{{ formatDate(row.ngayGiaoHang) }}</div>
           </template>
         </el-table-column>
 
@@ -142,7 +142,7 @@
             <div class="flex items-center justify-center gap-1" @click.stop>
               <button
                 @click.stop="openDetail(row)"
-                class="w-8 h-8 rounded-lg bg-slate-50 hover:bg-[#FFF0EC] hover:text-[#E8634A] text-slate-400 flex items-center justify-center transition-colors"
+                class="w-8 h-8 rounded-lg bg-slate-50 hover:bg-[#FDF6EC] hover:text-[#7A5C3A] text-slate-400 flex items-center justify-center transition-colors"
                 title="Xem chi tiết"
               >
                 <el-icon><View /></el-icon>
@@ -156,8 +156,8 @@
                     <el-dropdown-item command="DA_XAC_NHAN">✅ Xác nhận đơn</el-dropdown-item>
                     <el-dropdown-item command="DANG_LAM">🔧 Đang sản xuất</el-dropdown-item>
                     <el-dropdown-item command="SAN_SANG">📦 Sẵn sàng giao</el-dropdown-item>
-                    <el-dropdown-item command="DANG_GIAO">🚴 Đang giao hàng</el-dropdown-item>
-                    <el-dropdown-item command="HOAN_THANH">🎉 Hoàn thành</el-dropdown-item>
+                    <el-dropdown-item command="DANG_GIAO">Đang giao hàng</el-dropdown-item>
+                    <el-dropdown-item command="HOAN_THANH">Hoàn thành</el-dropdown-item>
                     <el-dropdown-item command="DA_HUY" divided>
                       <span class="text-red-500">❌ Hủy đơn</span>
                     </el-dropdown-item>
@@ -169,7 +169,7 @@
         </el-table-column>
       </el-table>
 
-      <div class="px-4 py-3 border-t border-[#EDE8E3] flex items-center justify-between">
+      <div class="px-4 py-3 border-t border-[#EDE0CC] flex items-center justify-between">
         <span class="text-sm text-slate-400">{{ filteredOrders.length }} đơn hàng</span>
       </div>
     </div>
@@ -183,24 +183,24 @@
       >
         <div class="flex justify-between items-center mb-3 px-1 shrink-0">
           <div class="flex items-center gap-2">
-            <span class="text-base">{{ col.icon }}</span>
-            <h3 class="font-bold text-[#1E2A3B] text-[14px] uppercase tracking-wide">{{ col.title }}</h3>
-            <span class="bg-[#E8634A] text-white text-[11px] font-black px-2 py-0.5 rounded-full">
+            <span class="text-base text-[#7A5C3A]"><iconify-icon :icon="col.icon"></iconify-icon></span>
+            <h3 class="font-bold text-[#5C4428] text-[14px] uppercase tracking-wide">{{ col.title }}</h3>
+            <span class="bg-[#7A5C3A] text-white text-[11px] font-black px-2 py-0.5 rounded-full">
               {{ getKanbanCards(col.id).length }}
             </span>
           </div>
         </div>
 
-        <div class="bg-slate-100/50 border border-[#EDE8E3] rounded-2xl p-3 flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-3">
+        <div class="bg-slate-100/50 border border-[#EDE0CC] rounded-2xl p-3 flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-3">
           <template v-if="getKanbanCards(col.id).length > 0">
             <div
               v-for="order in getKanbanCards(col.id)"
               :key="order.id"
               @click="openDetail(order)"
-              class="bg-white border border-[#EDE8E3] p-4 rounded-xl shadow-sm cursor-pointer hover:border-[#E8634A]/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group"
+              class="bg-white border border-[#EDE0CC] p-4 rounded-xl shadow-sm cursor-pointer hover:border-[#7A5C3A]/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group"
             >
               <div class="flex justify-between items-start mb-2.5">
-                <span class="text-xs font-black text-[#E8634A] bg-[#FFF0EC] px-2 py-1 rounded-md">HD-{{ order.id }}</span>
+                <span class="text-xs font-black text-[#7A5C3A] bg-[#FDF6EC] px-2 py-1 rounded-md">HD-{{ order.id }}</span>
                 <span class="text-[10px] font-bold px-2 py-1 rounded-lg" :class="order.nguonDon === 'POS' ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'">
                   {{ order.nguonDon || 'ONLINE' }}
                 </span>
@@ -209,16 +209,16 @@
                 <el-icon><User /></el-icon>
                 <span class="truncate">{{ order.emailNguoiDung }}</span>
               </div>
-              <div v-if="order.items && order.items.length > 0" class="text-sm font-semibold text-[#1E2A3B] mb-2 truncate">
+              <div v-if="order.items && order.items.length > 0" class="text-sm font-semibold text-[#5C4428] mb-2 truncate">
                 {{ order.items[0].tenSanPham }}
               </div>
               <div class="pt-2.5 border-t border-slate-100 flex justify-between items-center">
-                <span class="text-xs font-bold text-[#E8634A]">{{ formatCurrency(order.tongTien) }}</span>
+                <span class="text-xs font-bold text-[#7A5C3A]">{{ formatCurrency(order.tongTien) }}</span>
                 <div class="flex gap-1">
                   <button
                     v-if="getNextStatus(col.id)"
                     @click.stop="quickUpdateStatus(order, getNextStatus(col.id))"
-                    class="text-xs bg-[#E8634A] text-white px-2 py-1 rounded-lg hover:bg-[#d4543c] transition-colors font-semibold"
+                    class="text-xs bg-[#7A5C3A] text-white px-2 py-1 rounded-lg hover:bg-[#d4543c] transition-colors font-semibold"
                     :title="'Chuyển sang: ' + getStatusLabel(getNextStatus(col.id))"
                   >
                     → Tiếp
@@ -252,20 +252,20 @@
 
         <!-- Info 2 cột -->
         <div class="grid grid-cols-2 gap-3">
-          <div class="bg-[#FFF8F4] rounded-2xl p-4 border border-[#EDE8E3]">
+          <div class="bg-[#FFFBF5] rounded-2xl p-4 border border-[#EDE0CC]">
             <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Thông tin đơn</p>
             <div class="space-y-2 text-sm">
-              <div class="flex justify-between"><span class="text-slate-500">Mã đơn</span><span class="font-bold text-[#E8634A]">HD-{{ selectedOrder.id }}</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Mã đơn</span><span class="font-bold text-[#7A5C3A]">HD-{{ selectedOrder.id }}</span></div>
               <div class="flex justify-between"><span class="text-slate-500">Nguồn đơn</span><span class="font-semibold">{{ selectedOrder.nguonDon || 'ONLINE' }}</span></div>
-              <div class="flex justify-between"><span class="text-slate-500">Tổng tiền</span><span class="font-bold text-[#1E2A3B]">{{ formatCurrency(selectedOrder.tongTien) }}</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Tổng tiền</span><span class="font-bold text-[#5C4428]">{{ formatCurrency(selectedOrder.tongTien) }}</span></div>
               <div class="flex justify-between"><span class="text-slate-500">Ngày tạo</span><span>{{ formatDate(selectedOrder.ngayTao) }}</span></div>
               <div class="flex justify-between"><span class="text-slate-500">Ngày giao</span><span>{{ formatDate(selectedOrder.ngayGiaoHang) }}</span></div>
             </div>
           </div>
-          <div class="bg-[#FFF8F4] rounded-2xl p-4 border border-[#EDE8E3]">
+          <div class="bg-[#FFFBF5] rounded-2xl p-4 border border-[#EDE0CC]">
             <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Khách hàng</p>
             <div class="space-y-2 text-sm">
-              <div class="font-semibold text-[#1E2A3B]">{{ selectedOrder.emailNguoiDung }}</div>
+              <div class="font-semibold text-[#5C4428]">{{ selectedOrder.emailNguoiDung }}</div>
               <div class="text-slate-500">{{ selectedOrder.diaChiGiaoHang || '—' }}</div>
               <div v-if="selectedOrder.tenNhanVienPhuTrach" class="mt-2 pt-2 border-t border-slate-200">
                 <span class="text-xs text-slate-400">Nhân viên:</span>
@@ -292,18 +292,18 @@
           <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Sản phẩm đặt</p>
           <div class="space-y-2">
             <div v-for="item in selectedOrder.items" :key="item.sanPhamId"
-              class="flex justify-between items-center bg-white border border-[#EDE8E3] rounded-xl px-4 py-3">
+              class="flex justify-between items-center bg-white border border-[#EDE0CC] rounded-xl px-4 py-3">
               <div>
-                <div class="text-sm font-semibold text-[#1E2A3B]">{{ item.tenSanPham }}</div>
+                <div class="text-sm font-semibold text-[#5C4428]">{{ item.tenSanPham }}</div>
                 <div class="text-xs text-slate-400">x{{ item.soLuong }}</div>
               </div>
-              <span class="font-bold text-[#E8634A] text-sm">{{ formatCurrency(item.giaBan * item.soLuong) }}</span>
+              <span class="font-bold text-[#7A5C3A] text-sm">{{ formatCurrency(item.giaBan * item.soLuong) }}</span>
             </div>
           </div>
         </div>
 
         <!-- Cập nhật trạng thái -->
-        <div class="bg-white rounded-2xl border border-[#EDE8E3] p-4">
+        <div class="bg-white rounded-2xl border border-[#EDE0CC] p-4">
           <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Cập nhật trạng thái</p>
           <div class="flex gap-2 flex-wrap">
             <el-select v-model="newStatus" placeholder="Chọn trạng thái mới" style="flex:1; min-width:180px">
@@ -313,7 +313,7 @@
             <button
               @click="submitStatusUpdate"
               :disabled="!newStatus || updating"
-              class="px-5 py-2 bg-gradient-to-r from-[#E8634A] to-[#F07A5E] text-white rounded-xl font-bold text-sm shadow-md shadow-[#E8634A]/30 hover:shadow-[#E8634A]/50 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              class="px-5 py-2 bg-gradient-to-r from-[#7A5C3A] to-[#9A7650] text-white rounded-xl font-bold text-sm shadow-md shadow-[#7A5C3A]/30 hover:shadow-[#7A5C3A]/50 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
               <span v-if="updating"><el-icon class="animate-spin"><Refresh /></el-icon></span>
               <span v-else>Cập nhật</span>
@@ -357,20 +357,20 @@ const statusOptions = [
   { value: 'DA_XAC_NHAN',  label: '✅ Đã xác nhận' },
   { value: 'DANG_LAM',     label: '🔧 Đang sản xuất' },
   { value: 'SAN_SANG',     label: '📦 Sẵn sàng giao' },
-  { value: 'DANG_GIAO',    label: '🚴 Đang giao hàng' },
-  { value: 'HOAN_THANH',   label: '🎉 Hoàn thành' },
+  { value: 'DANG_GIAO',    label: 'Đang giao hàng' },
+  { value: 'HOAN_THANH',   label: 'Hoàn thành' },
   { value: 'DA_HUY',       label: '❌ Đã hủy' },
 ]
 
 const statusFlow = ['CHO_XAC_NHAN','DA_XAC_NHAN','DANG_LAM','SAN_SANG','DANG_GIAO','HOAN_THANH']
 
 const kanbanColumns = [
-  { id: 'CHO_XAC_NHAN', title: 'Chờ xác nhận', icon: '⏳' },
-  { id: 'DA_XAC_NHAN',  title: 'Đã xác nhận',  icon: '✅' },
-  { id: 'DANG_LAM',     title: 'Đang sản xuất', icon: '🔧' },
-  { id: 'SAN_SANG',     title: 'Sẵn sàng giao', icon: '📦' },
-  { id: 'DANG_GIAO',    title: 'Đang giao',      icon: '🚴' },
-  { id: 'HOAN_THANH',   title: 'Hoàn thành',     icon: '🎉' },
+  { id: 'CHO_XAC_NHAN', title: 'Chờ xác nhận', icon: 'ph:clock-countdown-duotone' },
+  { id: 'DA_XAC_NHAN',  title: 'Đã xác nhận',  icon: 'ph:seal-check-duotone' },
+  { id: 'DANG_LAM',     title: 'Đang sản xuất', icon: 'ph:wrench-duotone' },
+  { id: 'SAN_SANG',     title: 'Sẵn sàng giao', icon: 'ph:package-duotone' },
+  { id: 'DANG_GIAO',    title: 'Đang giao',      icon: 'ph:motorcycle-duotone' },
+  { id: 'HOAN_THANH',   title: 'Hoàn thành',     icon: 'ph:check-circle-duotone' },
 ]
 
 // ─── COMPUTED ────────────────────────────────────────────────────────────────
@@ -387,11 +387,11 @@ const filteredOrders = computed(() => {
 const statusStats = computed(() => {
   const all = orders.value
   return [
-    { key: '', icon: '📋', label: 'Tất cả',      count: all.length },
-    { key: 'CHO_XAC_NHAN', icon: '⏳', label: 'Chờ xử lý',  count: all.filter(o => o.trangThai === 'CHO_XAC_NHAN').length },
-    { key: 'DANG_LAM',     icon: '🔧', label: 'Đang làm',   count: all.filter(o => o.trangThai === 'DANG_LAM').length },
-    { key: 'SAN_SANG',     icon: '📦', label: 'Sẵn sàng',   count: all.filter(o => o.trangThai === 'SAN_SANG').length },
-    { key: 'HOAN_THANH',   icon: '🎉', label: 'Hoàn thành', count: all.filter(o => o.trangThai === 'HOAN_THANH').length },
+    { key: '', icon: 'ph:list-bullets-duotone', label: 'Tất cả',      count: all.length },
+    { key: 'CHO_XAC_NHAN', icon: 'ph:clock-countdown-duotone', label: 'Chờ xử lý',  count: all.filter(o => o.trangThai === 'CHO_XAC_NHAN').length },
+    { key: 'DANG_LAM',     icon: 'ph:wrench-duotone', label: 'Đang làm',   count: all.filter(o => o.trangThai === 'DANG_LAM').length },
+    { key: 'SAN_SANG',     icon: 'ph:package-duotone', label: 'Sẵn sàng',   count: all.filter(o => o.trangThai === 'SAN_SANG').length },
+    { key: 'HOAN_THANH',   icon: 'ph:check-circle-duotone', label: 'Hoàn thành', count: all.filter(o => o.trangThai === 'HOAN_THANH').length },
   ]
 })
 

@@ -19,7 +19,9 @@
     </div>
 
     <div v-if="!isAuthenticated" class="rounded-[24px] p-16 text-center shadow-sm" style="background:#FFFFFF; border:1px solid #FDD8EE;">
-      <p class="text-5xl mb-4">🛒</p>
+      <div class="w-16 h-16 rounded-2xl bg-[#FDF6EC] flex items-center justify-center mx-auto mb-4">
+        <iconify-icon icon="ph:shopping-cart-duotone" class="text-4xl text-[#7A5C3A]"></iconify-icon>
+      </div>
       <h2 style="font-family:'Playfair Display',serif;font-size:24px;font-weight:900;color:#3D1A2C;letter-spacing:1px;" class="mb-2">Bạn chưa đăng nhập</h2>
       <p style="font-family:'DM Sans',sans-serif;font-size:14px;color:#7C3D5C;" class="mb-8">Vui lòng đăng nhập để xem và quản lý giỏ hàng của bạn.</p>
       <RouterLink to="/login"
@@ -46,7 +48,9 @@
     </div>
 
     <div v-else-if="!cartStore.loading && cartStore.items.length === 0" class="rounded-[24px] p-16 text-center shadow-sm" style="background:#FFFFFF; border:1px solid #FDD8EE;">
-      <p class="text-6xl mb-4">🎂</p>
+      <div class="w-20 h-20 rounded-2xl bg-[#FDF6EC] flex items-center justify-center mx-auto mb-4">
+        <iconify-icon icon="ph:cake-duotone" class="text-5xl text-[#7A5C3A]"></iconify-icon>
+      </div>
       <h2 style="font-family:'Playfair Display',serif;font-size:24px;font-weight:900;color:#3D1A2C;letter-spacing:1px;" class="mb-2">Giỏ hàng trống</h2>
       <p style="font-family:'DM Sans',sans-serif;font-size:14px;color:#7C3D5C;" class="mb-8">Hãy khám phá cửa hàng và thêm những chiếc bánh yêu thích nhé!</p>
       <RouterLink to="/shop"
@@ -133,8 +137,9 @@
                 {{ cartStore.phiShip === 0 ? 'Miễn phí' : formatCurrency(cartStore.phiShip) }}
               </span>
             </div>
-            <p v-if="cartStore.phiShip > 0" class="text-xs" style="color:#F59E0B; font-weight:600;">
-              🎁 Đặt thêm {{ formatCurrency(500000 - cartStore.tongTienHang) }} để miễn phí ship!
+            <p v-if="cartStore.phiShip > 0" class="text-xs flex items-center gap-2" style="color:#F59E0B; font-weight:600;">
+              <iconify-icon icon="ph:gift-duotone" class="text-base shrink-0"></iconify-icon>
+              Đặt thêm {{ formatCurrency(500000 - cartStore.tongTienHang) }} để miễn phí ship!
             </p>
           </div>
           
@@ -195,7 +200,7 @@
         ]"
         style="font-family:'DM Sans',sans-serif; letter-spacing:0.5px;"
       >
-        <span class="text-lg">{{ toast.type === 'success' ? '✓' : '⚠' }}</span>
+        <iconify-icon :icon="toast.type === 'success' ? 'ph:check-circle-fill' : 'ph:warning-fill'" class="text-lg"></iconify-icon>
         {{ toast.message }}
       </div>
     </transition>

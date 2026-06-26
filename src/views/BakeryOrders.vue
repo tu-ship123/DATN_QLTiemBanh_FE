@@ -1,14 +1,17 @@
 <template>
-  <div class="min-h-screen bg-[#FFF8F4] p-5 flex flex-col gap-5">
+  <div class="min-h-screen bg-[#FFFBF5] p-5 flex flex-col gap-5">
 
     <!-- ── HEADER ────────────────────────────────────────────── -->
     <div class="flex flex-wrap justify-between items-end gap-3">
       <div>
-        <h1 class="text-2xl font-black text-[#1E2A3B] tracking-tight">🎂 Quản lý Đơn – Tiệm Bánh</h1>
+        <h1 class="text-2xl font-black text-[#5C4428] tracking-tight flex items-center gap-2">
+          <iconify-icon icon="ph:cake-duotone" class="text-[#7A5C3A]"></iconify-icon>
+          Quản lý Đơn – Bếp bánh
+        </h1>
         <p class="text-sm text-slate-500 mt-0.5">Nhận đơn → Sản xuất → Sẵn sàng → Chuyển Shipper</p>
       </div>
       <button @click="fetchOrders" :disabled="loading"
-        class="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-slate-200 text-sm font-semibold text-slate-600 hover:border-[#E8634A] hover:text-[#E8634A] transition-all disabled:opacity-50">
+        class="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-slate-200 text-sm font-semibold text-slate-600 hover:border-[#7A5C3A] hover:text-[#7A5C3A] transition-all disabled:opacity-50">
         <svg :class="loading ? 'animate-spin' : ''" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -24,30 +27,30 @@
         :class="[
           'rounded-2xl p-4 border-2 cursor-pointer transition-all',
           activeTab === s.key
-            ? 'bg-[#E8634A] border-[#E8634A] text-white shadow-lg shadow-[#E8634A]/20'
-            : 'bg-white border-[#EDE8E3] hover:border-[#E8634A]/50'
+            ? 'bg-[#7A5C3A] border-[#7A5C3A] text-white shadow-lg shadow-[#7A5C3A]/20'
+            : 'bg-white border-[#EDE0CC] hover:border-[#7A5C3A]/50'
         ]">
-        <div class="text-xl mb-1">{{ s.icon }}</div>
+        <div class="text-xl mb-1 text-[#7A5C3A]"><iconify-icon :icon="s.icon"></iconify-icon></div>
         <div :class="activeTab === s.key ? 'text-white/80' : 'text-slate-400'"
           class="text-[10px] font-bold uppercase tracking-wider">{{ s.label }}</div>
-        <div :class="activeTab === s.key ? 'text-white' : 'text-[#1E2A3B]'"
+        <div :class="activeTab === s.key ? 'text-white' : 'text-[#5C4428]'"
           class="text-2xl font-black mt-0.5">{{ s.count }}</div>
       </div>
     </div>
 
     <!-- ── KANBAN BOARD ────────────────────────────────────────── -->
     <div v-if="loading" class="flex justify-center py-16">
-      <div class="w-10 h-10 border-4 border-[#E8634A] border-t-transparent rounded-full animate-spin"></div>
+      <div class="w-10 h-10 border-4 border-[#7A5C3A] border-t-transparent rounded-full animate-spin"></div>
     </div>
 
     <div v-else class="grid grid-cols-1 lg:grid-cols-4 gap-4">
       <div v-for="col in columns" :key="col.status"
-        class="bg-white rounded-2xl border border-[#EDE8E3] overflow-hidden flex flex-col">
+        class="bg-white rounded-2xl border border-[#EDE0CC] overflow-hidden flex flex-col">
 
         <!-- Column header -->
         <div :class="col.headerClass" class="px-4 py-3 flex items-center justify-between">
           <span class="font-bold text-sm flex items-center gap-2">
-            <span>{{ col.icon }}</span> {{ col.title }}
+            <span class="inline-flex items-center gap-1"><iconify-icon :icon="col.icon"></iconify-icon></span> {{ col.title }}
           </span>
           <span class="text-xs font-black px-2 py-0.5 rounded-full bg-white/30">
             {{ ordersByStatus(col.status).length }}
@@ -62,18 +65,18 @@
           </div>
 
           <div v-for="order in ordersByStatus(col.status)" :key="order.id"
-            class="rounded-xl border border-[#EDE8E3] p-3.5 bg-white shadow-sm hover:shadow-md hover:border-[#E8634A]/30 transition-all cursor-pointer"
+            class="rounded-xl border border-[#EDE0CC] p-3.5 bg-white shadow-sm hover:shadow-md hover:border-[#7A5C3A]/30 transition-all cursor-pointer"
             @click="openDetail(order)">
 
             <!-- Order ID + time -->
             <div class="flex justify-between items-start mb-2">
-              <span class="text-sm font-black text-[#E8634A]">HD-{{ order.id }}</span>
+              <span class="text-sm font-black text-[#7A5C3A]">HD-{{ order.id }}</span>
               <span class="text-[10px] text-slate-400 font-medium">{{ formatTime(order.ngayTao) }}</span>
             </div>
 
             <!-- Customer -->
             <div class="flex items-center gap-2 mb-2">
-              <div class="w-6 h-6 rounded-lg bg-gradient-to-br from-[#E8634A] to-[#FBB830] text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0">
+              <div class="w-6 h-6 rounded-lg bg-gradient-to-br from-[#7A5C3A] to-[#FBB830] text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0">
                 {{ initials(order.emailNguoiDung) }}
               </div>
               <span class="text-xs text-slate-600 truncate font-medium">{{ order.emailNguoiDung }}</span>
@@ -81,13 +84,14 @@
 
             <!-- Items preview -->
             <div class="text-[11px] text-slate-500 mb-3 line-clamp-2">
-              🎂 {{ order.items?.map(i => i.tenSanPham).join(', ') || 'Không có sản phẩm' }}
+              <iconify-icon icon="ph:cake-duotone" class="inline text-[#7A5C3A]"></iconify-icon>
+              {{ order.items?.map(i => i.tenSanPham).join(', ') || 'Không có sản phẩm' }}
             </div>
 
             <!-- Total -->
             <div class="flex items-center justify-between mb-3">
               <span class="text-xs text-slate-400">Tổng tiền</span>
-              <span class="text-sm font-black text-[#1E2A3B]">{{ formatCurrency(order.tongTien) }}</span>
+              <span class="text-sm font-black text-[#5C4428]">{{ formatCurrency(order.tongTien) }}</span>
             </div>
 
             <!-- Action buttons -->
@@ -96,7 +100,7 @@
               <button v-if="col.nextStatus && col.nextStatus !== 'DANG_GIAO'"
                 @click.stop="quickUpdate(order, col.nextStatus)"
                 :disabled="updating === order.id"
-                class="flex-1 py-1.5 rounded-lg text-xs font-bold bg-[#E8634A] text-white hover:bg-[#f27355] transition-all disabled:opacity-60">
+                class="flex-1 py-1.5 rounded-lg text-xs font-bold bg-[#7A5C3A] text-white hover:bg-[#f27355] transition-all disabled:opacity-60">
                 {{ col.nextLabel }}
               </button>
 
@@ -105,7 +109,7 @@
                 @click.stop="confirmHandToShipper(order)"
                 :disabled="updating === order.id"
                 class="flex-1 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white hover:opacity-90 transition-all disabled:opacity-60">
-                🚴 Giao Shipper
+                <iconify-icon icon="ph:motorcycle-duotone" class="inline"></iconify-icon> Giao Shipper
               </button>
 
               <!-- Cancel button -->
@@ -127,7 +131,7 @@
       <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
 
         <!-- Modal header -->
-        <div class="bg-gradient-to-r from-[#E8634A] to-[#FBB830] px-6 py-5 flex justify-between items-center">
+        <div class="bg-gradient-to-r from-[#7A5C3A] to-[#FBB830] px-6 py-5 flex justify-between items-center">
           <div>
             <h2 class="text-xl font-black text-white">HD-{{ selectedOrder.id }}</h2>
             <p class="text-white/80 text-sm">{{ formatDate(selectedOrder.ngayTao) }}</p>
@@ -151,8 +155,8 @@
           <div class="bg-slate-50 rounded-2xl p-4 space-y-2">
             <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Thông tin khách hàng</p>
             <p class="text-sm text-slate-700">📧 {{ selectedOrder.emailNguoiDung }}</p>
-            <p v-if="selectedOrder.soDienThoai" class="text-sm text-slate-700">📞 {{ selectedOrder.soDienThoai }}</p>
-            <p v-if="selectedOrder.diaChiGiaoHang" class="text-sm text-slate-700">📍 {{ selectedOrder.diaChiGiaoHang }}</p>
+            <p v-if="selectedOrder.soDienThoai" class="text-sm text-slate-700 flex items-center gap-1.5"><iconify-icon icon="ph:phone-duotone" class="text-[#7A5C3A]"></iconify-icon> {{ selectedOrder.soDienThoai }}</p>
+            <p v-if="selectedOrder.diaChiGiaoHang" class="text-sm text-slate-700 flex items-center gap-1.5"><iconify-icon icon="ph:map-pin-duotone" class="text-[#7A5C3A]"></iconify-icon> {{ selectedOrder.diaChiGiaoHang }}</p>
             <p v-if="selectedOrder.ngayGiaoHang" class="text-sm text-slate-700">📅 Giao dự kiến: {{ formatDate(selectedOrder.ngayGiaoHang, false) }}</p>
           </div>
 
@@ -162,17 +166,17 @@
             <div v-for="item in selectedOrder.items" :key="item.sanPhamId"
               class="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
               <div>
-                <p class="text-sm font-semibold text-[#1E2A3B]">{{ item.tenSanPham }}</p>
+                <p class="text-sm font-semibold text-[#5C4428]">{{ item.tenSanPham }}</p>
                 <p class="text-xs text-slate-400">x{{ item.soLuong }} × {{ formatCurrency(item.giaBan) }}</p>
               </div>
-              <p class="text-sm font-bold text-[#E8634A]">{{ formatCurrency(item.giaBan * item.soLuong) }}</p>
+              <p class="text-sm font-bold text-[#7A5C3A]">{{ formatCurrency(item.giaBan * item.soLuong) }}</p>
             </div>
           </div>
 
           <!-- Total -->
           <div class="flex justify-between items-center pt-2 border-t border-slate-100">
             <span class="font-bold text-slate-600">Tổng cộng</span>
-            <span class="text-xl font-black text-[#E8634A]">{{ formatCurrency(selectedOrder.tongTien) }}</span>
+            <span class="text-xl font-black text-[#7A5C3A]">{{ formatCurrency(selectedOrder.tongTien) }}</span>
           </div>
 
           <!-- Note -->
@@ -202,7 +206,7 @@
           <button v-if="selectedOrder.trangThai === 'SAN_SANG'"
             @click="confirmHandToShipper(selectedOrder)" :disabled="updating === selectedOrder.id"
             class="flex-1 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white hover:opacity-90 transition-all disabled:opacity-60">
-            🚴 Giao cho Shipper
+            <iconify-icon icon="ph:motorcycle-duotone" class="inline"></iconify-icon> Giao cho Shipper
           </button>
           <button v-if="['CHO_XAC_NHAN','DA_XAC_NHAN'].includes(selectedOrder.trangThai)"
             @click="confirmCancel(selectedOrder)" :disabled="updating === selectedOrder.id"
@@ -218,10 +222,10 @@
       class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
       @click.self="showCancelModal = false">
       <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6">
-        <h3 class="text-lg font-black text-[#1E2A3B] mb-1">Hủy đơn HD-{{ cancelTarget?.id }}</h3>
+        <h3 class="text-lg font-black text-[#5C4428] mb-1">Hủy đơn HD-{{ cancelTarget?.id }}</h3>
         <p class="text-sm text-slate-500 mb-4">Nhập lý do hủy để tiệm lưu lại.</p>
         <textarea v-model="cancelReason" rows="3" placeholder="VD: Khách yêu cầu hủy, hết nguyên liệu..."
-          class="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-[#E8634A] resize-none mb-4"></textarea>
+          class="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-[#7A5C3A] resize-none mb-4"></textarea>
         <div class="flex gap-3">
           <button @click="showCancelModal = false"
             class="flex-1 py-2.5 rounded-xl text-sm font-bold border border-slate-200 text-slate-500 hover:bg-slate-50">
@@ -241,14 +245,16 @@
       @click.self="showShipperModal = false">
       <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6">
         <div class="text-center mb-5">
-          <div class="text-5xl mb-3">🚴‍♂️</div>
-          <h3 class="text-lg font-black text-[#1E2A3B]">Giao đơn cho Shipper?</h3>
+          <div class="w-16 h-16 rounded-2xl bg-[#FDF6EC] flex items-center justify-center mx-auto mb-3">
+            <iconify-icon icon="ph:motorcycle-duotone" class="text-4xl text-[#7A5C3A]"></iconify-icon>
+          </div>
+          <h3 class="text-lg font-black text-[#5C4428]">Giao đơn cho Shipper?</h3>
           <p class="text-sm text-slate-500 mt-1">
-            Đơn <strong class="text-[#E8634A]">HD-{{ shipperTarget?.id }}</strong> sẽ chuyển sang trạng thái <strong>Đang giao hàng</strong>.
+            Đơn <strong class="text-[#7A5C3A]">HD-{{ shipperTarget?.id }}</strong> sẽ chuyển sang trạng thái <strong>Đang giao hàng</strong>.
           </p>
         </div>
         <div class="bg-blue-50 rounded-2xl p-4 mb-4 text-sm text-blue-700">
-          📍 Địa chỉ: <strong>{{ shipperTarget?.diaChiGiaoHang || 'Chưa có địa chỉ' }}</strong>
+          <iconify-icon icon="ph:map-pin-duotone" class="inline text-[#7A5C3A]"></iconify-icon> Địa chỉ: <strong>{{ shipperTarget?.diaChiGiaoHang || 'Chưa có địa chỉ' }}</strong>
         </div>
         <div class="flex gap-3">
           <button @click="showShipperModal = false"
@@ -297,10 +303,10 @@ let   autoRefreshTimer = null
 
 // ── CONSTANTS ─────────────────────────────────────────────────────────────────
 const columns = [
-  { status: 'CHO_XAC_NHAN', title: 'Chờ xác nhận',  icon: '⏳', nextStatus: 'DA_XAC_NHAN',  nextLabel: '✅ Xác nhận',    headerClass: 'bg-amber-50 text-amber-700 border-b border-amber-100' },
-  { status: 'DA_XAC_NHAN',  title: 'Đã xác nhận',   icon: '✅', nextStatus: 'DANG_LAM',      nextLabel: '🔧 Bắt đầu làm', headerClass: 'bg-blue-50 text-blue-700 border-b border-blue-100' },
-  { status: 'DANG_LAM',     title: 'Đang sản xuất', icon: '🔧', nextStatus: 'SAN_SANG',      nextLabel: '📦 Sẵn sàng',    headerClass: 'bg-purple-50 text-purple-700 border-b border-purple-100' },
-  { status: 'SAN_SANG',     title: 'Sẵn sàng giao', icon: '📦', nextStatus: 'DANG_GIAO',     nextLabel: '',               headerClass: 'bg-green-50 text-green-700 border-b border-green-100' },
+  { status: 'CHO_XAC_NHAN', title: 'Chờ xác nhận',  icon: 'ph:clock-countdown-duotone', nextStatus: 'DA_XAC_NHAN',  nextLabel: 'Xác nhận',    headerClass: 'bg-amber-50 text-amber-700 border-b border-amber-100' },
+  { status: 'DA_XAC_NHAN',  title: 'Đã xác nhận',   icon: 'ph:seal-check-duotone', nextStatus: 'DANG_LAM',      nextLabel: 'Bắt đầu làm', headerClass: 'bg-blue-50 text-blue-700 border-b border-blue-100' },
+  { status: 'DANG_LAM',     title: 'Đang sản xuất', icon: 'ph:wrench-duotone', nextStatus: 'SAN_SANG',      nextLabel: 'Sẵn sàng',    headerClass: 'bg-purple-50 text-purple-700 border-b border-purple-100' },
+  { status: 'SAN_SANG',     title: 'Sẵn sàng giao', icon: 'ph:package-duotone', nextStatus: 'DANG_GIAO',     nextLabel: '',               headerClass: 'bg-green-50 text-green-700 border-b border-green-100' },
 ]
 
 const statusMap = {
@@ -308,8 +314,8 @@ const statusMap = {
   DA_XAC_NHAN:  '✅ Đã xác nhận',
   DANG_LAM:     '🔧 Đang sản xuất',
   SAN_SANG:     '📦 Sẵn sàng giao',
-  DANG_GIAO:    '🚴 Đang giao hàng',
-  HOAN_THANH:   '🎉 Hoàn thành',
+  DANG_GIAO:    'Đang giao hàng',
+  HOAN_THANH:   'Hoàn thành',
   DA_HUY:       '❌ Đã hủy',
 }
 
@@ -331,12 +337,12 @@ const filteredOrders = computed(() =>
 const stats = computed(() => {
   const all = orders.value
   return [
-    { key: '', icon: '📋', label: 'Tất cả',       count: all.length },
-    { key: 'CHO_XAC_NHAN', icon: '⏳', label: 'Chờ xác nhận', count: all.filter(o => o.trangThai === 'CHO_XAC_NHAN').length },
-    { key: 'DA_XAC_NHAN',  icon: '✅', label: 'Đã xác nhận',  count: all.filter(o => o.trangThai === 'DA_XAC_NHAN').length },
-    { key: 'DANG_LAM',     icon: '🔧', label: 'Đang làm',     count: all.filter(o => o.trangThai === 'DANG_LAM').length },
-    { key: 'SAN_SANG',     icon: '📦', label: 'Sẵn sàng',     count: all.filter(o => o.trangThai === 'SAN_SANG').length },
-    { key: 'HOAN_THANH',   icon: '🎉', label: 'Hoàn thành',   count: all.filter(o => o.trangThai === 'HOAN_THANH').length },
+    { key: '', icon: 'ph:list-bullets-duotone', label: 'Tất cả',       count: all.length },
+    { key: 'CHO_XAC_NHAN', icon: 'ph:clock-countdown-duotone', label: 'Chờ xác nhận', count: all.filter(o => o.trangThai === 'CHO_XAC_NHAN').length },
+    { key: 'DA_XAC_NHAN',  icon: 'ph:seal-check-duotone', label: 'Đã xác nhận',  count: all.filter(o => o.trangThai === 'DA_XAC_NHAN').length },
+    { key: 'DANG_LAM',     icon: 'ph:wrench-duotone', label: 'Đang làm',     count: all.filter(o => o.trangThai === 'DANG_LAM').length },
+    { key: 'SAN_SANG',     icon: 'ph:package-duotone', label: 'Sẵn sàng',     count: all.filter(o => o.trangThai === 'SAN_SANG').length },
+    { key: 'HOAN_THANH',   icon: 'ph:check-circle-duotone', label: 'Hoàn thành',   count: all.filter(o => o.trangThai === 'HOAN_THANH').length },
   ]
 })
 
@@ -420,7 +426,7 @@ async function doHandToShipper() {
   updating.value = shipperTarget.value.id
   try {
     await apiClient.put(`/api/v1/orders/${shipperTarget.value.id}/process`, { trangThai: 'DANG_GIAO' })
-    showToast('success', `🚴 HD-${shipperTarget.value.id} đã giao cho Shipper!`)
+    showToast('success', `HD-${shipperTarget.value.id} đã giao cho Shipper!`)
     showShipperModal.value = false
     await fetchOrders()
   } catch (e) {

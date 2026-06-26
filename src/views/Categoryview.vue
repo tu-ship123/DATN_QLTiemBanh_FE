@@ -3,11 +3,11 @@
     <!-- Page Header -->
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-black text-[#1E2A3B]">Danh mục</h1>
+        <h1 class="text-2xl font-black text-[#5C4428]">Danh mục</h1>
         <p class="text-sm text-gray-400 mt-0.5">Quản lý danh mục sản phẩm</p>
       </div>
       <button
-        class="flex items-center gap-2 bg-gradient-to-r from-[#E8634A] to-[#F07A5E] text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-[#E8634A]/30 hover:shadow-[#E8634A]/50 hover:-translate-y-0.5 transition-all"
+        class="flex items-center gap-2 bg-gradient-to-r from-[#7A5C3A] to-[#9A7650] text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-[#7A5C3A]/30 hover:shadow-[#7A5C3A]/50 hover:-translate-y-0.5 transition-all"
         @click="openAddModal"
       >
         <iconify-icon icon="ph:plus-bold" class="text-base"></iconify-icon>
@@ -26,10 +26,10 @@
 
     <!-- Empty state -->
     <div v-else-if="categories.length === 0" class="flex flex-col items-center justify-center py-24 text-center">
-      <div class="w-20 h-20 rounded-2xl bg-[#FFF0EC] flex items-center justify-center mb-4">
-        <iconify-icon icon="ph:tag-duotone" class="text-4xl text-[#E8634A]"></iconify-icon>
+      <div class="w-20 h-20 rounded-2xl bg-[#FDF6EC] flex items-center justify-center mb-4">
+        <iconify-icon icon="ph:tag-duotone" class="text-4xl text-[#7A5C3A]"></iconify-icon>
       </div>
-      <p class="text-lg font-bold text-[#1E2A3B] mb-1">Chưa có danh mục nào</p>
+      <p class="text-lg font-bold text-[#5C4428] mb-1">Chưa có danh mục nào</p>
       <p class="text-sm text-gray-400">Bấm "Thêm danh mục" để tạo mới.</p>
     </div>
 
@@ -38,10 +38,10 @@
       <div
         v-for="cat in categories"
         :key="cat.id"
-        class="bg-white rounded-2xl border border-[#EDE8E3] overflow-hidden hover:shadow-lg hover:shadow-black/5 hover:-translate-y-0.5 transition-all duration-200 group"
+        class="bg-white rounded-2xl border border-[#EDE0CC] overflow-hidden hover:shadow-lg hover:shadow-black/5 hover:-translate-y-0.5 transition-all duration-200 group"
       >
         <!-- Ảnh -->
-        <div class="relative h-36 bg-[#FFF8F4] overflow-hidden">
+        <div class="relative h-36 bg-[#FFFBF5] overflow-hidden">
           <img
             v-if="cat.anhDaiDien"
             :src="cat.anhDaiDien"
@@ -63,13 +63,13 @@
 
         <!-- Info -->
         <div class="p-4">
-          <h3 class="font-bold text-[#1E2A3B] truncate mb-1">{{ cat.tenDanhMuc }}</h3>
+          <h3 class="font-bold text-[#5C4428] truncate mb-1">{{ cat.tenDanhMuc }}</h3>
           <p class="text-xs text-gray-400 line-clamp-2 min-h-[32px]">{{ cat.moTa || 'Chưa có mô tả' }}</p>
 
           <!-- Actions -->
-          <div class="flex items-center gap-2 mt-3 pt-3 border-t border-[#F5F0ED]">
+          <div class="flex items-center gap-2 mt-3 pt-3 border-t border-[#FDF8F2]">
             <button
-              class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold text-[#E8634A] bg-[#FFF0EC] hover:bg-[#FFE4DC] transition-colors"
+              class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold text-[#7A5C3A] bg-[#FDF6EC] hover:bg-[#FFE4DC] transition-colors"
               @click="openEditModal(cat)"
             >
               <iconify-icon icon="ph:pencil-simple-duotone"></iconify-icon>
@@ -130,7 +130,7 @@
           <div v-if="form.anhDaiDien" class="mt-2">
             <img
               :src="form.anhDaiDien"
-              class="h-24 w-full object-cover rounded-xl border border-[#EDE8E3]"
+              class="h-24 w-full object-cover rounded-xl border border-[#EDE0CC]"
               @error="(e) => (e.target.style.display = 'none')"
             />
           </div>
@@ -141,7 +141,7 @@
             v-model="form.hoatDong"
             active-text="Hoạt động"
             inactive-text="Ẩn"
-            style="--el-switch-on-color: #E8634A"
+            style="--el-switch-on-color: #7A5C3A"
           />
         </el-form-item>
       </el-form>
@@ -153,7 +153,7 @@
             size="large"
             type="primary"
             :loading="submitting"
-            style="background: linear-gradient(135deg,#E8634A,#F07A5E); border:none; border-radius:12px; font-weight:700"
+            style="background: linear-gradient(135deg,#7A5C3A,#9A7650); border:none; border-radius:12px; font-weight:700"
             @click="submitForm"
           >
             {{ isEditing ? 'Lưu thay đổi' : 'Thêm danh mục' }}

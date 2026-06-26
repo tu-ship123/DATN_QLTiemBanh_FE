@@ -1,13 +1,13 @@
 <template>
-  <div class="flex h-screen bg-[#FFF8F4] overflow-hidden -m-6">
+  <div class="flex h-screen bg-[#FFFBF5] overflow-hidden -m-6">
 
     <!-- LEFT: Danh sách sản phẩm -->
-    <div class="flex-1 flex flex-col min-w-0 border-r border-[#EDE8E3]">
-      <div class="bg-white px-5 py-4 border-b border-[#EDE8E3] shrink-0">
-        <div class="flex items-center gap-3 bg-[#F5F0ED] rounded-xl px-4 py-2.5 mb-4 focus-within:ring-2 focus-within:ring-[#E8634A]/20">
+    <div class="flex-1 flex flex-col min-w-0 border-r border-[#EDE0CC]">
+      <div class="bg-white px-5 py-4 border-b border-[#EDE0CC] shrink-0">
+        <div class="flex items-center gap-3 bg-[#FDF8F2] rounded-xl px-4 py-2.5 mb-4 focus-within:ring-2 focus-within:ring-[#7A5C3A]/20">
           <iconify-icon icon="ph:magnifying-glass" class="text-gray-400 text-xl shrink-0"></iconify-icon>
           <input v-model="search" type="text" placeholder="Tìm tên bánh, mã sản phẩm..."
-            class="bg-transparent outline-none w-full text-sm text-[#1E2A3B] placeholder-gray-400" />
+            class="bg-transparent outline-none w-full text-sm text-[#5C4428] placeholder-gray-400" />
           <button v-if="search" @click="search = ''" class="text-gray-400 hover:text-gray-600">
             <iconify-icon icon="ph:x" class="text-lg"></iconify-icon>
           </button>
@@ -17,8 +17,8 @@
             v-for="tab in tabs" :key="tab.key" @click="activeTab = tab.key"
             class="px-4 py-2 rounded-xl text-sm font-bold transition-all"
             :class="activeTab === tab.key
-              ? 'bg-gradient-to-r from-[#E8634A] to-[#F07A5E] text-white shadow-md shadow-[#E8634A]/20'
-              : 'bg-[#F5F0ED] text-[#5A6474] hover:bg-[#EDE8E3]'">
+              ? 'bg-gradient-to-r from-[#7A5C3A] to-[#9A7650] text-white shadow-md shadow-[#7A5C3A]/20'
+              : 'bg-[#FDF8F2] text-[#5A6474] hover:bg-[#EDE0CC]'">
             {{ tab.label }} <span class="ml-1 text-xs opacity-70">({{ tab.count }})</span>
           </button>
         </div>
@@ -27,7 +27,7 @@
       <!-- Loading state -->
       <div v-if="loadingProducts" class="flex-1 flex items-center justify-center">
         <div class="flex flex-col items-center gap-3 text-gray-400">
-          <iconify-icon icon="ph:spinner-gap" class="text-4xl animate-spin text-[#E8634A]"></iconify-icon>
+          <iconify-icon icon="ph:spinner-gap" class="text-4xl animate-spin text-[#7A5C3A]"></iconify-icon>
           <p class="text-sm font-semibold">Đang tải sản phẩm...</p>
         </div>
       </div>
@@ -37,7 +37,7 @@
         <div class="flex flex-col items-center gap-3 text-red-400 p-6 text-center">
           <iconify-icon icon="ph:warning-circle-duotone" class="text-5xl"></iconify-icon>
           <p class="text-sm font-semibold">{{ productError }}</p>
-          <button @click="loadProducts" class="mt-2 px-4 py-2 bg-[#E8634A] text-white rounded-xl text-sm font-bold hover:bg-[#d4583f] transition">
+          <button @click="loadProducts" class="mt-2 px-4 py-2 bg-[#7A5C3A] text-white rounded-xl text-sm font-bold hover:bg-[#d4583f] transition">
             Thử lại
           </button>
         </div>
@@ -51,21 +51,21 @@
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
           <button v-for="p in filteredProducts" :key="p.id" @click="addToCart(p)"
             :disabled="p.soLuongTon === 0"
-            class="bg-white rounded-2xl border border-[#EDE8E3] p-3 text-left transition-all group relative"
+            class="bg-white rounded-2xl border border-[#EDE0CC] p-3 text-left transition-all group relative"
             :class="p.soLuongTon === 0
               ? 'opacity-50 cursor-not-allowed'
-              : 'hover:border-[#E8634A]/40 hover:shadow-md hover:-translate-y-0.5 active:scale-95'">
+              : 'hover:border-[#7A5C3A]/40 hover:shadow-md hover:-translate-y-0.5 active:scale-95'">
             <div v-if="p.soLuongTon === 0"
               class="absolute top-2 right-2 bg-red-100 text-red-500 text-[10px] font-black px-2 py-0.5 rounded-full">
               Hết
             </div>
-            <div class="w-full aspect-square rounded-xl bg-[#FFF0EC] flex items-center justify-center mb-3 overflow-hidden group-hover:bg-[#FFE4DC] transition-colors">
+            <div class="w-full aspect-square rounded-xl bg-[#FDF6EC] flex items-center justify-center mb-3 overflow-hidden group-hover:bg-[#FFE4DC] transition-colors">
               <img v-if="p.anhSanPham" :src="p.anhSanPham" :alt="p.tenSanPham"
                 class="w-full h-full object-cover rounded-xl" @error="handleImgError($event)" />
-              <iconify-icon v-else icon="ph:cake-duotone" class="text-4xl text-[#E8634A]"></iconify-icon>
+              <iconify-icon v-else icon="ph:cake-duotone" class="text-4xl text-[#7A5C3A]"></iconify-icon>
             </div>
-            <div class="text-xs font-black text-[#1E2A3B] truncate mb-0.5">{{ p.tenSanPham }}</div>
-            <div class="text-xs font-bold text-[#E8634A]">{{ formatPrice(p.donGia) }}</div>
+            <div class="text-xs font-black text-[#5C4428] truncate mb-0.5">{{ p.tenSanPham }}</div>
+            <div class="text-xs font-bold text-[#7A5C3A]">{{ formatPrice(p.donGia) }}</div>
             <div class="text-[10px] text-gray-400 mt-0.5">Tồn: {{ p.soLuongTon }}</div>
           </button>
         </div>
@@ -74,10 +74,10 @@
 
     <!-- RIGHT: Bill Panel -->
     <div class="w-[380px] shrink-0 bg-white flex flex-col">
-      <div class="px-5 py-4 border-b border-[#EDE8E3] shrink-0">
+      <div class="px-5 py-4 border-b border-[#EDE0CC] shrink-0">
         <div class="flex items-center justify-between mb-3">
           <div>
-            <div class="font-display font-black text-base text-[#1E2A3B]">Đơn hiện tại</div>
+            <div class="font-display font-black text-base text-[#5C4428]">Đơn hiện tại</div>
             <div class="text-xs text-gray-400 mt-0.5">#POS-{{ orderNo }}</div>
           </div>
           <button @click="clearCart" class="text-xs font-bold text-red-400 hover:text-red-500 px-3 py-1.5 rounded-lg hover:bg-red-50 transition flex items-center gap-1">
@@ -91,7 +91,7 @@
             v-model="emailKhach"
             type="email"
             placeholder="Email khách hàng (để trống = dùng email nhân viên)"
-            class="w-full text-xs border border-[#EDE8E3] rounded-xl pl-8 pr-3 py-2 focus:outline-none focus:border-[#E8634A] focus:ring-1 focus:ring-[#E8634A]/20"
+            class="w-full text-xs border border-[#EDE0CC] rounded-xl pl-8 pr-3 py-2 focus:outline-none focus:border-[#7A5C3A] focus:ring-1 focus:ring-[#7A5C3A]/20"
           />
         </div>
       </div>
@@ -104,22 +104,22 @@
         </div>
         <div v-else class="space-y-2">
           <div v-for="item in cart" :key="item.id"
-            class="flex items-center gap-3 p-3 rounded-xl bg-[#FFF8F4] border border-[#EDE8E3] group">
-            <div class="w-10 h-10 rounded-lg bg-[#FFF0EC] flex items-center justify-center shrink-0 overflow-hidden">
+            class="flex items-center gap-3 p-3 rounded-xl bg-[#FFFBF5] border border-[#EDE0CC] group">
+            <div class="w-10 h-10 rounded-lg bg-[#FDF6EC] flex items-center justify-center shrink-0 overflow-hidden">
               <img v-if="item.anhSanPham" :src="item.anhSanPham" :alt="item.tenSanPham" class="w-full h-full object-cover" @error="handleImgError($event)" />
-              <iconify-icon v-else icon="ph:cake-duotone" class="text-xl text-[#E8634A]"></iconify-icon>
+              <iconify-icon v-else icon="ph:cake-duotone" class="text-xl text-[#7A5C3A]"></iconify-icon>
             </div>
             <div class="flex-1 min-w-0">
-              <div class="text-xs font-bold text-[#1E2A3B] truncate">{{ item.tenSanPham }}</div>
-              <div class="text-xs text-[#E8634A] font-bold">{{ formatPrice(item.donGia) }}</div>
+              <div class="text-xs font-bold text-[#5C4428] truncate">{{ item.tenSanPham }}</div>
+              <div class="text-xs text-[#7A5C3A] font-bold">{{ formatPrice(item.donGia) }}</div>
             </div>
             <div class="flex items-center gap-1.5 shrink-0">
-              <button @click="decrease(item)" class="w-7 h-7 rounded-lg bg-white border border-[#EDE8E3] flex items-center justify-center text-gray-500 hover:border-[#E8634A] hover:text-[#E8634A] transition font-bold text-lg leading-none">-</button>
-              <span class="w-6 text-center text-sm font-black text-[#1E2A3B]">{{ item.qty }}</span>
+              <button @click="decrease(item)" class="w-7 h-7 rounded-lg bg-white border border-[#EDE0CC] flex items-center justify-center text-gray-500 hover:border-[#7A5C3A] hover:text-[#7A5C3A] transition font-bold text-lg leading-none">-</button>
+              <span class="w-6 text-center text-sm font-black text-[#5C4428]">{{ item.qty }}</span>
               <button @click="increase(item)"
                 :disabled="item.qty >= item.soLuongTon"
                 class="w-7 h-7 rounded-lg flex items-center justify-center transition font-bold text-lg leading-none"
-                :class="item.qty >= item.soLuongTon ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-[#E8634A] text-white hover:bg-[#d4583f]'">+</button>
+                :class="item.qty >= item.soLuongTon ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-[#7A5C3A] text-white hover:bg-[#d4583f]'">+</button>
             </div>
             <button @click="removeItem(item)" class="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-400 transition ml-1">
               <iconify-icon icon="ph:x-circle-fill" class="text-lg"></iconify-icon>
@@ -128,14 +128,14 @@
         </div>
       </div>
 
-      <div class="border-t border-[#EDE8E3] px-5 pt-4 pb-3 shrink-0 space-y-2">
+      <div class="border-t border-[#EDE0CC] px-5 pt-4 pb-3 shrink-0 space-y-2">
         <div class="flex justify-between text-sm text-gray-500">
           <span>Tạm tính ({{ totalQty }} món)</span>
-          <span class="font-semibold text-[#1E2A3B]">{{ formatPrice(subtotal) }}</span>
+          <span class="font-semibold text-[#5C4428]">{{ formatPrice(subtotal) }}</span>
         </div>
-        <div class="flex justify-between text-base font-black text-[#1E2A3B] pt-2 border-t border-[#EDE8E3]">
+        <div class="flex justify-between text-base font-black text-[#5C4428] pt-2 border-t border-[#EDE0CC]">
           <span>Tổng cộng</span>
-          <span class="text-[#E8634A] text-lg">{{ formatPrice(subtotal) }}</span>
+          <span class="text-[#7A5C3A] text-lg">{{ formatPrice(subtotal) }}</span>
         </div>
         <p class="text-[10px] text-gray-400 text-center italic">(Giá hiển thị theo BE, không cộng thêm VAT ở FE)</p>
       </div>
@@ -143,19 +143,19 @@
       <div class="px-5 pb-5 space-y-2 shrink-0">
         <button @click="openPayment('cash')" :disabled="cart.length === 0 || submitting"
           class="w-full py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2 transition-all"
-          :class="cart.length === 0 || submitting ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gradient-to-r from-[#E8634A] to-[#F07A5E] text-white shadow-lg shadow-[#E8634A]/30 hover:-translate-y-0.5'">
+          :class="cart.length === 0 || submitting ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gradient-to-r from-[#7A5C3A] to-[#9A7650] text-white shadow-lg shadow-[#7A5C3A]/30 hover:-translate-y-0.5'">
           <iconify-icon icon="ph:money-duotone" class="text-xl"></iconify-icon>
           Thanh toán tiền mặt
         </button>
         <button @click="openPayment('qr')" :disabled="cart.length === 0 || submitting"
           class="w-full py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2 transition-all border-2"
-          :class="cart.length === 0 || submitting ? 'border-gray-200 text-gray-300 cursor-not-allowed' : 'border-[#E8634A] text-[#E8634A] hover:bg-[#FFF0EC]'">
+          :class="cart.length === 0 || submitting ? 'border-gray-200 text-gray-300 cursor-not-allowed' : 'border-[#7A5C3A] text-[#7A5C3A] hover:bg-[#FDF6EC]'">
           <iconify-icon icon="ph:qr-code-duotone" class="text-xl"></iconify-icon>
           VietQR / Chuyển khoản
         </button>
         <button @click="doPrintBill" :disabled="!lastReceipt"
           class="w-full py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2 transition-all"
-          :class="!lastReceipt ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-[#1E2A3B] text-white hover:bg-[#2D3F56]'">
+          :class="!lastReceipt ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-[#5C4428] text-white hover:bg-[#2D3F56]'">
           <iconify-icon icon="ph:printer-duotone" class="text-xl"></iconify-icon>
           In hóa đơn nhiệt
         </button>
@@ -167,18 +167,18 @@
     <!-- ═══════════════════════════════════════════════ -->
     <el-dialog v-model="showCashModal" title="Thanh toán tiền mặt" width="420px" center align-center>
       <div class="space-y-4">
-        <div class="text-center p-4 bg-[#FFF8F4] rounded-xl">
+        <div class="text-center p-4 bg-[#FFFBF5] rounded-xl">
           <div class="text-sm text-gray-400 mb-1">Tổng tiền cần thanh toán</div>
-          <div class="text-3xl font-black text-[#E8634A]">{{ formatPrice(subtotal) }}</div>
+          <div class="text-3xl font-black text-[#7A5C3A]">{{ formatPrice(subtotal) }}</div>
         </div>
 
         <div>
-          <label class="text-sm font-bold text-[#1E2A3B] mb-2 block">Ghi chú đơn hàng</label>
+          <label class="text-sm font-bold text-[#5C4428] mb-2 block">Ghi chú đơn hàng</label>
           <el-input v-model="ghiChu" type="textarea" :rows="2" placeholder="Ghi chú (tuỳ chọn)..." />
         </div>
 
         <div>
-          <label class="text-sm font-bold text-[#1E2A3B] mb-2 block">Tiền khách đưa</label>
+          <label class="text-sm font-bold text-[#5C4428] mb-2 block">Tiền khách đưa</label>
           <el-input v-model="cashGiven" type="number" size="large" placeholder="Nhập số tiền..." @input="calcChange">
             <template #suffix>đ</template>
           </el-input>
@@ -199,7 +199,7 @@
           :disabled="change < 0 || !cashGiven || submitting"
           :loading="submitting"
           @click="submitOrder('TIEN_MAT')"
-          style="background-color: #E8634A; border-color: #E8634A;">
+          style="background-color: #7A5C3A; border-color: #7A5C3A;">
           Xác nhận thanh toán
         </el-button>
       </template>
@@ -214,35 +214,35 @@
         <!-- Bước 1: Nhập ghi chú, chưa tạo đơn -->
         <template v-if="!qrData && !submitting">
           <div>
-            <label class="text-sm font-bold text-[#1E2A3B] mb-2 block">Ghi chú đơn hàng</label>
+            <label class="text-sm font-bold text-[#5C4428] mb-2 block">Ghi chú đơn hàng</label>
             <el-input v-model="ghiChu" type="textarea" :rows="2" placeholder="Ghi chú (tuỳ chọn)..." />
           </div>
           <div class="flex flex-col items-center gap-3 py-4">
-            <div class="w-40 h-40 bg-[#F5F0ED] rounded-2xl flex items-center justify-center">
-              <iconify-icon icon="ph:qr-code-duotone" class="text-7xl text-[#E8634A]/30"></iconify-icon>
+            <div class="w-40 h-40 bg-[#FDF8F2] rounded-2xl flex items-center justify-center">
+              <iconify-icon icon="ph:qr-code-duotone" class="text-7xl text-[#7A5C3A]/30"></iconify-icon>
             </div>
             <p class="text-sm text-gray-400 text-center">
-              Nhấn <strong class="text-[#E8634A]">"Tạo mã QR"</strong> để gửi đơn lên server và nhận mã chuyển khoản.
+              Nhấn <strong class="text-[#7A5C3A]">"Tạo mã QR"</strong> để gửi đơn lên server và nhận mã chuyển khoản.
             </p>
           </div>
         </template>
 
         <!-- Loading -->
         <div v-else-if="submitting" class="flex flex-col items-center gap-3 py-8">
-          <iconify-icon icon="ph:spinner-gap" class="text-5xl animate-spin text-[#E8634A]"></iconify-icon>
+          <iconify-icon icon="ph:spinner-gap" class="text-5xl animate-spin text-[#7A5C3A]"></iconify-icon>
           <p class="text-sm text-gray-500 font-semibold">Đang tạo đơn hàng &amp; mã QR...</p>
         </div>
 
         <!-- Bước 2: Hiển thị QR từ BE -->
         <div v-else-if="qrData" class="flex flex-col items-center gap-4">
-          <div class="p-2 bg-white rounded-2xl shadow-md border border-[#EDE8E3]">
+          <div class="p-2 bg-white rounded-2xl shadow-md border border-[#EDE0CC]">
             <img :src="qrData.vietQrUrl" alt="VietQR" class="w-56 h-56 rounded-xl object-contain"
               @error="qrImgError = true" />
             <p v-if="qrImgError" class="text-xs text-red-400 text-center mt-2">Không tải được ảnh QR. Kiểm tra cấu hình ngân hàng BE.</p>
           </div>
 
-          <div class="text-center p-3 bg-[#FFF8F4] rounded-xl w-full">
-            <div class="text-2xl font-black text-[#E8634A]">{{ formatPrice(qrData.tongTien) }}</div>
+          <div class="text-center p-3 bg-[#FFFBF5] rounded-xl w-full">
+            <div class="text-2xl font-black text-[#7A5C3A]">{{ formatPrice(qrData.tongTien) }}</div>
             <div class="text-xs text-gray-500 mt-1 font-semibold">Mã đơn: HD-POS-{{ qrData.donHangId }}</div>
           </div>
 
@@ -261,7 +261,7 @@
       <template #footer>
         <el-button @click="cancelQR" :disabled="submitting">Huỷ</el-button>
         <el-button v-if="!qrData" type="primary" :loading="submitting" @click="submitOrder('VIET_QR')"
-          style="background-color: #E8634A; border-color: #E8634A;">
+          style="background-color: #7A5C3A; border-color: #7A5C3A;">
           <iconify-icon icon="ph:qr-code-duotone" class="mr-1 text-base"></iconify-icon>
           Tạo mã QR
         </el-button>
@@ -280,12 +280,12 @@
         <div class="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center">
           <iconify-icon icon="ph:check-circle-duotone" class="text-6xl text-green-500"></iconify-icon>
         </div>
-        <div class="text-xl font-black text-[#1E2A3B]">Thanh toán thành công!</div>
+        <div class="text-xl font-black text-[#5C4428]">Thanh toán thành công!</div>
         <div class="text-sm text-gray-400">
           Đơn <strong>HD-POS-{{ successData?.donHangId }}</strong> đã hoàn tất
         </div>
-        <div class="text-2xl font-black text-[#E8634A]">{{ formatPrice(successData?.tongTien) }}</div>
-        <div class="text-xs text-gray-500 bg-[#FFF8F4] px-4 py-2 rounded-xl">
+        <div class="text-2xl font-black text-[#7A5C3A]">{{ formatPrice(successData?.tongTien) }}</div>
+        <div class="text-xs text-gray-500 bg-[#FFFBF5] px-4 py-2 rounded-xl">
           {{ successData?.phuongThuc === 'TIEN_MAT' ? '💵 Tiền mặt' : '📱 VietQR / Chuyển khoản' }}
         </div>
       </div>
@@ -294,7 +294,7 @@
           <el-button @click="doPrintBill" style="flex:1">
             <iconify-icon icon="ph:printer-duotone" class="mr-1"></iconify-icon>In hóa đơn
           </el-button>
-          <el-button type="primary" @click="newOrder" style="background-color: #E8634A; border-color: #E8634A; flex:1">
+          <el-button type="primary" @click="newOrder" style="background-color: #7A5C3A; border-color: #7A5C3A; flex:1">
             Tạo đơn mới
           </el-button>
         </div>

@@ -14,7 +14,7 @@
           <div class="flex items-center gap-4">
             <div class="w-24 h-24 rounded-xl overflow-hidden bg-slate-100 border border-dashed border-gray-300 flex items-center justify-center shrink-0">
               <img v-if="form.anhSanPham && !isPlaceholder" :src="form.anhSanPham" class="w-full h-full object-cover" alt="Xem trước ảnh" />
-              <span v-else class="text-gray-300 text-3xl">🎂</span>
+              <span v-else class="text-gray-300 text-3xl"><iconify-icon icon="ph:cake-duotone"></iconify-icon></span>
             </div>
             <div class="flex flex-col gap-2">
               <label class="btn-secondary cursor-pointer inline-flex items-center gap-1.5 text-sm px-3 py-1.5 w-fit">
@@ -89,7 +89,7 @@
       <el-button @click="emit('update:visible', false)" :disabled="saving">Huỷ</el-button>
       <el-button
         type="primary"
-        :style="{ background: '#E8634A', borderColor: '#E8634A' }"
+        :style="{ background: '#7A5C3A', borderColor: '#7A5C3A' }"
         :loading="saving"
         @click="handleSave"
       >

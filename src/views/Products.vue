@@ -1,36 +1,34 @@
 <template>
-  <div :class="isCustomer ? 'blossom-theme px-4 md:px-12 py-10 max-w-7xl mx-auto space-y-10' : 'space-y-6'" v-loading="productStore.loading">
+  <div :class="isCustomer ? 'chocopine-page' : 'space-y-6'" v-loading="productStore.loading">
     
-    <div v-if="isCustomer" class="space-y-8 animate-fade-in">
-      <div class="text-center max-w-2xl mx-auto space-y-3">
-        <span style="font-family:'DM Sans',sans-serif;font-size:11px;font-weight:700;color:#EC4899;letter-spacing:2px;text-transform:uppercase;display:block;">Thủ công · Tươi mới mỗi ngày</span>
-        <h1 style="font-family:'Playfair Display',serif;font-size:44px;font-weight:950;color:#3D1A2C;letter-spacing:1px;">Thực Đơn Bánh Ngọt</h1>
-        <p style="font-family:'DM Sans',sans-serif;font-size:14px;color:#7C3D5C;line-height:1.7;">Khám phá thế giới bánh ngọt tinh tế của chúng tôi, được làm thủ công bằng nguyên liệu tự nhiên bởi những nghệ nhân làm bánh hàng đầu.</p>
-        <div style="width:48px;height:2px;background:#EC4899;margin:16px auto 0;opacity:0.6;"></div>
+    <div v-if="isCustomer" class="chocopine-inner animate-fade-in">
+      <div class="chocopine-hero">
+        <span class="chocopine-eyebrow">Thủ công · Tươi mới mỗi ngày</span>
+        <h1 class="chocopine-title">Thực Đơn Bánh Ngọt</h1>
+        <p class="chocopine-desc">Khám phá thế giới bánh ngọt tinh tế của Chocopine, được làm thủ công bằng nguyên liệu tự nhiên bởi những nghệ nhân làm bánh hàng đầu.</p>
+        <div class="chocopine-divider"></div>
       </div>
 
-      <div class="flex flex-col md:flex-row gap-4 justify-between items-center p-4 rounded-[20px]" style="background:#FFFFFF;border:1px solid #FDD8EE;">
+      <div class="chocopine-filter-bar chocopine-card">
         <div class="flex gap-2 flex-wrap items-center justify-center">
           <button
-            class="px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200"
-            :class="activeCategory === null ? 'text-white' : 'text-[#7C3D5C] hover:text-[#EC4899]'"
-            :style="activeCategory === null ? 'background:linear-gradient(135deg,#EC4899,#F472B6);border:1px solid transparent;box-shadow:0 4px 12px rgba(236,72,153,0.25);' : 'background:#FFF0F7;border:1px solid #FDD8EE;'"
+            class="chocopine-pill"
+            :class="{ 'chocopine-pill--active': activeCategory === null }"
             @click="activeCategory = null"
           >
             Tất cả
           </button>
           
           <template v-if="categoryStore.loading">
-            <div v-for="n in 3" :key="n" class="h-8 w-20 rounded-xl bg-pink-50 animate-pulse"></div>
+            <div v-for="n in 3" :key="n" class="h-8 w-20 rounded-xl animate-pulse" style="background: var(--cream-white-mid)"></div>
           </template>
           
           <button
             v-else
             v-for="cat in categoryStore.activeCategories || categoryStore.categories"
             :key="cat.id"
-            class="px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200"
-            :class="activeCategory === cat.id ? 'text-white' : 'text-[#7C3D5C] hover:text-[#EC4899]'"
-            :style="activeCategory === cat.id ? 'background:linear-gradient(135deg,#EC4899,#F472B6);border:1px solid transparent;box-shadow:0 4px 12px rgba(236,72,153,0.25);' : 'background:#FFF0F7;border:1px solid #FDD8EE;'"
+            class="chocopine-pill"
+            :class="{ 'chocopine-pill--active': activeCategory === cat.id }"
             @click="activeCategory = cat.id"
           >
             {{ cat.tenDanhMuc }}
@@ -39,16 +37,15 @@
 
         <div class="flex gap-3 w-full md:w-auto items-center">
           <div class="relative flex-1 md:w-60">
-            <el-icon class="absolute left-3.5 top-1/2 -translate-y-1/2 text-base" style="color:#7C3D5C;"><Search /></el-icon>
+            <el-icon class="absolute left-3.5 top-1/2 -translate-y-1/2 text-base chocopine-text-mid"><Search /></el-icon>
             <input
               v-model="search"
               type="text"
               placeholder="Tìm bánh ngọt..."
-              class="w-full pl-10 pr-4 py-2 rounded-xl text-xs outline-none transition-all"
-              style="border:1px solid #FDD8EE;background:#FFF0F7;color:#3D1A2C;font-family:'DM Sans',sans-serif;"
+              class="chocopine-input"
             />
           </div>
-          <el-select v-model="sortBy" style="width:145px" size="default" class="custom-select">
+          <el-select v-model="sortBy" style="width:145px" size="default" class="chocopine-select">
             <el-option label="Mới nhất" value="newest" />
             <el-option label="Giá thấp → cao" value="price-asc" />
             <el-option label="Giá cao → thấp" value="price-desc" />
@@ -60,93 +57,85 @@
         <div
           v-for="product in displayedProducts"
           :key="product.id"
-          class="overflow-hidden group transition-all duration-300 flex flex-col justify-between h-[450px] product-card"
-          style="border-radius:20px;background:#FFFFFF;border:1px solid #FDD8EE;"
-          onmouseenter="this.style.borderColor='#F9A8D4';this.style.boxShadow='0 8px 24px rgba(236,72,153,0.08)'"
-          onmouseleave="this.style.borderColor='#FDD8EE';this.style.boxShadow='none'"
+          class="chocopine-product-card overflow-hidden group transition-all duration-300 flex flex-col justify-between h-[450px]"
         >
-          <div class="h-48 relative overflow-hidden bg-[#FAFAF9] flex items-center justify-center flex-shrink-0 cursor-pointer" @click="goToDetail(product.id)">
+          <div class="h-48 relative overflow-hidden flex items-center justify-center flex-shrink-0 cursor-pointer product-img-wrap" @click="goToDetail(product.id)">
             <img
               :src="product.anhSanPham || defaultImage"
               :alt="product.tenSanPham"
               class="h-full w-full object-cover transition duration-500 group-hover:scale-105"
               @error="handleImageError"
             />
-            <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity" style="background:linear-gradient(to top, rgba(61,26,44,0.15) 0%, transparent 60%);"></div>
+            <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity product-img-overlay"></div>
 
             <div v-if="product.soLuongTon === 0" class="absolute inset-0 bg-black/40 flex items-center justify-center z-20">
-              <span class="bg-white text-[#3D1A2C] font-black text-xs px-4 py-2 rounded-full uppercase tracking-wider shadow-lg">Hết hàng</span>
+              <span class="sold-out-badge">Hết hàng</span>
             </div>
 
             <button
-              class="absolute top-3 right-3 w-9 h-9 backdrop-blur-sm rounded-xl shadow-md flex items-center justify-center transition hover:scale-110 active:scale-95 z-10"
-              style="background:rgba(255,255,255,0.85);border:1px solid #FDD8EE;"
-              :class="product.wished ? 'text-[#EC4899]' : 'text-[#B07090]'"
+              class="wish-btn"
+              :class="{ 'wish-btn--active': product.wished }"
               @click.stop="toggleWishlist(product)"
             >
-              <span class="text-base">♥</span>
+              <iconify-icon :icon="product.wished ? 'ph:heart-fill' : 'ph:heart'" class="text-base"></iconify-icon>
             </button>
 
-            <span v-if="product.isBestseller" class="absolute top-3 left-3 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg shadow-sm z-10" style="background:#EC4899;color:#FFFFFF;">
-              ★ Bán chạy
-            </span>
+            <span v-if="product.isBestseller" class="bestseller-badge"><iconify-icon icon="ph:star-fill" class="inline text-xs"></iconify-icon> Bán chạy</span>
           </div>
 
           <div class="p-5 flex-1 flex flex-col justify-between">
             <div>
-              <span style="font-family:'DM Sans',sans-serif;font-size:10px;font-weight:700;color:#B07090;text-transform:uppercase;letter-spacing:1.5px;display:block;">{{ product.tenDanhMuc || 'Bánh ngọt' }}</span>
-              <h3 @click="goToDetail(product.id)" style="font-family:'Playfair Display',serif;font-size:16px;font-weight:900;color:#3D1A2C;margin:4px 0 0;letter-spacing:0.3px;" class="truncate cursor-pointer group-hover:text-[#EC4899] transition-colors" :title="product.tenSanPham">{{ product.tenSanPham }}</h3>
-              <p style="font-family:'DM Sans',sans-serif;font-size:12px;color:#7C3D5C;margin-top:8px;line-height:1.5;" class="line-clamp-2">
+              <span class="product-cat">{{ product.tenDanhMuc || 'Bánh ngọt' }}</span>
+              <h3 @click="goToDetail(product.id)" class="product-name truncate cursor-pointer" :title="product.tenSanPham">{{ product.tenSanPham }}</h3>
+              <p class="product-desc line-clamp-2">
                 {{ product.moTa || 'Chiếc bánh thơm ngon mềm mịn, chế biến trong ngày với kem tươi organic hảo hạng.' }}
               </p>
             </div>
 
             <div>
-              <div class="flex items-center justify-between pt-3 mt-4" style="border-top:1px solid #FFF0F7;">
+              <div class="flex items-center justify-between pt-3 mt-4 product-footer-row">
                 <div>
-                  <span style="font-family:'Playfair Display',serif;font-size:16px;font-weight:900;color:#EC4899;">{{ formatPrice(product.donGia) }}</span>
-                  <span v-if="product.giaGoc" style="font-family:'DM Sans',sans-serif;font-size:11px;color:#B07090;text-decoration:line-through;display:block;">{{ formatPrice(product.giaGoc) }}</span>
+                  <span class="product-price">{{ formatPrice(product.donGia) }}</span>
+                  <span v-if="product.giaGoc" class="product-price-old">{{ formatPrice(product.giaGoc) }}</span>
                 </div>
-                <div class="flex items-center gap-1 px-2.5 py-1 rounded-xl" style="background:#FFF0F7;border:1px solid #FDD8EE;">
-                  <span style="color:#F59E0B;font-size:11px;">★</span>
-                  <span style="font-family:'DM Sans',sans-serif;font-size:11px;font-weight:700;color:#3D1A2C;">5.0</span>
+                <div class="rating-pill">
+                  <iconify-icon icon="ph:star-fill" class="rating-star"></iconify-icon>
+                  <span class="rating-num">5.0</span>
                 </div>
               </div>
 
               <button
                 @click.stop="addToCart(product)"
                 :disabled="cartStore.loading || product.soLuongTon === 0"
-                class="mt-4 w-full py-3 rounded-xl font-bold text-xs transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                style="font-family:'DM Sans',sans-serif;font-weight:700;font-size:12px;letter-spacing:0.5px;"
-                :style="product.added
-                  ? 'background:#10B981;color:#FFFFFF;border:none;'
-                  : 'background:linear-gradient(135deg,#EC4899,#F472B6);color:#FFFFFF;border:none;box-shadow:0 4px 12px rgba(236,72,153,0.25);'"
+                class="chocopine-btn-primary mt-4 w-full py-3 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                :class="{ 'btn-added': product.added }"
               >
-                {{ cartStore.loading ? 'Đang xử lý...' : (product.added ? '✓ Đã thêm vào giỏ' : 'Thêm vào giỏ') }}
+                <iconify-icon :icon="cartStore.loading ? 'ph:spinner-gap-bold' : (product.added ? 'ph:check-bold' : 'ph:shopping-cart-simple')" :class="{ 'spin-icon': cartStore.loading }"></iconify-icon>
+                {{ cartStore.loading ? 'Đang xử lý...' : (product.added ? 'Đã thêm vào giỏ' : 'Thêm vào giỏ') }}
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      <div v-else class="p-16 text-center" style="border-radius:24px;border:1px dashed #FDD8EE;background:#FFFFFF;">
-        <h3 style="font-family:'Playfair Display',serif;font-size:18px;font-weight:750;color:#3D1A2C;margin-bottom:8px;">Không tìm thấy bánh ngọt phù hợp</h3>
-        <p style="font-family:'DM Sans',sans-serif;font-size:13px;color:#7C3D5C;">Hãy thử thay đổi từ khóa tìm kiếm hoặc chọn danh mục khác nhé.</p>
-        <button @click="activeCategory = null; search = ''" class="mt-4 text-xs font-bold text-[#EC4899] hover:underline">Xóa bộ lọc</button>
+      <div v-else class="empty-box p-16 text-center chocopine-card">
+        <h3 class="chocopine-title" style="font-size: 2rem;">Không tìm thấy bánh ngọt phù hợp</h3>
+        <p class="chocopine-desc">Hãy thử thay đổi từ khóa tìm kiếm hoặc chọn danh mục khác nhé.</p>
+        <button @click="activeCategory = null; search = ''" class="mt-4 text-xs font-extrabold chocopine-accent hover:underline" style="font-family: var(--font-sans)">Xóa bộ lọc</button>
       </div>
     </div>
 
     <div v-else class="space-y-6">
       <div class="flex items-center justify-between mb-6">
         <div>
-          <h1 class="font-display font-black text-2xl" style="color:#1E2A3B">Quản lý sản phẩm</h1>
+          <h1 class="font-display font-black text-2xl" style="color:#5C4428">Quản lý sản phẩm</h1>
           <p class="text-sm text-muted mt-0.5">{{ productStore.products.length }} sản phẩm · {{ productStore.products.filter(p => p.trangThai).length }} đang bán</p>
         </div>
         <div class="flex gap-2">
           <div class="flex bg-white border border-[var(--color-border)] rounded-xl p-1">
             <button v-for="v in ['grid','list']" :key="v"
               class="px-3 py-1.5 rounded-lg text-sm font-medium transition"
-              :class="viewMode === v ? 'bg-[#E8634A] text-white' : 'text-gray-400 hover:text-gray-600'"
+              :class="viewMode === v ? 'bg-[#7A5C3A] text-white' : 'text-gray-400 hover:text-gray-600'"
               @click="viewMode = v">
               {{ v === 'grid' ? '⊞' : '☰' }}
             </button>
@@ -160,12 +149,12 @@
       <div class="flex gap-2 mb-5 flex-wrap">
         <button
           class="px-4 py-2 rounded-xl text-sm font-semibold transition"
-          :class="activeCategory === null ? 'text-white shadow bg-gradient-to-br from-[#E8634A] to-[#F07A5E]' : 'bg-white border border-[var(--color-border)] text-gray-500 hover:border-[#E8634A] hover:text-[#E8634A]'"
+          :class="activeCategory === null ? 'text-white shadow bg-gradient-to-br from-[#7A5C3A] to-[#9A7650]' : 'bg-white border border-[var(--color-border)] text-gray-500 hover:border-[#7A5C3A] hover:text-[#7A5C3A]'"
           @click="activeCategory = null"
         >Tất cả</button>
         <button v-for="cat in categoryStore.categories" :key="cat.id"
           class="px-4 py-2 rounded-xl text-sm font-semibold transition"
-          :class="activeCategory === cat.id ? 'text-white shadow bg-gradient-to-br from-[#E8634A] to-[#F07A5E]' : 'bg-white border border-[var(--color-border)] text-gray-500 hover:border-[#E8634A] hover:text-[#E8634A]'"
+          :class="activeCategory === cat.id ? 'text-white shadow bg-gradient-to-br from-[#7A5C3A] to-[#9A7650]' : 'bg-white border border-[var(--color-border)] text-gray-500 hover:border-[#7A5C3A] hover:text-[#7A5C3A]'"
           @click="activeCategory = cat.id">
           {{ cat.tenDanhMuc }}
         </button>
@@ -198,7 +187,7 @@
             />
             <div class="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-transparent"></div>
             <div class="absolute top-3 right-3 flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 transition">
-              <button class="w-8 h-8 bg-white rounded-xl shadow flex items-center justify-center text-sm" @click.stop="openEdit(product)" title="Sửa">✏️</button>
+              <button class="w-8 h-8 bg-white rounded-xl shadow flex items-center justify-center text-[#7A5C3A]" @click.stop="openEdit(product)" title="Sửa"><iconify-icon icon="ph:pencil-simple-duotone"></iconify-icon></button>
               <button class="w-8 h-8 bg-white rounded-xl shadow flex items-center justify-center text-sm text-red-500" @click.stop="deleteProduct(product)" title="Xoá">🗑</button>
             </div>
             <div class="absolute top-3 left-3">
@@ -207,22 +196,22 @@
           </div>
 
           <div class="p-4">
-            <div class="font-semibold text-sm mb-1 line-clamp-1" style="color:#1E2A3B" :title="product.tenSanPham">{{ product.tenSanPham }}</div>
+            <div class="font-semibold text-sm mb-1 line-clamp-1" style="color:#5C4428" :title="product.tenSanPham">{{ product.tenSanPham }}</div>
             <div class="text-xs text-muted mb-3">{{ product.tenDanhMuc }} · Tồn: {{ product.soLuongTon }}</div>
             <div class="flex items-center justify-between">
               <div>
-                <div class="font-bold text-base" style="color:#E8634A">{{ formatPrice(product.donGia) }}</div>
+                <div class="font-bold text-base" style="color:#7A5C3A">{{ formatPrice(product.donGia) }}</div>
               </div>
             </div>
           </div>
         </div>
 
         <div
-          class="bg-white rounded-2xl border-2 border-dashed border-[var(--color-border)] flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-[#E8634A] hover:bg-[#FFF8F4] transition min-h-[240px]"
+          class="bg-white rounded-2xl border-2 border-dashed border-[var(--color-border)] flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-[#7A5C3A] hover:bg-[#FFFBF5] transition min-h-[240px]"
           @click="openAdd"
         >
-          <div class="w-12 h-12 rounded-2xl bg-[#FFF0EC] flex items-center justify-center text-2xl">+</div>
-          <div class="text-sm font-semibold" style="color:#E8634A">Thêm sản phẩm</div>
+          <div class="w-12 h-12 rounded-2xl bg-[#FDF6EC] flex items-center justify-center text-2xl">+</div>
+          <div class="text-sm font-semibold" style="color:#7A5C3A">Thêm sản phẩm</div>
         </div>
       </div>
 
@@ -235,7 +224,7 @@
                   <img :src="row.anhSanPham || defaultImage" class="h-full w-full object-cover" @error="handleImageError" />
                 </div>
                 <div>
-                  <div class="font-semibold text-sm line-clamp-1" style="color:#1E2A3B" :title="row.tenSanPham">{{ row.tenSanPham }}</div>
+                  <div class="font-semibold text-sm line-clamp-1" style="color:#5C4428" :title="row.tenSanPham">{{ row.tenSanPham }}</div>
                   <div class="text-xs text-muted">{{ row.tenDanhMuc }}</div>
                 </div>
               </div>
@@ -243,7 +232,7 @@
           </el-table-column>
           <el-table-column label="GIÁ BÁN" width="150">
             <template #default="{ row }">
-              <span class="font-bold" style="color:#E8634A">{{ formatPrice(row.donGia) }}</span>
+              <span class="font-bold" style="color:#7A5C3A">{{ formatPrice(row.donGia) }}</span>
             </template>
           </el-table-column>
           <el-table-column label="TỒN KHO" width="100" align="center">
@@ -387,7 +376,7 @@ const addToCart = async (product) => {
 function toggleWishlist(product) {
   product.wished = !product.wished
   if(product.wished) {
-    ElMessage.success(`Đã lưu "${product.tenSanPham}" vào danh sách yêu thích! ♥`)
+    ElMessage.success(`Đã lưu "${product.tenSanPham}" vào danh sách yêu thích!`)
   } else {
     ElMessage.info(`Đã bỏ lưu "${product.tenSanPham}".`)
   }
@@ -427,21 +416,133 @@ function deleteProduct(product) {
   to { opacity: 1; transform: translateY(0); } 
 }
 
-/* Custom Select cho Theme Khách hàng */
-:deep(.custom-select .el-input__wrapper) {
-  background-color: #FFF0F7;
-  border-radius: 1rem;
-  box-shadow: none !important;
-  border: 1px solid #FDD8EE;
-  padding: 6px 12px;
+.chocopine-product-card {
+  border-radius: 20px;
+  background: var(--cream-white);
+  border: 1px solid var(--cream-white-deep);
+  transition: border-color 0.3s, box-shadow 0.3s;
 }
-:deep(.custom-select .el-input__wrapper.is-focus) {
-  border-color: #EC4899;
+.chocopine-product-card:hover {
+  border-color: var(--wheat-brown-pale);
+  box-shadow: 0 8px 24px rgba(122, 92, 58, 0.1);
 }
-:deep(.custom-select .el-input__inner) {
-  color: #3D1A2C;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.75rem;
+.product-img-wrap { background: var(--cream-white-soft); }
+.product-img-overlay {
+  background: linear-gradient(to top, rgba(92, 68, 40, 0.15) 0%, transparent 60%);
+}
+.sold-out-badge {
+  background: var(--cream-white);
+  color: var(--wheat-brown-dark);
+  font-family: var(--font-sans);
+  font-weight: 900;
+  font-size: 12px;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.wish-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  backdrop-filter: blur(8px);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(92, 68, 40, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 251, 245, 0.9);
+  border: 1px solid var(--cream-white-deep);
+  color: var(--wheat-brown-light);
+  cursor: pointer;
+  transition: transform 0.2s, color 0.2s;
+  z-index: 10;
+}
+.wish-btn:hover { transform: scale(1.1); }
+.wish-btn--active { color: var(--wheat-brown); }
+.bestseller-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: var(--wheat-brown);
+  color: var(--cream-white);
+  z-index: 10;
+}
+.product-cat {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--wheat-brown-mid);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  display: block;
+}
+.product-name {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--wheat-brown-dark);
+  margin: 4px 0 0;
+  transition: color 0.2s;
+}
+.group:hover .product-name { color: var(--wheat-brown); }
+.product-desc {
+  font-family: var(--font-sans);
+  font-size: 12px;
   font-weight: 500;
+  color: var(--wheat-brown-mid);
+  margin-top: 8px;
+  line-height: 1.5;
+}
+.product-footer-row {
+  border-top: 1px solid var(--cream-white-deep);
+}
+.product-price {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--wheat-brown);
+}
+.product-price-old {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--wheat-brown-light);
+  text-decoration: line-through;
+  display: block;
+}
+.rating-pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: var(--cream-white-soft);
+  border: 1px solid var(--cream-white-deep);
+}
+.rating-star { color: var(--wheat-brown-mid); font-size: 11px; }
+.spin-icon { animation: spin 0.75s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.rating-num {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--wheat-brown-dark);
+}
+.btn-added {
+  background: #10B981 !important;
+  box-shadow: none !important;
+}
+.empty-box {
+  border-style: dashed;
 }
 </style>

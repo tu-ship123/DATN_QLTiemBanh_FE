@@ -21,6 +21,7 @@ export const useAuthStore = defineStore('auth', {
     accessToken: sessionStorage.getItem('accessToken') || null,
     refreshToken: sessionStorage.getItem('refreshToken') || null,
     loading: false,
+    loginPending: false,
     error: null,
   }),
 
@@ -61,6 +62,7 @@ export const useAuthStore = defineStore('auth', {
 
     async login(credentials) {
       this.loading = true;
+      this.loginPending = true;
       this.error = null;
 
       try {
@@ -110,6 +112,7 @@ export const useAuthStore = defineStore('auth', {
 
       } catch (err) {
         console.error("❌ [LỖI GỐC TẠI STORE]:", err);
+        this.loginPending = false;
         this.error =
           err.response?.data?.message ||
           err.response?.data?.error ||
@@ -118,6 +121,10 @@ export const useAuthStore = defineStore('auth', {
       } finally {
         this.loading = false;
       }
+    },
+
+    finishLoginRedirect() {
+      this.loginPending = false;
     },
 
     async logout() {

@@ -7,7 +7,7 @@ const getInitials = (hoTen = '') =>
 
 // ── Helper: màu avatar theo vai trò ──────────────────────────────────────────
 const AVATAR_PALETTE = [
-  { bg: 'linear-gradient(135deg,#E8634A,#FBB830)', color: '#FFF' },
+  { bg: 'linear-gradient(135deg,#7A5C3A,#FBB830)', color: '#FFF' },
   { bg: '#EFF6FF', color: '#3B82F6' },
   { bg: '#F0FDF4', color: '#22C55E' },
   { bg: '#F5F3FF', color: '#7C3AED' },

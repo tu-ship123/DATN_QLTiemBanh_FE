@@ -2,7 +2,7 @@
   <div>
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="font-display font-black text-2xl" style="color:#1E2A3B">Nhân sự & Phân quyền</h1>
+        <h1 class="font-display font-black text-2xl" style="color:#5C4428">Nhân sự & Phân quyền</h1>
         <p class="text-sm text-muted mt-0.5">
           {{ staffStore.totalStaff }} nhân viên · {{ roles.length }} vai trò
         </p>
@@ -50,14 +50,14 @@
               :style="{ background: s.avatarBg, color: s.avatarColor }"
             >{{ s.initials }}</div>
             <div class="flex-1 min-w-0">
-              <div class="font-semibold" style="color:#1E2A3B">{{ s.name }}</div>
+              <div class="font-semibold" style="color:#5C4428">{{ s.name }}</div>
               <div class="text-xs text-muted mt-0.5">{{ s.email }}</div>
               <span class="badge mt-1.5" :class="`badge-${roleColor(s.role)}`">{{ s.role }}</span>
             </div>
 
             <!-- Dropdown actions -->
             <el-dropdown trigger="click" placement="bottom-end">
-              <button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-orange-50 text-slate-400 hover:text-[#E8634A] transition-all">
+              <button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-orange-50 text-slate-400 hover:text-[#7A5C3A] transition-all">
                 <el-icon><MoreFilled /></el-icon>
               </button>
               <template #dropdown>
@@ -85,15 +85,15 @@
           </div>
 
           <div class="grid grid-cols-3 gap-3 text-center">
-            <div class="bg-[#FFF8F4] rounded-xl p-2">
-              <div class="font-bold text-sm" style="color:#1E2A3B">{{ s.ordersHandled }}</div>
+            <div class="bg-[#FFFBF5] rounded-xl p-2">
+              <div class="font-bold text-sm" style="color:#5C4428">{{ s.ordersHandled }}</div>
               <div class="text-xs text-muted">Đơn xử lý</div>
             </div>
-            <div class="bg-[#FFF8F4] rounded-xl p-2">
-              <div class="font-bold text-sm" style="color:#1E2A3B">{{ s.performance }}%</div>
+            <div class="bg-[#FFFBF5] rounded-xl p-2">
+              <div class="font-bold text-sm" style="color:#5C4428">{{ s.performance }}%</div>
               <div class="text-xs text-muted">Hiệu suất</div>
             </div>
-            <div class="bg-[#FFF8F4] rounded-xl p-2">
+            <div class="bg-[#FFFBF5] rounded-xl p-2">
               <div class="font-bold text-sm" :style="{ color: s.active ? '#22C55E' : '#EF4444' }">
                 {{ s.active ? 'Làm việc' : 'Nghỉ phép' }}
               </div>
@@ -102,7 +102,7 @@
           </div>
 
           <div class="mt-3 text-xs text-muted flex items-center gap-1.5">
-            <span>📞 {{ s.phone }}</span>
+            <span class="flex items-center gap-1.5"><iconify-icon icon="ph:phone-duotone" class="text-[#7A5C3A]"></iconify-icon> {{ s.phone }}</span>
             <span>·</span>
             <span>🗓 Từ {{ s.joinDate }}</span>
           </div>
@@ -110,11 +110,11 @@
 
         <!-- Add new card -->
         <div
-          class="bg-white rounded-2xl border-2 border-dashed border-[var(--color-border)] flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-[#E8634A] hover:bg-[#FFF8F4] transition min-h-[200px]"
+          class="bg-white rounded-2xl border-2 border-dashed border-[var(--color-border)] flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-[#7A5C3A] hover:bg-[#FFFBF5] transition min-h-[200px]"
           @click="openAddDialog"
         >
-          <div class="w-12 h-12 rounded-2xl bg-[#FFF0EC] flex items-center justify-center text-2xl">+</div>
-          <div class="text-sm font-semibold" style="color:#E8634A">Thêm nhân viên</div>
+          <div class="w-12 h-12 rounded-2xl bg-[#FDF6EC] flex items-center justify-center text-2xl">+</div>
+          <div class="text-sm font-semibold" style="color:#7A5C3A">Thêm nhân viên</div>
         </div>
       </div>
     </div>
@@ -124,9 +124,9 @@
       <div v-for="role in roles" :key="role.name" class="data-card">
         <div class="data-card-header">
           <div class="flex items-center gap-3">
-            <span class="text-2xl">{{ role.icon }}</span>
+            <iconify-icon :icon="role.icon" class="text-2xl text-[#7A5C3A]"></iconify-icon>
             <div>
-              <div class="font-display font-bold text-base" style="color:#1E2A3B">{{ role.name }}</div>
+              <div class="font-display font-bold text-base" style="color:#5C4428">{{ role.name }}</div>
               <div class="text-xs text-muted">
                 {{ staffStore.staffList.filter(s => s.role === role.name).length }} nhân viên
               </div>
@@ -140,7 +140,7 @@
             <span
               v-for="perm in role.permissions" :key="perm"
               class="text-xs px-2.5 py-1 rounded-lg font-medium"
-              style="background:#FFF8F4;color:#E8634A;border:1px solid #FFE4D5"
+              style="background:#FFFBF5;color:#7A5C3A;border:1px solid #FFE4D5"
             >{{ perm }}</span>
           </div>
         </div>
@@ -181,7 +181,7 @@
         <el-button @click="showStaffDialog = false">Huỷ</el-button>
         <el-button
           type="primary"
-          :style="{ background:'#E8634A', borderColor:'#E8634A' }"
+          :style="{ background:'#7A5C3A', borderColor:'#7A5C3A' }"
           :loading="staffStore.submitting"
           @click="submitStaffForm"
         >
@@ -193,7 +193,7 @@
     <!-- ── DIALOG: PHÂN CA ─────────────────────────────────────────────────────── -->
     <el-dialog v-model="showScheduleDialog" title="Phân ca làm việc" width="420px" @open="loadCaLamViec">
       <div v-if="loadingCa" class="flex justify-center py-6">
-        <iconify-icon icon="ph:spinner-gap" class="text-3xl animate-spin text-[#E8634A]"></iconify-icon>
+        <iconify-icon icon="ph:spinner-gap" class="text-3xl animate-spin text-[#7A5C3A]"></iconify-icon>
       </div>
       <el-form v-else :model="scheduleForm" label-position="top">
         <el-form-item label="Nhân viên">
@@ -238,7 +238,7 @@
         <el-button @click="showScheduleDialog = false">Huỷ</el-button>
         <el-button
           type="primary"
-          :style="{ background:'#E8634A', borderColor:'#E8634A' }"
+          :style="{ background:'#7A5C3A', borderColor:'#7A5C3A' }"
           :loading="submittingSchedule"
           :disabled="loadingCa || caLamViecList.length === 0"
           @click="submitSchedule"
@@ -411,10 +411,10 @@ async function confirmDeactivate(s) {
 
 // ── Roles (tĩnh — không cần API) ─────────────────────────────────────────────
 const roles = [
-  { name:'Super Admin',  icon:'👑', level:'Cấp 1', permissions:['Tất cả quyền','Quản lý hệ thống','Phân quyền','Báo cáo tài chính','Xoá dữ liệu'] },
-  { name:'Quản lý',      icon:'💼', level:'Cấp 2', permissions:['Đơn hàng','Sản phẩm','Nhân viên','Kho','Báo cáo','Voucher'] },
-  { name:'Thu ngân',     icon:'💰', level:'Cấp 3', permissions:['Xem đơn','Tạo đơn','Thanh toán','Xuất hoá đơn'] },
-  { name:'Thợ làm bánh', icon:'👨‍🍳', level:'Cấp 3', permissions:['Xem đơn cần làm','Cập nhật tiến độ','Kho nguyên liệu'] },
+  { name:'Super Admin',  icon:'ph:crown-duotone', level:'Cấp 1', permissions:['Tất cả quyền','Quản lý hệ thống','Phân quyền','Báo cáo tài chính','Xoá dữ liệu'] },
+  { name:'Quản lý',      icon:'ph:briefcase-duotone', level:'Cấp 2', permissions:['Đơn hàng','Sản phẩm','Nhân viên','Kho','Báo cáo','Voucher'] },
+  { name:'Thu ngân',     icon:'ph:coins-duotone', level:'Cấp 3', permissions:['Xem đơn','Tạo đơn','Thanh toán','Xuất hoá đơn'] },
+  { name:'Thợ làm bánh', icon:'ph:cooking-pot-duotone', level:'Cấp 3', permissions:['Xem đơn cần làm','Cập nhật tiến độ','Kho nguyên liệu'] },
   { name:'Giao hàng',    icon:'🚚', level:'Cấp 4', permissions:['Xem đơn cần giao','Xác nhận giao','Chụp ảnh giao hàng'] },
   { name:'Marketing',    icon:'📣', level:'Cấp 3', permissions:['Voucher','Khuyến mãi','Đánh giá','Tin nhắn KH'] },
 ]

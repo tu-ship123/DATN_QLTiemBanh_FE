@@ -106,8 +106,8 @@
                     <div class="flex items-start gap-3">
                       <iconify-icon icon="ph:info-duotone" class="text-[#EC4899] text-lg flex-shrink-0 mt-0.5"></iconify-icon>
                       <div class="text-[#7C3D5C] space-y-1.5 font-bold">
-                        <p>✓ Thanh toán tiện lợi khi giao bánh.</p>
-                        <p>⚠ Chỉ áp dụng cho đơn hàng có tổng trị giá dưới <strong class="text-[#EC4899]">5.000.000đ</strong>.</p>
+                        <p class="flex items-center gap-2"><iconify-icon icon="ph:check-circle-duotone" class="text-[#7A5C3A]"></iconify-icon> Thanh toán tiện lợi khi giao bánh.</p>
+                        <p class="flex items-center gap-2"><iconify-icon icon="ph:warning-duotone" class="text-amber-500"></iconify-icon> Chỉ áp dụng cho đơn hàng có tổng trị giá dưới <strong class="text-[#EC4899]">5.000.000đ</strong>.</p>
                       </div>
                     </div>
                   </div>
@@ -213,7 +213,7 @@
 
           <div class="bg-[#FFF5FA] rounded-2xl p-4 text-xs text-[#7C3D5C] font-medium text-left space-y-2 border border-[#FDD8EE]">
             <p>📌 <strong>Nội dung bắt buộc:</strong> <span class="bg-white border border-[#FDD8EE] px-2 py-1 rounded text-[#EC4899] font-black text-sm ml-1">{{ sePayMemo }}</span></p>
-            <p class="text-[11px] italic">⚠️ Vui lòng không tự ý sửa nội dung chuyển khoản để SePay tự quét đơn.</p>
+            <p class="text-[11px] italic flex items-center gap-1.5"><iconify-icon icon="ph:warning-duotone" class="text-amber-500 shrink-0"></iconify-icon> Vui lòng không tự ý sửa nội dung chuyển khoản để SePay tự quét đơn.</p>
           </div>
 
           <div class="flex items-center justify-center gap-2 text-sm font-bold text-[#EC4899] animate-pulse pt-2">
@@ -362,7 +362,7 @@ const batDauTheoDoiDonHang = (orderId) => {
       if (orderStatus === 'DA_XAC_NHAN') {
         clearInterval(checkOrderInterval)
         showQrModal.value = false
-        showToast('🎉 Thanh toán thành công! SePay đã xác nhận. Cảm ơn bạn!', 'success')
+        showToast('Thanh toán thành công! SePay đã xác nhận. Cảm ơn bạn!', 'success')
         await cartStore.xoaToanBo()
         router.push(`/orders/${orderId}`)
       }
