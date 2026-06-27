@@ -136,6 +136,66 @@
             Tổng Đơn Hàng
           </h2>
 
+          <!-- ===== VOUCHER SECTION ===== -->
+          <div class="space-y-3">
+            <div class="flex items-center gap-2">
+              <iconify-icon icon="ph:ticket-duotone" class="text-[#7A5C3A] text-base flex-shrink-0"></iconify-icon>
+              <span class="text-xs font-black text-[#5C4428] uppercase tracking-wider font-sans">Mã Giảm Giá</span>
+            </div>
+
+            <!-- Đã áp voucher -->
+            <div v-if="appliedVoucher"
+              class="flex items-center justify-between gap-2 bg-green-50 border border-green-200 rounded-xl px-3 py-2.5">
+              <div class="flex items-center gap-2 min-w-0">
+                <iconify-icon icon="ph:check-circle-fill" class="text-green-600 text-base flex-shrink-0"></iconify-icon>
+                <div class="min-w-0">
+                  <p class="text-xs font-black text-green-700 truncate">{{ appliedVoucher.tenVoucher || appliedVoucher.maCode }}</p>
+                  <p class="text-[10px] text-green-600 font-medium">
+                    Giảm {{ appliedVoucher.loaiGiam === 'PHAN_TRAM' ? appliedVoucher.giaTriGiam + '%' : formatCurrency(appliedVoucher.giaTriGiam) }}
+                  </p>
+                </div>
+              </div>
+              <button @click="boVoucher"
+                class="text-[10px] font-bold text-red-500 hover:text-red-700 flex-shrink-0 px-2 py-1 rounded-lg hover:bg-red-50 transition-colors">
+                Bỏ
+              </button>
+            </div>
+
+            <!-- Input nhập mã -->
+            <div v-else class="space-y-2">
+              <div class="flex gap-2">
+                <input
+                  v-model="voucherInput"
+                  @keyup.enter="apDungVoucher"
+                  type="text"
+                  placeholder="Nhập mã giảm giá..."
+                  class="flex-1 text-xs border border-[#EDE0CC] rounded-xl px-3 py-2.5 outline-none focus:border-[#9A7650] focus:ring-2 focus:ring-[#9A7650]/20 font-sans placeholder:text-[#C4A882] bg-[#FDFAF6] transition-all"
+                  :class="voucherError ? 'border-red-300 focus:border-red-400 focus:ring-red-100' : ''"
+                />
+                <button
+                  @click="apDungVoucher"
+                  :disabled="!voucherInput.trim() || voucherLoading"
+                  class="px-4 py-2.5 rounded-xl text-xs font-black transition-all disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+                  style="background:linear-gradient(135deg,#7A5C3A,#9A7650);color:white;"
+                >
+                  <iconify-icon v-if="voucherLoading" icon="ph:circle-notch" class="animate-spin text-sm"></iconify-icon>
+                  <span v-else>Áp dụng</span>
+                </button>
+              </div>
+              <p v-if="voucherError" class="text-[10px] text-red-500 font-semibold px-1">{{ voucherError }}</p>
+
+              <!-- Nút xem voucher của tôi -->
+              <button
+                @click="moModalVoucher"
+                class="w-full text-[11px] font-bold text-[#7A5C3A] border border-dashed border-[#C4A882] rounded-xl py-2 hover:bg-[#FDF6EC] transition-colors flex items-center justify-center gap-1.5"
+              >
+                <iconify-icon icon="ph:gift-duotone" class="text-sm"></iconify-icon>
+                Xem voucher của tôi
+              </button>
+            </div>
+          </div>
+          <!-- ===== /VOUCHER SECTION ===== -->
+
           <div class="space-y-3 text-xs font-sans text-[#9A7650]">
             <div class="flex justify-between">
               <span>Giá sản phẩm ({{ cartStore.tongSoLuong }} món)</span>
@@ -147,6 +207,14 @@
                 {{ cartStore.phiShip === 0 ? 'Miễn phí' : formatCurrency(cartStore.phiShip) }}
               </span>
             </div>
+            <!-- Dòng giảm giá -->
+            <div v-if="soTienGiam > 0" class="flex justify-between text-green-700">
+              <span class="flex items-center gap-1">
+                <iconify-icon icon="ph:tag-duotone" class="text-sm"></iconify-icon>
+                Giảm giá voucher
+              </span>
+              <span class="font-black">-{{ formatCurrency(soTienGiam) }}</span>
+            </div>
             <div v-if="cartStore.phiShip > 0"
               class="flex items-center gap-2 text-amber-600 font-semibold bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
               <iconify-icon icon="ph:gift-duotone" class="text-base shrink-0"></iconify-icon>
@@ -156,9 +224,14 @@
 
           <div class="flex items-center justify-between pt-3 border-t border-[#EDE0CC]">
             <span class="text-sm font-bold text-[#5C4428] font-sans">Thành tiền</span>
-            <span style="font-family:'Playfair Display',serif;font-size:24px;font-weight:950;color:#7A5C3A;">
-              {{ formatCurrency(cartStore.tongThanhToan) }}
-            </span>
+            <div class="text-right">
+              <div v-if="soTienGiam > 0" class="text-xs text-[#A68B5C] line-through font-sans mb-0.5">
+                {{ formatCurrency(cartStore.tongThanhToan) }}
+              </div>
+              <span style="font-family:'Playfair Display',serif;font-size:24px;font-weight:950;color:#7A5C3A;">
+                {{ formatCurrency(tongThanhToanSauGiam) }}
+              </span>
+            </div>
           </div>
 
           <button
@@ -203,6 +276,117 @@
       </div>
     </div>
 
+    <!-- ===== MODAL CHỌN VOUCHER ===== -->
+    <Transition name="modal">
+      <div v-if="showVoucherModal"
+        class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
+        @click.self="dongModalVoucher">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="dongModalVoucher"></div>
+
+        <!-- Panel -->
+        <div class="relative w-full max-w-md bg-white rounded-[24px] shadow-2xl overflow-hidden z-10 max-h-[90vh] flex flex-col">
+          <!-- Header modal -->
+          <div class="p-6 border-b border-[#EDE0CC] flex items-center justify-between flex-shrink-0"
+            style="background:linear-gradient(135deg,#7A5C3A,#9A7650);">
+            <div class="flex items-center gap-3">
+              <iconify-icon icon="ph:ticket-duotone" class="text-2xl text-white"></iconify-icon>
+              <div>
+                <h3 style="font-family:'Playfair Display',serif;font-size:18px;font-weight:900;color:white;letter-spacing:0.5px;">
+                  Voucher Của Tôi
+                </h3>
+                <p class="text-xs text-white/70 font-sans">Chọn voucher để áp dụng vào đơn hàng</p>
+              </div>
+            </div>
+            <button @click="dongModalVoucher"
+              class="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-colors text-white">
+              <iconify-icon icon="ph:x-bold" class="text-sm"></iconify-icon>
+            </button>
+          </div>
+
+          <!-- Danh sách voucher -->
+          <div class="overflow-y-auto flex-1 p-4 space-y-3">
+            <!-- Loading -->
+            <div v-if="voucherListLoading" class="py-10 text-center">
+              <iconify-icon icon="ph:circle-notch" class="animate-spin text-3xl text-[#9A7650]"></iconify-icon>
+              <p class="text-xs text-[#9A7650] mt-3 font-sans">Đang tải voucher...</p>
+            </div>
+
+            <!-- Không có voucher -->
+            <div v-else-if="danhSachVoucher.length === 0" class="py-10 text-center">
+              <iconify-icon icon="ph:ticket-duotone" class="text-5xl text-[#C4A882]"></iconify-icon>
+              <p class="text-sm font-bold text-[#5C4428] mt-3 font-sans">Bạn chưa có voucher nào</p>
+              <p class="text-xs text-[#9A7650] mt-1 font-sans">Hãy tích điểm để đổi lấy voucher hấp dẫn!</p>
+            </div>
+
+            <!-- Danh sách -->
+            <div
+              v-for="v in danhSachVoucher" :key="v.id"
+              @click="v.conHieuLuc && chonVoucher(v)"
+              class="rounded-[16px] border-2 p-4 transition-all cursor-pointer select-none"
+              :class="[
+                !v.conHieuLuc
+                  ? 'border-[#EDE0CC] bg-gray-50 opacity-50 cursor-not-allowed'
+                  : appliedVoucher?.id === v.id
+                    ? 'border-[#7A5C3A] bg-[#FDF6EC] shadow-md'
+                    : 'border-[#EDE0CC] bg-white hover:border-[#C4A882] hover:shadow-sm'
+              ]"
+            >
+              <div class="flex items-start gap-3">
+                <!-- Icon loại -->
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                  :style="v.conHieuLuc ? 'background:linear-gradient(135deg,#7A5C3A,#9A7650)' : 'background:#D1C9BE'">
+                  <iconify-icon
+                    :icon="v.loaiGiam === 'PHAN_TRAM' ? 'ph:percent-duotone' : 'ph:tag-duotone'"
+                    class="text-white text-base">
+                  </iconify-icon>
+                </div>
+
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-start justify-between gap-2">
+                    <div>
+                      <p class="text-sm font-black text-[#3D2A1A] font-sans truncate">
+                        {{ v.tenVoucher || 'Voucher giảm giá' }}
+                      </p>
+                      <p class="text-xs text-[#7A5C3A] font-bold mt-0.5">
+                        Giảm {{ v.loaiGiam === 'PHAN_TRAM' ? v.giaTriGiam + '%' : formatCurrency(v.giaTriGiam) }}
+                        <span v-if="v.donHangToiThieu > 0" class="text-[#A68B5C] font-normal">
+                          · Đơn tối thiểu {{ formatCurrency(v.donHangToiThieu) }}
+                        </span>
+                      </p>
+                    </div>
+                    <!-- Badge đang áp dụng -->
+                    <span v-if="appliedVoucher?.id === v.id"
+                      class="flex-shrink-0 text-[9px] font-black uppercase tracking-wider bg-[#7A5C3A] text-white px-2 py-0.5 rounded-full">
+                      Đang dùng
+                    </span>
+                    <span v-else-if="!v.conHieuLuc"
+                      class="flex-shrink-0 text-[9px] font-black uppercase tracking-wider bg-gray-300 text-gray-600 px-2 py-0.5 rounded-full">
+                      Hết hạn
+                    </span>
+                  </div>
+
+                  <div class="flex items-center gap-3 mt-2 text-[10px] text-[#A68B5C] font-sans">
+                    <span v-if="v.ngayHetHan" class="flex items-center gap-1">
+                      <iconify-icon icon="ph:clock-duotone" class="text-xs"></iconify-icon>
+                      HSD: {{ formatDate(v.ngayHetHan) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer modal -->
+          <div class="p-4 border-t border-[#EDE0CC] flex-shrink-0 bg-[#FDFAF6]">
+            <p class="text-[10px] text-center text-[#A68B5C] font-sans">
+              Chỉ áp dụng 1 voucher cho mỗi đơn hàng
+            </p>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
     <!-- ===== TOAST ===== -->
     <Transition name="toast">
       <div
@@ -219,10 +403,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cartStore'
 import { useAuthStore } from '@/stores/authStore'
+import apiClient from '@/services/apiService'
 
 const router = useRouter()
 const cartStore = useCartStore()
@@ -238,10 +423,124 @@ const showToast = (message, type = 'success') => {
   setTimeout(() => { toast.value.show = false }, 3000)
 }
 
-// ─── Format tiền ─────────────────────────────────────────────────────────────
+// ─── Format ──────────────────────────────────────────────────────────────────
 const formatCurrency = (value) => {
   if (!value && value !== 0) return '0đ'
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value).replace('₫', 'đ')
+}
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`
+}
+
+// ─── Voucher state ────────────────────────────────────────────────────────────
+const voucherInput = ref('')
+const voucherError = ref('')
+const voucherLoading = ref(false)
+const appliedVoucher = ref(null)   // { id, tenVoucher, loaiGiam, giaTriGiam, donHangToiThieu, ... }
+
+// ─── Modal voucher ────────────────────────────────────────────────────────────
+const showVoucherModal = ref(false)
+const voucherListLoading = ref(false)
+const danhSachVoucher = ref([])
+
+const moModalVoucher = async () => {
+  showVoucherModal.value = true
+  if (danhSachVoucher.value.length > 0) return
+  voucherListLoading.value = true
+  try {
+    const res = await apiClient.get('/api/v1/loyalty/voucher')
+    danhSachVoucher.value = res.data || []
+  } catch (err) {
+    showToast('Không thể tải danh sách voucher', 'error')
+  } finally {
+    voucherListLoading.value = false
+  }
+}
+
+const dongModalVoucher = () => {
+  showVoucherModal.value = false
+}
+
+// ─── Tính số tiền giảm ───────────────────────────────────────────────────────
+const soTienGiam = computed(() => {
+  if (!appliedVoucher.value) return 0
+  const tongTien = cartStore.tongThanhToan
+  const v = appliedVoucher.value
+  if (!v.conHieuLuc && v.trangThai !== undefined) return 0
+
+  // Kiểm tra đơn tối thiểu
+  if (v.donHangToiThieu > 0 && tongTien < v.donHangToiThieu) return 0
+
+  if (v.loaiGiam === 'PHAN_TRAM') {
+    return Math.round(tongTien * (v.giaTriGiam / 100))
+  }
+  return Math.min(Number(v.giaTriGiam) || 0, tongTien)
+})
+
+const tongThanhToanSauGiam = computed(() => {
+  return Math.max(0, cartStore.tongThanhToan - soTienGiam.value)
+})
+
+// ─── Áp dụng voucher bằng mã nhập tay ───────────────────────────────────────
+const apDungVoucher = async () => {
+  const ma = voucherInput.value.trim().toUpperCase()
+  if (!ma) return
+  voucherError.value = ''
+  voucherLoading.value = true
+  try {
+    // Lấy danh sách voucher của khách rồi tìm theo mã
+    const res = await apiClient.get('/api/v1/loyalty/voucher')
+    const list = res.data || []
+    const found = list.find(v => (v.tenVoucher || '').toUpperCase() === ma || (v.maCode || '').toUpperCase() === ma)
+    if (!found) {
+      voucherError.value = 'Mã voucher không hợp lệ hoặc không thuộc tài khoản của bạn.'
+      return
+    }
+    if (!found.conHieuLuc) {
+      voucherError.value = 'Voucher này đã hết hạn hoặc không còn hiệu lực.'
+      return
+    }
+    if (found.donHangToiThieu > 0 && cartStore.tongThanhToan < found.donHangToiThieu) {
+      voucherError.value = `Đơn hàng tối thiểu ${formatCurrency(found.donHangToiThieu)} để dùng voucher này.`
+      return
+    }
+    appliedVoucher.value = found
+    danhSachVoucher.value = list
+    voucherInput.value = ''
+    showToast('Áp dụng voucher thành công! 🎉')
+  } catch (err) {
+    voucherError.value = 'Không thể kiểm tra voucher. Vui lòng thử lại.'
+  } finally {
+    voucherLoading.value = false
+  }
+}
+
+// ─── Chọn voucher từ modal ───────────────────────────────────────────────────
+const chonVoucher = (v) => {
+  if (!v.conHieuLuc) return
+  if (v.donHangToiThieu > 0 && cartStore.tongThanhToan < v.donHangToiThieu) {
+    showToast(`Cần đơn tối thiểu ${formatCurrency(v.donHangToiThieu)} để dùng voucher này.`, 'error')
+    return
+  }
+  if (appliedVoucher.value?.id === v.id) {
+    appliedVoucher.value = null
+    showToast('Đã bỏ chọn voucher.')
+  } else {
+    appliedVoucher.value = v
+    showToast('Áp dụng voucher thành công! 🎉')
+  }
+  dongModalVoucher()
+}
+
+// ─── Bỏ voucher ──────────────────────────────────────────────────────────────
+const boVoucher = () => {
+  appliedVoucher.value = null
+  voucherInput.value = ''
+  voucherError.value = ''
+  showToast('Đã bỏ voucher.')
 }
 
 // ─── Tăng / Giảm số lượng ────────────────────────────────────────────────────
@@ -268,13 +567,18 @@ const xacNhanXoa = async (item) => {
 const xoaToanBo = async () => {
   if (!confirm('Xóa toàn bộ giỏ hàng?')) return
   await cartStore.xoaToanBo()
+  appliedVoucher.value = null
   if (cartStore.error) showToast(cartStore.error, 'error')
   else showToast('Đã xóa toàn bộ giỏ hàng!')
 }
 
 // ─── Thanh toán ──────────────────────────────────────────────────────────────
 const thanhToan = () => {
-  router.push({ name: 'Checkout' })
+  // Truyền thông tin voucher và tổng tiền sau giảm sang trang Checkout nếu cần
+  router.push({
+    name: 'Checkout',
+    query: appliedVoucher.value ? { voucherId: appliedVoucher.value.id } : {}
+  })
 }
 
 // ─── Khởi tạo ────────────────────────────────────────────────────────────────
@@ -296,4 +600,18 @@ onMounted(async () => {
 }
 .toast-enter-active, .toast-leave-active { transition: all 0.3s ease; }
 .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(20px); }
+
+/* Modal transition */
+.modal-enter-active { transition: all 0.25s ease-out; }
+.modal-leave-active { transition: all 0.2s ease-in; }
+.modal-enter-from, .modal-leave-to { opacity: 0; }
+.modal-enter-from .relative,
+.modal-leave-to .relative { transform: translateY(20px) scale(0.97); }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.animate-spin {
+  animation: spin 0.8s linear infinite;
+}
 </style>

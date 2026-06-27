@@ -458,11 +458,21 @@ const daDanhGia = ref(false)
 const danhGiaLoading = ref(false)
 const danhGia = ref({ sanPhamId: null, soSao: 0, noiDung: '' })
 
-// Tự điền sanPhamId khi chỉ có 1 sản phẩm
-watch(() => activeOrder.value, (order) => {
+// Tự điền sanPhamId và kiểm tra đã đánh giá chưa khi chuyển đơn
+watch(() => activeOrder.value, async (order) => {
   moFormDanhGia.value = false
   daDanhGia.value = false
   danhGia.value = { sanPhamId: order?.items?.[0]?.sanPhamId || null, soSao: 0, noiDung: '' }
+
+  // Nếu đơn đã hoàn thành, hỏi BE xem đã đánh giá chưa
+  if (order?.trangThai === 'HOAN_THANH') {
+    try {
+      const res = await apiClient.get(`/api/v1/orders/${order.id}/review`)
+      daDanhGia.value = res.data?.daDanhGia === true
+    } catch {
+      // Không xử lý lỗi — mặc định cho phép đánh giá
+    }
+  }
 }, { immediate: true })
 
 const guiDanhGia = async () => {

@@ -51,13 +51,6 @@
             class="w-full h-full object-cover"
             @error="handleImageError"
           />
-          <!-- Badge hết hàng -->
-          <div
-            v-if="product.soLuongTon === 0"
-            class="absolute inset-0 bg-black/40 flex items-center justify-center"
-          >
-            <span class="bg-white text-gray-700 font-bold text-lg px-6 py-3 rounded-full">Hết hàng</span>
-          </div>
           <!-- Badge danh mục -->
           <div class="absolute left-5 top-5 rounded-full bg-white/95 backdrop-blur px-4 py-1.5 text-xs font-bold text-[#7A5C3A] shadow">
             {{ product.tenDanhMuc }}
@@ -78,23 +71,23 @@
           </h1>
         </div>
 
-        <!-- Rating + tồn kho -->
+        <!-- Rating -->
         <div class="flex items-center gap-4">
           <div class="flex items-center gap-1 bg-[#FFF8EC] px-3 py-1.5 rounded-lg">
             <span class="star-row inline-flex items-center gap-0.5 text-[#FBB830]">
-              <iconify-icon v-for="n in 5" :key="n" icon="ph:star-fill"></iconify-icon>
+              <iconify-icon
+                v-for="n in 5"
+                :key="n"
+                :icon="n <= Math.round(averageRating || 0) ? 'ph:star-fill' : 'ph:star'"
+              ></iconify-icon>
             </span>
-            <span class="text-sm font-bold text-[#5C4428] ml-1">5.0</span>
+            <span class="text-sm font-bold text-[#5C4428] ml-1">
+              {{ averageRating || '—' }}
+            </span>
           </div>
-          <div class="h-5 w-px bg-gray-200"></div>
-          <p class="text-sm text-gray-500 font-medium">
-            <span
-              :class="product.soLuongTon > 0 ? 'text-green-500' : 'text-red-400'"
-              class="font-bold"
-            >
-              {{ product.soLuongTon > 0 ? `Còn ${product.soLuongTon} cái` : 'Hết hàng' }}
-            </span>
-          </p>
+          <span class="text-sm text-gray-400 font-medium">
+            {{ reviews.length > 0 ? `${reviews.length} đánh giá` : 'Chưa có đánh giá' }}
+          </span>
         </div>
 
         <!-- Giá -->
@@ -189,8 +182,70 @@
             <h3 class="font-bold text-[#5C4428] line-clamp-1">{{ item.tenSanPham }}</h3>
             <div class="flex items-center justify-between">
               <span class="font-black text-[#7A5C3A]">{{ formatPrice(item.donGia) }}</span>
-              <span class="text-xs text-gray-400">Còn {{ item.soLuongTon }}</span>
             </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Đánh giá khách hàng thật -->
+    <section class="mt-16">
+      <h2 class="text-2xl font-black text-[#5C4428] mb-6 flex items-center gap-2">
+        <iconify-icon icon="ph:star-duotone" class="text-[#7A5C3A]"></iconify-icon>
+        Đánh giá từ khách hàng
+        <span class="text-base font-normal text-gray-400 ml-1">({{ reviews.length }})</span>
+      </h2>
+
+      <div v-if="loadingReviews" class="flex items-center gap-3 py-8 text-[#A68B5C]">
+        <div class="animate-spin w-5 h-5 border-2 border-[#7A5C3A] border-t-transparent rounded-full"></div>
+        <span class="text-sm font-semibold">Đang tải đánh giá...</span>
+      </div>
+
+      <div v-else-if="reviews.length === 0" class="rounded-2xl border border-dashed border-[#EDE0CC] p-10 text-center text-[#A68B5C]">
+        <iconify-icon icon="ph:chat-circle-duotone" class="text-4xl mb-3 block"></iconify-icon>
+        <p class="font-semibold">Chưa có đánh giá nào cho sản phẩm này.</p>
+        <p class="text-sm mt-1">Hãy là người đầu tiên chia sẻ cảm nhận!</p>
+      </div>
+
+      <div v-else class="space-y-4">
+        <div
+          v-for="r in reviews"
+          :key="r.id"
+          class="rounded-2xl border border-[#EDE0CC] bg-white p-5 space-y-3 hover:border-[#C4A882] transition-colors"
+        >
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 rounded-full flex items-center justify-center text-white font-black text-sm flex-shrink-0"
+                style="background: linear-gradient(135deg, #7A5C3A, #9A7650)"
+              >
+                {{ r.tenKhachHang?.charAt(0)?.toUpperCase() || 'K' }}
+              </div>
+              <div>
+                <p class="font-bold text-[#5C4428] text-sm">{{ r.tenKhachHang }}</p>
+                <p class="text-[11px] text-[#A68B5C]">
+                  {{ new Date(r.ngayTao).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) }}
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center gap-0.5 flex-shrink-0">
+              <iconify-icon
+                v-for="n in 5"
+                :key="n"
+                :icon="n <= r.soSao ? 'ph:star-fill' : 'ph:star'"
+                class="text-sm"
+                :class="n <= r.soSao ? 'text-[#FBB830]' : 'text-gray-300'"
+              ></iconify-icon>
+              <span class="text-xs font-bold text-[#5C4428] ml-1.5">{{ r.soSao }}/5</span>
+            </div>
+          </div>
+
+          <p v-if="r.noiDung" class="text-sm text-gray-600 leading-relaxed">{{ r.noiDung }}</p>
+          <p v-else class="text-sm text-gray-400 italic">Khách hàng không để lại nhận xét.</p>
+
+          <div v-if="r.phanHoiCuaTiem" class="bg-[#FDF6EC] rounded-xl p-3 border-l-4 border-[#7A5C3A]">
+            <p class="text-xs font-bold text-[#5C4428] mb-1">💬 Phản hồi từ Chocopine:</p>
+            <p class="text-sm text-[#5C4428]">{{ r.phanHoiCuaTiem }}</p>
           </div>
         </div>
       </div>
@@ -207,6 +262,7 @@ import { ElMessage } from 'element-plus'
 import { useProductStore } from '@/stores/productStore'
 import { useCartStore } from '@/stores/cartStore'
 import { useAuthStore } from '@/stores/authStore'
+import apiClient from '@/services/apiService'
 
 const router = useRouter()
 const route = useRoute()
@@ -218,6 +274,31 @@ const product = ref(null)
 const loading = ref(false)
 const qty = ref(1)
 const defaultImage = 'https://placehold.co/600x480?text=Polycake'
+
+// ==========================================
+// ĐÁNH GIÁ THẬT TỪ API
+// ==========================================
+const reviews = ref([])
+const loadingReviews = ref(false)
+
+const averageRating = computed(() => {
+  if (!reviews.value.length) return null
+  const sum = reviews.value.reduce((acc, r) => acc + r.soSao, 0)
+  return (sum / reviews.value.length).toFixed(1)
+})
+
+const loadReviews = async (sanPhamId) => {
+  loadingReviews.value = true
+  try {
+    const { data } = await apiClient.get(`/api/v1/products/${sanPhamId}/reviews`)
+    reviews.value = data
+  } catch (e) {
+    console.error('Lỗi tải đánh giá:', e)
+    reviews.value = []
+  } finally {
+    loadingReviews.value = false
+  }
+}
 
 // ==========================================
 // FORMAT GIÁ
@@ -249,6 +330,11 @@ const loadProduct = async () => {
     if (!product.value) {
       await productStore.fetchAllProducts()
       product.value = productStore.products.find((p) => p.id === id) || null
+    }
+
+    // Tải đánh giá thật sau khi có sản phẩm
+    if (product.value) {
+      await loadReviews(product.value.id)
     }
   } catch (error) {
     console.error('Lỗi tải chi tiết sản phẩm:', error)

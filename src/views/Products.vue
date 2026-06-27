@@ -68,10 +68,6 @@
             />
             <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity product-img-overlay"></div>
 
-            <div v-if="product.soLuongTon === 0" class="absolute inset-0 bg-black/40 flex items-center justify-center z-20">
-              <span class="sold-out-badge">Hết hàng</span>
-            </div>
-
             <button
               class="wish-btn"
               :class="{ 'wish-btn--active': product.wished }"
@@ -100,13 +96,18 @@
                 </div>
                 <div class="rating-pill">
                   <iconify-icon icon="ph:star-fill" class="rating-star"></iconify-icon>
-                  <span class="rating-num">5.0</span>
+                  <span class="rating-num">
+                    {{ productRatings[product.id]?.avg || '—' }}
+                    <span v-if="productRatings[product.id]" style="font-size:9px;color:#A68B5C;font-weight:600;">
+                      ({{ productRatings[product.id].count }})
+                    </span>
+                  </span>
                 </div>
               </div>
 
               <button
                 @click.stop="addToCart(product)"
-                :disabled="cartStore.loading || product.soLuongTon === 0"
+                :disabled="cartStore.loading"
                 class="chocopine-btn-primary mt-4 w-full py-3 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 :class="{ 'btn-added': product.added }"
               >
@@ -298,6 +299,27 @@ const editingProduct = ref(null)
 
 const defaultImage = 'https://placehold.co/400x300?text=Polycake'
 
+// ==========================================
+// ĐÁNH GIÁ THẬT — rating động theo sản phẩm
+// ==========================================
+const productRatings = ref({}) // { [sanPhamId]: { avg: '4.5', count: 12 } }
+
+const loadAllRatings = async (productList) => {
+  await Promise.allSettled(
+    productList.map(async (p) => {
+      try {
+        const { data } = await apiClient.get(`/api/v1/products/${p.id}/reviews`)
+        if (data.length > 0) {
+          const avg = data.reduce((sum, r) => sum + r.soSao, 0) / data.length
+          productRatings.value[p.id] = { avg: avg.toFixed(1), count: data.length }
+        }
+      } catch (e) {
+        // Bỏ qua lỗi từng sản phẩm, không làm crash toàn trang
+      }
+    })
+  )
+}
+
 const formatPrice = (price) => {
   if (!price && price !== 0) return 'Liên hệ'
   return new Intl.NumberFormat('vi-VN').format(price) + 'đ'
@@ -308,19 +330,24 @@ const handleImageError = (e) => {
 }
 
 // ======================= LOAD DATA =======================
-onMounted(() => {
+onMounted(async () => {
   // Lấy dữ liệu chuẩn xác thông qua Store giống như Shop.vue
-  productStore.fetchAllProducts()
+  await productStore.fetchAllProducts()
   categoryStore.fetchAllCategories()
+
+  // Chỉ load ratings ở trang khách hàng
+  if (isCustomer.value) {
+    loadAllRatings(productStore.products)
+  }
 })
 
 // ======================= FILTER & SORT =======================
 const displayedProducts = computed(() => {
   let result = productStore.products
 
-  // Nếu là khách hàng, chỉ hiện bánh đang bán (trangThai = true)
+  // Nếu là khách hàng, chỉ hiện bánh đang bán (trangThai = true) và còn hàng (soLuongTon > 0)
   if (isCustomer.value) {
-    result = result.filter(p => p.trangThai !== false)
+    result = result.filter(p => p.trangThai !== false && p.soLuongTon > 0)
   }
 
   // Lọc theo Danh mục

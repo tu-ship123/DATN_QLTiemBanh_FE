@@ -225,13 +225,12 @@
               <button class="product-wish" @click.stop="toggleWishlist(product)" :class="product.wished ? 'product-wish--active' : ''">
                 <iconify-icon :icon="product.wished ? 'ph:heart-fill' : 'ph:heart'"></iconify-icon>
               </button>
-              <span v-if="product.soLuongTon === 0" class="product-badge" style="background: #3D2000">Hết hàng</span>
-              <span v-else class="product-badge" style="background: #7A5C3A">{{ product.tenDanhMuc || 'Bánh ngọt' }}</span>
+              <span class="product-badge" style="background: #7A5C3A">{{ product.tenDanhMuc || 'Bánh ngọt' }}</span>
             </div>
 
             <div class="product-body">
               <div>
-                <div class="product-meta">Tồn kho: {{ product.soLuongTon }}</div>
+                <div class="product-meta">{{ product.tenDanhMuc || 'Bánh ngọt' }}</div>
                 <h3 class="product-name" :title="product.tenSanPham">{{ product.tenSanPham }}</h3>
               </div>
 
@@ -242,7 +241,7 @@
                 <button
                   class="product-add-btn"
                   @click.stop="addToCart(product)"
-                  :disabled="cartStore.loading || product.soLuongTon === 0"
+                  :disabled="cartStore.loading"
                   :class="{
                     'product-add-btn--done': product.added,
                     'product-add-btn--loading': cartStore.loading
@@ -255,8 +254,21 @@
             </div>
 
             <div class="product-rating">
-              <span class="star-row" aria-hidden="true"><iconify-icon v-for="n in 5" :key="n" icon="ph:star-fill"></iconify-icon></span>
-              <span class="rating-text">5.0 · Đánh giá tốt</span>
+              <template v-if="productRatings[product.id]">
+                <span class="star-row" aria-hidden="true">
+                  <iconify-icon
+                    v-for="n in 5"
+                    :key="n"
+                    :icon="n <= Math.round(productRatings[product.id].avg) ? 'ph:star-fill' : 'ph:star'"
+                  ></iconify-icon>
+                </span>
+                <span class="rating-text">
+                  {{ productRatings[product.id].avg }} · {{ productRatings[product.id].count }} đánh giá
+                </span>
+              </template>
+              <template v-else>
+                <span class="rating-text" style="color: var(--c-text-light)">Chưa có đánh giá</span>
+              </template>
             </div>
           </div>
         </div>
@@ -332,22 +344,56 @@
         </div>
 
         <div class="reviews-grid">
-          <div
-            v-for="(r, idx) in reviews"
-            :key="r.name"
-            class="review-card"
-            :style="{ transitionDelay: `${idx * 0.1}s` }"
-          >
-            <div class="review-stars"><span class="star-row" aria-hidden="true"><iconify-icon v-for="n in 5" :key="`r-${n}`" icon="ph:star-fill"></iconify-icon></span></div>
-            <p class="review-quote">"{{ r.quote }}"</p>
-            <div class="review-author">
-              <div class="review-avatar" :style="{ background: r.color }">{{ r.initials }}</div>
-              <div>
-                <div class="review-name">{{ r.name }}</div>
-                <div class="review-loc">{{ r.location }} · {{ r.date }}</div>
+          <template v-if="realReviews.length > 0">
+            <div
+              v-for="(r, idx) in realReviews"
+              :key="r.id"
+              class="review-card"
+              :style="{ transitionDelay: `${idx * 0.1}s` }"
+            >
+              <div class="review-stars">
+                <span class="star-row" aria-hidden="true">
+                  <iconify-icon
+                    v-for="n in 5"
+                    :key="`r-${n}`"
+                    :icon="n <= r.soSao ? 'ph:star-fill' : 'ph:star'"
+                  ></iconify-icon>
+                </span>
+              </div>
+              <p class="review-quote">"{{ r.noiDung || 'Rất hài lòng với sản phẩm và dịch vụ!' }}"</p>
+              <div class="review-author">
+                <div class="review-avatar" style="background: #7A5C3A">
+                  {{ r.tenKhachHang?.charAt(0)?.toUpperCase() || 'K' }}
+                </div>
+                <div>
+                  <div class="review-name">{{ r.tenKhachHang }}</div>
+                  <div class="review-loc">
+                    {{ new Date(r.ngayTao).toLocaleDateString('vi-VN') }} · {{ r.soSao }}/5 ⭐
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          </template>
+
+          <!-- Fallback: hiển thị review mẫu nếu chưa có data thật -->
+          <template v-else>
+            <div
+              v-for="(r, idx) in reviews"
+              :key="r.name"
+              class="review-card"
+              :style="{ transitionDelay: `${idx * 0.1}s` }"
+            >
+              <div class="review-stars"><span class="star-row" aria-hidden="true"><iconify-icon v-for="n in 5" :key="`r-${n}`" icon="ph:star-fill"></iconify-icon></span></div>
+              <p class="review-quote">"{{ r.quote }}"</p>
+              <div class="review-author">
+                <div class="review-avatar" :style="{ background: r.color }">{{ r.initials }}</div>
+                <div>
+                  <div class="review-name">{{ r.name }}</div>
+                  <div class="review-loc">{{ r.location }} · {{ r.date }}</div>
+                </div>
+              </div>
+            </div>
+          </template>
         </div>
       </div>
     </section>
@@ -382,6 +428,7 @@ import { useCategoryStore } from '@/stores/categoryStore'
 import { useCartStore } from '@/stores/cartStore'
 import { useAuthStore } from '@/stores/authStore'
 import heroImage from '@/assets/images/thiet-ke-cua-tiem-banh-ngot-1.jpg'
+import apiClient from '@/services/apiService'
 
 const router = useRouter()
 const productStore = useProductStore()
@@ -397,6 +444,37 @@ const showBackTop = ref(false)
 const ripplingCat = ref(null)
 const defaultImage = 'https://placehold.co/400x300?text=Polycake'
 
+// ==========================================
+// ĐÁNH GIÁ THẬT TỪ API
+// ==========================================
+const realReviews = ref([])
+const productRatings = ref({}) // { [sanPhamId]: { avg: '4.5', count: 3 } }
+
+const loadHomepageReviews = async () => {
+  try {
+    // Fetch toàn bộ sản phẩm, không giới hạn slice
+    const products = productStore.products
+    const allReviews = []
+    await Promise.allSettled(
+      products.map(async (p) => {
+        const { data } = await apiClient.get(`/api/v1/products/${p.id}/reviews`)
+        // Gom reviews cho testimonials
+        allReviews.push(...data)
+        // Tính rating từng sản phẩm
+        if (data.length > 0) {
+          const avg = data.reduce((sum, r) => sum + r.soSao, 0) / data.length
+          productRatings.value[p.id] = { avg: avg.toFixed(1), count: data.length }
+        }
+      })
+    )
+    realReviews.value = allReviews
+      .sort((a, b) => new Date(b.ngayTao) - new Date(a.ngayTao))
+      .slice(0, 3)
+  } catch (e) {
+    console.error('Lỗi tải reviews trang chủ:', e)
+  }
+}
+
 const formatPrice = (price) => {
   if (!price && price !== 0) return 'Liên hệ'
   return new Intl.NumberFormat('vi-VN').format(price) + 'đ'
@@ -404,9 +482,10 @@ const formatPrice = (price) => {
 
 const handleImageError = (e) => { e.target.src = defaultImage }
 
-onMounted(() => {
-  productStore.fetchAllProducts()
+onMounted(async () => {
+  await productStore.fetchAllProducts()
   categoryStore.fetchAllCategories()
+  loadHomepageReviews()
 
   scrollHandler = () => { showBackTop.value = window.scrollY > 500 }
   window.addEventListener('scroll', scrollHandler)
@@ -418,7 +497,8 @@ const displayedProducts = computed(() => {
   let result = productStore.products.filter((item) => {
     const matchesCategory = activeCategory.value === null || item.danhMucId === activeCategory.value
     const matchesSearch = !search.value || item.tenSanPham?.toLowerCase().includes(search.value.toLowerCase())
-    return matchesCategory && matchesSearch
+    const inStock = item.soLuongTon > 0
+    return matchesCategory && matchesSearch && inStock
   })
 
   if (sortBy.value === 'newest') {
