@@ -103,7 +103,7 @@ const activeNames = ref(['1']);
 
 const form = reactive({
   storeInfo: {
-    name: 'Polycake Bakery',
+    name: 'Chocopine Bakery',
     email: 'hello@polycake.com',
     phone: '090 123 4567',
     address: '123 Nguyễn Trãi, Quận 1'

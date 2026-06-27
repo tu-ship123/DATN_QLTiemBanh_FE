@@ -68,6 +68,12 @@ const routes = [
         name: 'OrderDetail',
         component: () => import('@/views/OrderDetail.vue'),
         meta: { title: 'Chi tiết đơn hàng', breadcrumb: ['Cửa hàng', 'Chi tiết đơn hàng'], requiresAuth: true }
+      },
+      {
+        path: 'profile',
+        name: 'Profile',
+        component: () => import('@/views/Profile.vue'),
+        meta: { title: 'Hồ sơ của tôi', breadcrumb: ['Cửa hàng', 'Hồ sơ'], requiresAuth: true, roles: ['ROLE_KHACH_HANG'] }
       }
     ]
   },

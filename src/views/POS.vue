@@ -301,11 +301,86 @@
       </template>
     </el-dialog>
 
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- POPUP: Cộng điểm khách hàng (inline)            -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <Teleport to="body">
+      <Transition name="congdiem-modal">
+        <div v-if="showCongDiem" class="fixed inset-0 z-50 flex items-center justify-center p-4"
+             style="background:rgba(0,0,0,0.4);" @click.self="showCongDiem = false">
+          <div class="w-full max-w-md rounded-[28px] bg-white shadow-2xl overflow-hidden">
+            <div class="p-6 border-b border-[#FDF6EC]"
+                 style="background:linear-gradient(135deg,#7A5C3A 0%,#9A7650 100%);">
+              <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl bg-white/20 flex items-center justify-center">
+                  <iconify-icon icon="ph:star-duotone" class="text-2xl text-white"></iconify-icon>
+                </div>
+                <div>
+                  <h2 class="text-base font-black text-white">Cộng điểm cho khách</h2>
+                  <p class="text-xs text-white/70 mt-0.5">Đơn hàng #{{ congDiemDonHangId }}</p>
+                </div>
+                <button @click="showCongDiem = false"
+                  class="ml-auto w-8 h-8 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors">
+                  <iconify-icon icon="ph:x" class="text-white text-sm"></iconify-icon>
+                </button>
+              </div>
+            </div>
+            <div class="p-6 space-y-5">
+              <div v-if="!congDiemKetQua">
+                <p class="text-sm text-[#5C4428] font-semibold mb-1">Số điện thoại khách hàng</p>
+                <p class="text-xs text-[#9A7650] mb-4">Nhập SĐT để tích điểm. Bỏ qua nếu khách không muốn.</p>
+                <div class="flex gap-2">
+                  <div class="flex-1 relative">
+                    <iconify-icon icon="ph:phone-duotone"
+                      class="absolute left-3 top-1/2 -translate-y-1/2 text-[#A68B5C] text-base"></iconify-icon>
+                    <input v-model="congDiemSdt" type="tel" placeholder="0901 234 567"
+                      @keyup.enter="doCongDiem"
+                      class="w-full pl-9 pr-4 py-3 rounded-xl border border-[#EDE0CC] bg-[#FDF6EC] text-sm text-[#5C4428] outline-none focus:border-[#7A5C3A] focus:ring-2 focus:ring-[#7A5C3A]/10 transition-all" />
+                  </div>
+                  <button @click="doCongDiem" :disabled="congDiemLoading || !congDiemSdt.trim()"
+                    class="px-5 py-3 rounded-xl text-sm font-bold text-white transition-colors disabled:opacity-50"
+                    style="background:#7A5C3A;">
+                    <iconify-icon v-if="congDiemLoading" icon="ph:circle-notch" class="animate-spin text-base"></iconify-icon>
+                    <iconify-icon v-else icon="ph:magnifying-glass-bold" class="text-base"></iconify-icon>
+                  </button>
+                </div>
+              </div>
+              <div v-if="congDiemKetQua">
+                <div v-if="congDiemKetQua.timThayKhach"
+                  class="rounded-2xl bg-green-50 border border-green-200 p-5 text-center">
+                  <div class="w-14 h-14 rounded-2xl bg-green-100 flex items-center justify-center mx-auto mb-3">
+                    <iconify-icon icon="ph:check-circle-duotone" class="text-4xl text-green-600"></iconify-icon>
+                  </div>
+                  <p class="text-base font-black text-green-700">{{ congDiemKetQua.tenKhach }}</p>
+                  <div class="mt-3 flex items-center justify-center gap-2">
+                    <span class="text-2xl font-black text-green-600">+{{ congDiemKetQua.diemDuocCong }}</span>
+                    <span class="text-sm text-green-500 font-semibold">điểm</span>
+                  </div>
+                  <p class="text-xs text-green-500 mt-1">Tổng điểm: {{ congDiemKetQua.tongDiemMoi }} điểm</p>
+                </div>
+                <div v-else class="rounded-2xl bg-amber-50 border border-amber-200 p-5 text-center">
+                  <iconify-icon icon="ph:user-circle-dashed-duotone" class="text-5xl text-amber-500 mb-2"></iconify-icon>
+                  <p class="text-sm font-bold text-amber-700">Không tìm thấy tài khoản</p>
+                  <p class="text-xs text-amber-500 mt-1">{{ congDiemKetQua.thongBao }}</p>
+                  <button @click="congDiemKetQua = null; congDiemSdt = ''"
+                    class="mt-3 text-xs font-bold text-amber-700 underline">Thử lại</button>
+                </div>
+              </div>
+              <button @click="showCongDiem = false"
+                class="w-full py-3 rounded-xl border border-[#EDE0CC] text-sm font-bold text-[#9A7650] hover:bg-[#FDF6EC] transition-colors">
+                {{ congDiemKetQua?.timThayKhach ? 'Hoàn tất' : 'Bỏ qua, không cộng điểm' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import apiClient from '@/services/apiService'
 import { productService } from '@/services/ProductService'
@@ -325,6 +400,36 @@ const ghiChu     = ref('')
 const showCashModal    = ref(false)
 const showQRModal      = ref(false)
 const showSuccessModal = ref(false)
+const showCongDiem       = ref(false)
+const congDiemDonHangId  = ref(null)
+const congDiemSdt        = ref('')
+const congDiemLoading    = ref(false)
+const congDiemKetQua     = ref(null)
+
+// Reset khi mở popup
+watch(showCongDiem, (val) => {
+  if (val) { congDiemSdt.value = ''; congDiemKetQua.value = null }
+})
+
+async function doCongDiem() {
+  if (!congDiemSdt.value.trim()) return
+  congDiemLoading.value = true
+  try {
+    const res = await apiClient.post('/api/v1/loyalty/pos/cong-diem', {
+      soDienThoai: congDiemSdt.value.trim(),
+      donHangId: congDiemDonHangId.value,
+    })
+    congDiemKetQua.value = res.data
+  } catch (e) {
+    console.error(e)
+    congDiemKetQua.value = {
+      timThayKhach: false,
+      thongBao: e.response?.data || 'Lỗi kết nối server.'
+    }
+  } finally {
+    congDiemLoading.value = false
+  }
+}
 const cashGiven        = ref('')
 const change           = ref(0)
 const submitting       = ref(false)
@@ -448,6 +553,9 @@ async function submitOrder(phuongThuc) {
       showCashModal.value = false
       successData.value = { ...data, phuongThuc }
       showSuccessModal.value = true
+      // Mở popup cộng điểm
+      congDiemDonHangId.value = data.donHangId
+      showCongDiem.value = true
       // Làm mới tồn kho và xóa giỏ
       await loadProducts()
       cart.value = []
@@ -472,6 +580,9 @@ function confirmQRPaid() {
   showQRModal.value = false
   successData.value = { ...qrData.value, phuongThuc: 'VIET_QR' }
   showSuccessModal.value = true
+  // Mở popup cộng điểm
+  congDiemDonHangId.value = qrData.value.donHangId
+  showCongDiem.value = true
   loadProducts()
   cart.value = []
   qrData.value = null
@@ -526,3 +637,9 @@ function handleImgError(e) {
   e.target.style.display = 'none'
 }
 </script>
+
+<style scoped>
+.congdiem-modal-enter-active, .congdiem-modal-leave-active { transition: all .3s ease; }
+.congdiem-modal-enter-from, .congdiem-modal-leave-to { opacity: 0; }
+.congdiem-modal-enter-from > div, .congdiem-modal-leave-to > div { transform: scale(0.95); }
+</style>

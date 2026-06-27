@@ -1,204 +1,219 @@
 <template>
-  <div class="space-y-8 max-w-7xl mx-auto px-4 md:px-12 py-10 animate-fade-in blossom-theme">
+  <div class="space-y-8 max-w-7xl mx-auto px-4 md:px-12 py-10 animate-fade-in">
 
-    <div class="rounded-[24px] p-8" style="background:#FFFFFF; border:1px solid #FDD8EE;">
+    <!-- ===== HEADER ===== -->
+    <div class="rounded-[24px] p-8 bg-white border border-[#EDE0CC] shadow-sm">
       <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <span style="font-family:'DM Sans',sans-serif;font-size:11px;font-weight:700;color:#EC4899;letter-spacing:3px;text-transform:uppercase;">Giỏ Hàng</span>
-          <h1 style="font-family:'Playfair Display',serif;font-size:32px;font-weight:950;color:#3D1A2C;letter-spacing:1px;margin:4px 0 0;">Của Bạn</h1>
-          <p style="font-family:'DM Sans',sans-serif;font-size:13px;color:#7C3D5C;margin-top:4px;">Xem lại các sản phẩm thơm ngon đã chọn và hoàn tất đơn hàng.</p>
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+            style="background:linear-gradient(135deg,#7A5C3A,#9A7650);box-shadow:0 4px 16px rgba(122,92,58,0.2);">
+            <iconify-icon icon="ph:shopping-cart-duotone" class="text-2xl text-white"></iconify-icon>
+          </div>
+          <div>
+            <span style="font-family:'DM Sans',sans-serif;font-size:11px;font-weight:700;color:#9A7650;letter-spacing:3px;text-transform:uppercase;">Giỏ Hàng</span>
+            <h1 style="font-family:'Playfair Display',serif;font-size:28px;font-weight:950;color:#3D2A1A;letter-spacing:1px;margin:2px 0 0;">Của Bạn</h1>
+            <p style="font-family:'DM Sans',sans-serif;font-size:13px;color:#9A7650;margin-top:2px;">Xem lại các sản phẩm thơm ngon đã chọn và hoàn tất đơn hàng.</p>
+          </div>
         </div>
-        <RouterLink to="/shop/products"
-          style="display:inline-flex;align-items:center;gap:8px;border:1px solid #FDD8EE;border-radius:14px;padding:10px 20px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;color:#EC4899;text-decoration:none;letter-spacing:1px;transition:all 0.2s;background:#FFF0F7;"
-          onmouseenter="this.style.background='#EC4899';this.style.color='#FFFFFF';this.style.borderColor='#EC4899';"
-          onmouseleave="this.style.background='#FFF0F7';this.style.color='#EC4899';this.style.borderColor='#FDD8EE';"
-        >
+        <RouterLink to="/shop/products" class="chocopine-btn-secondary px-5 py-2.5 inline-flex items-center gap-2 no-underline">
           ← Tiếp tục mua sắm
         </RouterLink>
       </div>
     </div>
 
-    <div v-if="!isAuthenticated" class="rounded-[24px] p-16 text-center shadow-sm" style="background:#FFFFFF; border:1px solid #FDD8EE;">
-      <p class="text-5xl mb-4">🛒</p>
-      <h2 style="font-family:'Playfair Display',serif;font-size:24px;font-weight:900;color:#3D1A2C;letter-spacing:1px;" class="mb-2">Bạn chưa đăng nhập</h2>
-      <p style="font-family:'DM Sans',sans-serif;font-size:14px;color:#7C3D5C;" class="mb-8">Vui lòng đăng nhập để xem và quản lý giỏ hàng của bạn.</p>
-      <RouterLink to="/login"
-        style="display:inline-block;border-radius:14px;background:linear-gradient(135deg,#EC4899,#F472B6);padding:14px 32px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;color:#FFFFFF;text-decoration:none;letter-spacing:0.5px;transition:all 0.2s;box-shadow:0 4px 20px rgba(236,72,153,0.25);"
-        onmouseenter="this.style.boxShadow='0 6px 28px rgba(236,72,153,0.4)';this.style.transform='translateY(-2px)'"
-        onmouseleave="this.style.boxShadow='0 4px 20px rgba(236,72,153,0.25)';this.style.transform='translateY(0)'"
-      >
+    <!-- ===== CHƯA ĐĂNG NHẬP ===== -->
+    <div v-if="!isAuthenticated" class="rounded-[24px] p-16 text-center bg-white border border-[#EDE0CC] shadow-sm">
+      <div class="w-20 h-20 rounded-2xl bg-[#FDF6EC] border border-[#EDE0CC] flex items-center justify-center mx-auto mb-5">
+        <iconify-icon icon="ph:shopping-cart-duotone" class="text-5xl text-[#7A5C3A]"></iconify-icon>
+      </div>
+      <h2 style="font-family:'Playfair Display',serif;font-size:24px;font-weight:900;color:#3D2A1A;letter-spacing:1px;" class="mb-2">Bạn chưa đăng nhập</h2>
+      <p style="font-family:'DM Sans',sans-serif;font-size:14px;color:#9A7650;" class="mb-8">Vui lòng đăng nhập để xem và quản lý giỏ hàng của bạn.</p>
+      <RouterLink to="/login" class="chocopine-btn-primary px-8 py-3.5 inline-block no-underline">
         Đăng nhập ngay
       </RouterLink>
     </div>
 
+    <!-- ===== SKELETON LOADING ===== -->
     <div v-else-if="cartStore.loading && !cartStore.gioHang" class="grid gap-6 xl:grid-cols-[2.2fr_1fr]">
       <div class="space-y-4">
-        <div v-for="i in 2" :key="i" class="rounded-[24px] p-6 animate-pulse flex gap-4" style="background:#FFFFFF; border:1px solid #FDD8EE;">
-          <div class="h-32 w-[160px] rounded-2xl bg-pink-50 flex-shrink-0"></div>
+        <div v-for="i in 2" :key="i" class="rounded-[24px] p-6 animate-pulse flex gap-4 bg-white border border-[#EDE0CC]">
+          <div class="h-32 w-[160px] rounded-2xl bg-[#F5ECD8] flex-shrink-0"></div>
           <div class="flex-1 space-y-3 pt-2">
-            <div class="h-5 bg-pink-100 rounded w-1/2"></div>
-            <div class="h-4 bg-pink-50 rounded w-1/3"></div>
-            <div class="h-4 bg-pink-50 rounded w-1/4"></div>
+            <div class="h-5 bg-[#EDE0CC] rounded-xl w-1/2"></div>
+            <div class="h-4 bg-[#F5ECD8] rounded-xl w-1/3"></div>
+            <div class="h-4 bg-[#F5ECD8] rounded-xl w-1/4"></div>
           </div>
         </div>
       </div>
-      <div class="rounded-[24px] bg-pink-50 h-64 animate-pulse border border-[#FDD8EE]"></div>
+      <div class="rounded-[24px] bg-[#FDF6EC] h-64 animate-pulse border border-[#EDE0CC]"></div>
     </div>
 
-    <div v-else-if="!cartStore.loading && cartStore.items.length === 0" class="rounded-[24px] p-16 text-center shadow-sm" style="background:#FFFFFF; border:1px solid #FDD8EE;">
-      <p class="text-6xl mb-4">🎂</p>
-      <h2 style="font-family:'Playfair Display',serif;font-size:24px;font-weight:900;color:#3D1A2C;letter-spacing:1px;" class="mb-2">Giỏ hàng trống</h2>
-      <p style="font-family:'DM Sans',sans-serif;font-size:14px;color:#7C3D5C;" class="mb-8">Hãy khám phá cửa hàng và thêm những chiếc bánh yêu thích nhé!</p>
-      <RouterLink to="/shop"
-        style="display:inline-block;border-radius:14px;background:linear-gradient(135deg,#EC4899,#F472B6);padding:14px 32px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;color:#FFFFFF;text-decoration:none;letter-spacing:0.5px;transition:all 0.2s;box-shadow:0 4px 20px rgba(236,72,153,0.25);"
-        onmouseenter="this.style.boxShadow='0 6px 28px rgba(236,72,153,0.4)';this.style.transform='translateY(-2px)'"
-        onmouseleave="this.style.boxShadow='0 4px 20px rgba(236,72,153,0.25)';this.style.transform='translateY(0)'"
-      >
+    <!-- ===== GIỎ TRỐNG ===== -->
+    <div v-else-if="!cartStore.loading && cartStore.items.length === 0"
+      class="rounded-[24px] p-16 text-center bg-white border border-[#EDE0CC] shadow-sm">
+      <div class="w-24 h-24 rounded-2xl bg-[#FDF6EC] border border-[#EDE0CC] flex items-center justify-center mx-auto mb-5">
+        <iconify-icon icon="ph:cake-duotone" class="text-6xl text-[#7A5C3A]"></iconify-icon>
+      </div>
+      <h2 style="font-family:'Playfair Display',serif;font-size:24px;font-weight:900;color:#3D2A1A;letter-spacing:1px;" class="mb-2">Giỏ hàng trống</h2>
+      <p style="font-family:'DM Sans',sans-serif;font-size:14px;color:#9A7650;" class="mb-8">Hãy khám phá cửa hàng và thêm những chiếc bánh yêu thích nhé!</p>
+      <RouterLink to="/shop" class="chocopine-btn-primary px-8 py-3.5 inline-block no-underline">
         Khám phá cửa hàng
       </RouterLink>
     </div>
 
+    <!-- ===== NỘI DUNG GIỎ HÀNG ===== -->
     <div v-else class="grid gap-6 xl:grid-cols-[2.2fr_1fr]">
+
+      <!-- Danh sách sản phẩm -->
       <div class="space-y-4">
-        <div v-for="item in cartStore.items" :key="item.id"
-          class="flex flex-col gap-5 sm:flex-row sm:items-center p-6 transition-all duration-200"
-          style="border-radius:20px; background:#FFFFFF; border:1px solid #FDD8EE;"
-          onmouseenter="this.style.borderColor='#F9A8D4';this.style.boxShadow='0 8px 24px rgba(236,72,153,0.05)';"
-          onmouseleave="this.style.borderColor='#FDD8EE';this.style.boxShadow='none';"
+        <div
+          v-for="item in cartStore.items" :key="item.id"
+          class="flex flex-col gap-5 sm:flex-row sm:items-center p-6 bg-white border border-[#EDE0CC] rounded-[20px] transition-all duration-200 hover:border-[#C4A882] hover:shadow-[0_8px_24px_rgba(122,92,58,0.08)]"
         >
           <img
             :src="item.anhSanPham || defaultImage"
             :alt="item.tenSanPham"
-            class="h-32 w-full max-w-[160px] object-cover flex-shrink-0" 
-            style="border-radius:16px;border:1px solid #FDD8EE;"
+            class="h-32 w-full max-w-[160px] object-cover flex-shrink-0 rounded-[16px] border border-[#EDE0CC]"
             @error="e => e.target.src = defaultImage"
           />
 
-          <div class="flex-1 space-y-3">
-            <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div class="flex-1 space-y-3 font-sans">
+            <!-- Tên + Thành tiền -->
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h2 style="font-family:'Playfair Display',serif;font-size:18px;font-weight:900;color:#3D1A2C;letter-spacing:0.5px;">{{ item.tenSanPham }}</h2>
-                <p style="font-family:'DM Sans',sans-serif;font-size:12px;color:#7C3D5C;margin-top:2px;">{{ item.tenDanhMuc || 'Bánh ngọt' }}</p>
+                <h2 style="font-family:'Playfair Display',serif;font-size:17px;font-weight:900;color:#3D2A1A;letter-spacing:0.5px;">
+                  {{ item.tenSanPham }}
+                </h2>
+                <p class="text-xs text-[#A68B5C] mt-0.5 font-medium">{{ item.tenDanhMuc || 'Bánh ngọt' }}</p>
               </div>
-              <div style="border-radius:10px;background:#FFF0F7;border:1px solid #FDD8EE;padding:6px 14px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:800;color:#EC4899;white-space:nowrap;align-self:flex-start;">
+              <div class="rounded-xl bg-[#FDF6EC] border border-[#EDE0CC] px-3 py-1.5 text-sm font-black text-[#7A5C3A] whitespace-nowrap self-start">
                 {{ formatCurrency(item.thanhTien) }}
               </div>
             </div>
 
-            <div class="flex flex-wrap items-center gap-x-6 gap-y-2" style="font-family:'DM Sans',sans-serif;font-size:13px;color:#7C3D5C;">
-              <span>Đơn giá: <strong style="color:#3D1A2C;font-weight:700;">{{ formatCurrency(item.donGia) }}</strong></span>
-              
+            <!-- Đơn giá + Số lượng -->
+            <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-[#9A7650]">
+              <span>Đơn giá: <strong class="text-[#5C4428] font-bold">{{ formatCurrency(item.donGia) }}</strong></span>
+
               <div class="flex items-center gap-2">
                 <span>Số lượng:</span>
-                <div class="flex items-center gap-1" style="border-radius:20px; border:1px solid #FDD8EE; background:#FFF0F7; padding:2px 4px;">
+                <div class="flex items-center gap-1 rounded-full border border-[#EDE0CC] bg-[#FDF6EC] px-1 py-0.5">
                   <button
                     @click="giamSoLuong(item)"
                     :disabled="cartStore.loading"
-                    class="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[#F9A8D4] hover:text-white transition-colors text-lg font-bold text-[#EC4899] disabled:opacity-50"
+                    class="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[#7A5C3A] hover:text-white transition-colors text-base font-bold text-[#7A5C3A] disabled:opacity-40"
                   >−</button>
-                  <span class="min-w-[28px] text-center font-bold text-[#3D1A2C] text-sm">{{ item.soLuong }}</span>
+                  <span class="min-w-[28px] text-center font-bold text-[#3D2A1A] text-sm">{{ item.soLuong }}</span>
                   <button
                     @click="tangSoLuong(item)"
                     :disabled="cartStore.loading"
-                    class="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[#F9A8D4] hover:text-white transition-colors text-lg font-bold text-[#EC4899] disabled:opacity-50"
+                    class="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[#7A5C3A] hover:text-white transition-colors text-base font-bold text-[#7A5C3A] disabled:opacity-40"
                   >+</button>
                 </div>
               </div>
             </div>
 
-            <div class="flex flex-wrap items-center gap-3 pt-1">
+            <!-- Nút xóa -->
+            <div class="pt-1">
               <button
                 @click="xacNhanXoa(item)"
                 :disabled="cartStore.loading"
-                style="border-radius:10px;border:1px solid #FDD8EE;padding:7px 16px;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:700;color:#B07090;background:transparent;cursor:pointer;transition:all 0.2s;"
-                onmouseenter="this.style.color='#E11D48';this.style.borderColor='#E11D48';this.style.background='#FFF0F7';"
-                onmouseleave="this.style.color='#B07090';this.style.borderColor='#FDD8EE';this.style.background='transparent';"
-              >Xóa khỏi giỏ</button>
+                class="text-[11px] font-bold text-[#A68B5C] border border-[#EDE0CC] rounded-xl px-4 py-1.5 hover:text-red-600 hover:border-red-300 hover:bg-red-50 transition-all disabled:opacity-40"
+              >
+                <iconify-icon icon="ph:trash-duotone" class="mr-1"></iconify-icon>
+                Xóa khỏi giỏ
+              </button>
             </div>
           </div>
         </div>
       </div>
 
+      <!-- Sidebar tổng đơn -->
       <div class="space-y-4">
-        <div class="p-6 space-y-5 sticky top-6" style="border-radius:20px;background:#FFFFFF;border:1px solid #FDD8EE;">
-          <h2 style="font-family:'Playfair Display',serif;font-size:18px;font-weight:900;color:#3D1A2C;letter-spacing:1px;padding-bottom:12px;border-bottom:1px solid #FFF0F7;">Tổng Đơn Hàng</h2>
-          <div class="space-y-3" style="font-family:'DM Sans',sans-serif;font-size:13px;color:#7C3D5C;">
+        <div class="p-6 space-y-5 sticky top-6 bg-white border border-[#EDE0CC] rounded-[20px] shadow-sm">
+          <h2 style="font-family:'Playfair Display',serif;font-size:18px;font-weight:900;color:#3D2A1A;letter-spacing:1px;"
+            class="pb-3 border-b border-[#EDE0CC]">
+            Tổng Đơn Hàng
+          </h2>
+
+          <div class="space-y-3 text-xs font-sans text-[#9A7650]">
             <div class="flex justify-between">
               <span>Giá sản phẩm ({{ cartStore.tongSoLuong }} món)</span>
-              <span style="font-weight:700;color:#3D1A2C;">{{ formatCurrency(cartStore.tongTienHang) }}</span>
+              <span class="font-bold text-[#5C4428]">{{ formatCurrency(cartStore.tongTienHang) }}</span>
             </div>
             <div class="flex justify-between">
               <span>Phí giao hàng</span>
-              <span :style="cartStore.phiShip === 0 ? 'font-weight:700;color:#10B981;' : 'font-weight:700;color:#3D1A2C;'">
+              <span :class="cartStore.phiShip === 0 ? 'font-bold text-green-600' : 'font-bold text-[#5C4428]'">
                 {{ cartStore.phiShip === 0 ? 'Miễn phí' : formatCurrency(cartStore.phiShip) }}
               </span>
             </div>
-            <p v-if="cartStore.phiShip > 0" class="text-xs" style="color:#F59E0B; font-weight:600;">
-              🎁 Đặt thêm {{ formatCurrency(500000 - cartStore.tongTienHang) }} để miễn phí ship!
-            </p>
+            <div v-if="cartStore.phiShip > 0"
+              class="flex items-center gap-2 text-amber-600 font-semibold bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
+              <iconify-icon icon="ph:gift-duotone" class="text-base shrink-0"></iconify-icon>
+              Thêm {{ formatCurrency(500000 - cartStore.tongTienHang) }} để miễn phí ship!
+            </div>
           </div>
-          
-          <div class="flex items-center justify-between pt-4" style="border-top:1px solid #FFF0F7;">
-            <span style="font-family:'DM Sans',sans-serif;font-size:14px;font-weight:800;color:#7C3D5C;">Thành tiền</span>
-            <span style="font-family:'Playfair Display',serif;font-size:24px;font-weight:950;color:#EC4899;">{{ formatCurrency(cartStore.tongThanhToan) }}</span>
+
+          <div class="flex items-center justify-between pt-3 border-t border-[#EDE0CC]">
+            <span class="text-sm font-bold text-[#5C4428] font-sans">Thành tiền</span>
+            <span style="font-family:'Playfair Display',serif;font-size:24px;font-weight:950;color:#7A5C3A;">
+              {{ formatCurrency(cartStore.tongThanhToan) }}
+            </span>
           </div>
 
           <button
             @click="thanhToan"
             :disabled="cartStore.loading || cartStore.items.length === 0"
-            class="block w-full text-center disabled:opacity-60 disabled:cursor-not-allowed"
-            style="border:none;border-radius:14px;background:linear-gradient(135deg,#EC4899,#F472B6);padding:14px 20px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;color:#FFFFFF;cursor:pointer;letter-spacing:0.5px;transition:all 0.2s;box-shadow:0 4px 20px rgba(236,72,153,0.25);"
-            onmouseenter="if(!this.disabled) {this.style.boxShadow='0 6px 28px rgba(236,72,153,0.4)';this.style.transform='translateY(-1px)'}"
-            onmouseleave="if(!this.disabled) {this.style.boxShadow='0 4px 20px rgba(236,72,153,0.25)';this.style.transform='translateY(0)'}"
+            class="chocopine-btn-primary w-full py-4 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:translate-y-0"
           >
-            Tiến hành thanh toán →
+            <iconify-icon icon="ph:lock-duotone" class="text-sm"></iconify-icon>
+            Tiến hành thanh toán
           </button>
 
           <button
             @click="xoaToanBo"
             :disabled="cartStore.loading"
-            class="block w-full text-center disabled:opacity-60"
-            style="border-radius:14px;border:1px solid #FDD8EE;background:transparent;padding:12px 20px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;color:#B07090;cursor:pointer;transition:all 0.2s;"
-            onmouseenter="if(!this.disabled) {this.style.background='#FFF0F7';this.style.color='#E11D48';this.style.borderColor='#F9A8D4'}"
-            onmouseleave="if(!this.disabled) {this.style.background='transparent';this.style.color='#B07090';this.style.borderColor='#FDD8EE'}"
+            class="w-full py-3 text-xs font-bold text-[#A68B5C] border border-[#EDE0CC] rounded-xl hover:text-red-600 hover:border-red-300 hover:bg-red-50 transition-all disabled:opacity-40 font-sans"
           >
-            Xóa toàn bộ giỏ
+            Xóa toàn bộ giỏ hàng
           </button>
         </div>
 
-        <div class="p-6" style="border-radius:20px;background:#FFFFFF;border:1px dashed #FDD8EE;">
-          <h3 style="font-family:'Playfair Display',serif;font-size:13px;font-weight:900;color:#EC4899;letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;">Mẹo đặt bánh</h3>
-          <ul class="space-y-2.5" style="font-family:'DM Sans',sans-serif;font-size:12px;color:#7C3D5C;line-height:1.6;">
+        <!-- Mẹo đặt bánh -->
+        <div class="p-6 bg-[#FDF6EC] border border-dashed border-[#C4A882] rounded-[20px]">
+          <h3 class="text-xs font-black text-[#7A5C3A] uppercase tracking-widest mb-4 flex items-center gap-2">
+            <iconify-icon icon="ph:lightbulb-duotone" class="text-base"></iconify-icon>
+            Mẹo đặt bánh
+          </h3>
+          <ul class="space-y-2.5 text-xs text-[#9A7650] font-sans leading-relaxed">
             <li class="flex items-start gap-2">
-              <span style="color:#EC4899;flex-shrink:0;">◆</span>
-              <span>Nên đặt trước <strong style="color:#3D1A2C;">2–3 ngày</strong> với bánh Custom 3D phức tạp.</span>
+              <span class="text-[#7A5C3A] flex-shrink-0 mt-0.5">◆</span>
+              <span>Nên đặt trước <strong class="text-[#5C4428]">2–3 ngày</strong> với bánh Custom 3D phức tạp.</span>
             </li>
             <li class="flex items-start gap-2">
-              <span style="color:#EC4899;flex-shrink:0;">◆</span>
-              <span>Chọn hình ảnh rõ nét khi yêu cầu thiết kế bánh.</span>
+              <span class="text-[#7A5C3A] flex-shrink-0 mt-0.5">◆</span>
+              <span>Chọn hình ảnh rõ nét khi yêu cầu thiết kế bánh in.</span>
             </li>
             <li class="flex items-start gap-2">
-              <span style="color:#EC4899;flex-shrink:0;">◆</span>
-              <span>Ghi chú dị ứng thực phẩm (nếu có) khi thanh toán.</span>
+              <span class="text-[#7A5C3A] flex-shrink-0 mt-0.5">◆</span>
+              <span>Ghi chú dị ứng thực phẩm (nếu có) trong phần ghi chú đơn hàng.</span>
             </li>
           </ul>
         </div>
       </div>
     </div>
 
-    <transition name="toast">
+    <!-- ===== TOAST ===== -->
+    <Transition name="toast">
       <div
         v-if="toast.show"
-        :class="[
-          'fixed bottom-6 right-6 z-50 rounded-2xl px-6 py-3.5 text-sm font-bold text-white shadow-xl flex items-center gap-3',
-          toast.type === 'success' ? 'bg-[#10B981]' : 'bg-[#E11D48]'
-        ]"
-        style="font-family:'DM Sans',sans-serif; letter-spacing:0.5px;"
+        class="fixed bottom-6 right-6 z-50 rounded-2xl px-6 py-3.5 text-xs font-bold text-white shadow-xl flex items-center gap-3 font-sans"
+        :class="toast.type === 'success' ? 'bg-[#7A5C3A]' : 'bg-red-500'"
       >
-        <span class="text-lg">{{ toast.type === 'success' ? '✓' : '⚠' }}</span>
+        <iconify-icon :icon="toast.type === 'success' ? 'ph:check-circle-fill' : 'ph:warning-fill'" class="text-lg"></iconify-icon>
         {{ toast.message }}
       </div>
-    </transition>
+    </Transition>
 
   </div>
 </template>
@@ -214,7 +229,6 @@ const cartStore = useCartStore()
 const authStore = useAuthStore()
 
 const isAuthenticated = authStore.isAuthenticated
-
 const defaultImage = 'https://images.unsplash.com/photo-1562440499-64c9a111f713?auto=format&fit=crop&w=800&q=80'
 
 // ─── Toast ───────────────────────────────────────────────────────────────────
@@ -224,12 +238,10 @@ const showToast = (message, type = 'success') => {
   setTimeout(() => { toast.value.show = false }, 3000)
 }
 
-// ─── Format tiền VND ─────────────────────────────────────────────────────────
+// ─── Format tiền ─────────────────────────────────────────────────────────────
 const formatCurrency = (value) => {
   if (!value && value !== 0) return '0đ'
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' })
-    .format(value)
-    .replace('₫', 'đ')
+  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value).replace('₫', 'đ')
 }
 
 // ─── Tăng / Giảm số lượng ────────────────────────────────────────────────────
@@ -239,10 +251,7 @@ const tangSoLuong = async (item) => {
 }
 
 const giamSoLuong = async (item) => {
-  if (item.soLuong <= 1) {
-    xacNhanXoa(item)
-    return
-  }
+  if (item.soLuong <= 1) { xacNhanXoa(item); return }
   await cartStore.capNhatSoLuong(item.id, item.soLuong - 1)
   if (cartStore.error) showToast(cartStore.error, 'error')
 }
@@ -251,27 +260,20 @@ const giamSoLuong = async (item) => {
 const xacNhanXoa = async (item) => {
   if (!confirm(`Bỏ "${item.tenSanPham}" khỏi giỏ hàng?`)) return
   await cartStore.xoaItem(item.id)
-  if (cartStore.error) {
-    showToast(cartStore.error, 'error')
-  } else {
-    showToast('Đã xóa sản phẩm khỏi giỏ hàng!')
-  }
+  if (cartStore.error) showToast(cartStore.error, 'error')
+  else showToast('Đã xóa sản phẩm khỏi giỏ hàng!')
 }
 
 // ─── Xóa toàn bộ ─────────────────────────────────────────────────────────────
 const xoaToanBo = async () => {
   if (!confirm('Xóa toàn bộ giỏ hàng?')) return
   await cartStore.xoaToanBo()
-  if (cartStore.error) {
-    showToast(cartStore.error, 'error')
-  } else {
-    showToast('Đã xóa toàn bộ giỏ hàng!')
-  }
+  if (cartStore.error) showToast(cartStore.error, 'error')
+  else showToast('Đã xóa toàn bộ giỏ hàng!')
 }
 
 // ─── Thanh toán ──────────────────────────────────────────────────────────────
 const thanhToan = () => {
-  // Chuyển sang trang đặt hàng, truyền dữ liệu giỏ qua state
   router.push({ name: 'Checkout' })
 }
 
@@ -292,12 +294,6 @@ onMounted(async () => {
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-
-.toast-enter-active, .toast-leave-active {
-  transition: all 0.3s ease;
-}
-.toast-enter-from, .toast-leave-to {
-  opacity: 0;
-  transform: translateY(20px);
-}
+.toast-enter-active, .toast-leave-active { transition: all 0.3s ease; }
+.toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(20px); }
 </style>

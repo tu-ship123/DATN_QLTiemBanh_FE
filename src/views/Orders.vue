@@ -2,7 +2,7 @@
   <div>
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="font-display font-black text-2xl" style="color:#1E2A3B">Quản lý đơn hàng</h1>
+        <h1 class="font-display font-black text-2xl" style="color:#5C4428">Quản lý đơn hàng</h1>
         <p class="text-sm text-muted mt-0.5">Theo dõi và xử lý {{ orders.length }} đơn hàng</p>
       </div>
       <div class="flex gap-2">
@@ -16,9 +16,9 @@
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
       <div v-for="s in orderStats" :key="s.label"
            class="bg-white rounded-2xl p-4 border border-[var(--color-border)] flex items-center gap-3">
-        <span class="text-2xl">{{ s.icon }}</span>
+        <span class="text-2xl text-[#7A5C3A]"><iconify-icon :icon="s.icon"></iconify-icon></span>
         <div>
-          <div class="font-display font-black text-xl" style="color:#1E2A3B">{{ s.count }}</div>
+          <div class="font-display font-black text-xl" style="color:#5C4428">{{ s.count }}</div>
           <div class="text-xs text-muted">{{ s.label }}</div>
         </div>
       </div>
@@ -59,7 +59,7 @@
 
         <el-table-column label="MÃ ĐƠN" width="110">
           <template #default="{ row }">
-            <span class="font-bold text-sm" style="color:#E8634A">{{ row.id }}</span>
+            <span class="font-bold text-sm" style="color:#7A5C3A">{{ row.id }}</span>
           </template>
         </el-table-column>
 
@@ -69,7 +69,7 @@
               <div class="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold flex-shrink-0"
                    :style="{ background: row.avatarBg, color: row.avatarColor }">{{ row.initials }}</div>
               <div>
-                <div class="text-sm font-semibold" style="color:#1E2A3B">{{ row.customer }}</div>
+                <div class="text-sm font-semibold" style="color:#5C4428">{{ row.customer }}</div>
                 <div class="text-xs text-muted">{{ row.phone }}</div>
               </div>
             </div>
@@ -78,21 +78,21 @@
 
         <el-table-column label="SẢN PHẨM" min-width="180">
           <template #default="{ row }">
-            <div class="text-sm font-medium" style="color:#1E2A3B">{{ row.product }}</div>
+            <div class="text-sm font-medium" style="color:#5C4428">{{ row.product }}</div>
             <div class="text-xs text-muted">{{ row.variant }}</div>
           </template>
         </el-table-column>
 
         <el-table-column label="NGÀY NHẬN" width="120">
           <template #default="{ row }">
-            <div class="text-sm" style="color:#1E2A3B">{{ row.deliveryDate }}</div>
+            <div class="text-sm" style="color:#5C4428">{{ row.deliveryDate }}</div>
             <div class="text-xs text-muted">{{ row.deliveryTime }}</div>
           </template>
         </el-table-column>
 
         <el-table-column label="GIÁ TRỊ" width="130">
           <template #default="{ row }">
-            <div class="text-sm font-bold" style="color:#1E2A3B">{{ row.total }}</div>
+            <div class="text-sm font-bold" style="color:#5C4428">{{ row.total }}</div>
             <div class="text-xs text-muted">{{ row.deposit ? 'Đặt cọc: ' + row.deposit : '' }}</div>
           </template>
         </el-table-column>
@@ -121,9 +121,9 @@
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item command="view">👁 Xem chi tiết</el-dropdown-item>
-                  <el-dropdown-item command="edit">✏️ Chỉnh sửa</el-dropdown-item>
+                  <el-dropdown-item command="edit"><iconify-icon icon="ph:pencil-simple-duotone" class="mr-1"></iconify-icon> Chỉnh sửa</el-dropdown-item>
                   <el-dropdown-item command="status">🔄 Đổi trạng thái</el-dropdown-item>
-                  <el-dropdown-item command="print">🖨️ In đơn</el-dropdown-item>
+                  <el-dropdown-item command="print"><iconify-icon icon="ph:printer-duotone" class="mr-1"></iconify-icon> In đơn</el-dropdown-item>
                   <el-dropdown-item command="override" divided>⚡ Ghi đè (Override)</el-dropdown-item>
                   <el-dropdown-item command="refund">💸 Hoàn tiền (Refund)</el-dropdown-item>
                   <el-dropdown-item command="delete" divided>
@@ -159,25 +159,25 @@
         </el-steps>
 
         <div class="grid grid-cols-2 gap-4 mb-4">
-          <div class="bg-[#FFF8F4] rounded-2xl p-4">
+          <div class="bg-[#FFFBF5] rounded-2xl p-4">
             <div class="text-xs font-bold text-muted uppercase tracking-wider mb-3">Khách hàng</div>
-            <div class="font-semibold" style="color:#1E2A3B">{{ selectedOrder.customer }}</div>
-            <div class="text-sm text-muted mt-1">📞 {{ selectedOrder.phone }}</div>
-            <div class="text-sm text-muted mt-0.5">📍 {{ selectedOrder.address }}</div>
+            <div class="font-semibold" style="color:#5C4428">{{ selectedOrder.customer }}</div>
+            <div class="text-sm text-muted mt-1 flex items-center gap-1.5"><iconify-icon icon="ph:phone-duotone" class="text-[#7A5C3A]"></iconify-icon> {{ selectedOrder.phone }}</div>
+            <div class="text-sm text-muted mt-0.5 flex items-center gap-1.5"><iconify-icon icon="ph:map-pin-duotone" class="text-[#7A5C3A]"></iconify-icon> {{ selectedOrder.address }}</div>
           </div>
-          <div class="bg-[#FFF8F4] rounded-2xl p-4">
+          <div class="bg-[#FFFBF5] rounded-2xl p-4">
             <div class="text-xs font-bold text-muted uppercase tracking-wider mb-3">Thông tin đơn</div>
             <div class="flex justify-between text-sm mb-2">
               <span class="text-muted">Sản phẩm</span>
-              <span class="font-semibold" style="color:#1E2A3B">{{ selectedOrder.product }}</span>
+              <span class="font-semibold" style="color:#5C4428">{{ selectedOrder.product }}</span>
             </div>
             <div class="flex justify-between text-sm mb-2">
               <span class="text-muted">Ngày nhận</span>
-              <span class="font-semibold" style="color:#1E2A3B">{{ selectedOrder.deliveryDate }} {{ selectedOrder.deliveryTime }}</span>
+              <span class="font-semibold" style="color:#5C4428">{{ selectedOrder.deliveryDate }} {{ selectedOrder.deliveryTime }}</span>
             </div>
             <div class="flex justify-between text-sm">
               <span class="text-muted">Tổng tiền</span>
-              <span class="font-bold text-base" style="color:#E8634A">{{ selectedOrder.total }}</span>
+              <span class="font-bold text-base" style="color:#7A5C3A">{{ selectedOrder.total }}</span>
             </div>
           </div>
         </div>
@@ -236,7 +236,7 @@
       </el-form>
       <template #footer>
         <el-button @click="showAddOrder = false">Huỷ</el-button>
-        <el-button type="primary" :style="{ background:'#E8634A', borderColor:'#E8634A' }" @click="saveOrder">
+        <el-button type="primary" :style="{ background:'#7A5C3A', borderColor:'#7A5C3A' }" @click="saveOrder">
           Tạo đơn hàng
         </el-button>
       </template>
@@ -245,7 +245,7 @@
     <!-- ── DIALOG: HOÀN TIỀN ──────────────────────────────────────────────────── -->
     <el-dialog v-model="showRefund" title="Xử lý hoàn tiền" width="450px">
       <div class="mb-5 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-200">
-        Đang xử lý hoàn tiền cho đơn hàng <strong class="text-[#E8634A]">{{ selectedOrder?.id }}</strong>.<br>
+        Đang xử lý hoàn tiền cho đơn hàng <strong class="text-[#7A5C3A]">{{ selectedOrder?.id }}</strong>.<br>
         Khách hàng: <strong>{{ selectedOrder?.customer }}</strong>
       </div>
       <el-form label-position="top">
@@ -258,7 +258,7 @@
       </el-form>
       <template #footer>
         <el-button @click="showRefund = false">Hủy</el-button>
-        <el-button type="primary" :style="{ background:'#E8634A', borderColor:'#E8634A' }" @click="processRefund">
+        <el-button type="primary" :style="{ background:'#7A5C3A', borderColor:'#7A5C3A' }" @click="processRefund">
           Xác nhận hoàn tiền
         </el-button>
       </template>
@@ -267,7 +267,7 @@
     <!-- ── DIALOG: OVERRIDE ───────────────────────────────────────────────────── -->
     <el-dialog v-model="showOverride" title="Ghi đè hệ thống (Override)" width="450px">
       <div class="mb-5 text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-200">
-        <strong>⚠️ Cảnh báo:</strong> Thao tác này sẽ ép buộc chuyển đổi trạng thái đơn <strong class="text-[#E8634A]">{{ selectedOrder?.id }}</strong>, bỏ qua quy trình thông thường.
+        <strong class="inline-flex items-center gap-1.5"><iconify-icon icon="ph:warning-duotone"></iconify-icon> Cảnh báo:</strong> Thao tác này sẽ ép buộc chuyển đổi trạng thái đơn <strong class="text-[#7A5C3A]">{{ selectedOrder?.id }}</strong>, bỏ qua quy trình thông thường.
       </div>
       <el-form label-position="top">
         <el-form-item label="Ép chuyển sang trạng thái" required>
@@ -290,9 +290,9 @@
     </el-dialog>
 
     <!-- ── DIALOG: CHỈNH SỬA ĐƠN ──────────────────────────────────────────── -->
-    <el-dialog v-model="showEdit" title="✏️ Chỉnh sửa đơn hàng" width="500px">
+    <el-dialog v-model="showEdit" title="Chỉnh sửa đơn hàng" width="500px">
       <div v-if="selectedOrder" class="mb-4 text-sm text-slate-500 bg-slate-50 px-3 py-2 rounded-lg">
-        Đơn <strong class="text-[#E8634A]">{{ selectedOrder.id }}</strong> — {{ selectedOrder.customer }}
+        Đơn <strong class="text-[#7A5C3A]">{{ selectedOrder.id }}</strong> — {{ selectedOrder.customer }}
       </div>
       <el-form :model="editData" label-position="top">
         <el-form-item label="Địa chỉ giao hàng">
@@ -311,7 +311,7 @@
       </el-form>
       <template #footer>
         <el-button @click="showEdit = false">Hủy</el-button>
-        <el-button type="primary" :style="{ background:'#E8634A', borderColor:'#E8634A' }"
+        <el-button type="primary" :style="{ background:'#7A5C3A', borderColor:'#7A5C3A' }"
           :loading="saving" @click="saveEdit">
           Lưu thay đổi
         </el-button>
@@ -322,7 +322,7 @@
     <el-dialog v-model="showStatus" title="🔄 Đổi trạng thái đơn hàng" width="420px">
       <div v-if="selectedOrder" class="mb-4 text-sm">
         <div class="bg-slate-50 px-3 py-2 rounded-lg mb-3">
-          Đơn <strong class="text-[#E8634A]">{{ selectedOrder.id }}</strong> — hiện tại:
+          Đơn <strong class="text-[#7A5C3A]">{{ selectedOrder.id }}</strong> — hiện tại:
           <span class="badge ml-1" :class="`badge-${statusColor(selectedOrder.status)}`">
             {{ selectedOrder.status }}
           </span>
@@ -337,7 +337,7 @@
             <el-option label="✅ Đã xác nhận"   value="DA_XAC_NHAN" />
             <el-option label="🔧 Đang làm"      value="DANG_LAM" />
             <el-option label="📦 Sẵn sàng"      value="SAN_SANG" />
-            <el-option label="🚴 Đang giao"     value="DANG_GIAO" />
+            <el-option label="Đang giao"     value="DANG_GIAO" />
             <el-option label="✅ Hoàn thành"    value="HOAN_THANH" />
             <el-option label="❌ Huỷ đơn"       value="DA_HUY" />
           </el-select>
@@ -348,7 +348,7 @@
       </el-form>
       <template #footer>
         <el-button @click="showStatus = false">Hủy</el-button>
-        <el-button type="primary" :style="{ background:'#E8634A', borderColor:'#E8634A' }"
+        <el-button type="primary" :style="{ background:'#7A5C3A', borderColor:'#7A5C3A' }"
           :loading="saving" @click="saveStatus">
           Xác nhận chuyển
         </el-button>
@@ -356,15 +356,15 @@
     </el-dialog>
 
     <!-- ── DIALOG: IN ĐƠN ──────────────────────────────────────────────────── -->
-    <el-dialog v-model="showPrint" title="🖨️ Phiếu đơn hàng" width="560px">
+    <el-dialog v-model="showPrint" title="Phiếu đơn hàng" width="560px">
       <div v-if="printLoading" class="flex justify-center py-10">
-        <div class="w-8 h-8 border-4 border-[#E8634A] border-t-transparent rounded-full animate-spin"></div>
+        <div class="w-8 h-8 border-4 border-[#7A5C3A] border-t-transparent rounded-full animate-spin"></div>
       </div>
       <div v-else-if="printData" id="print-area" class="text-sm text-slate-700 font-sans">
         <div class="text-center mb-5">
-          <div class="text-lg font-black text-[#E8634A]">🎂 TIỆM BÁNH</div>
+          <div class="text-lg font-black text-[#7A5C3A] brand-print" style="font-family:'Great Vibes',cursive;font-size:1.5rem;">Chocopine</div>
           <div class="text-xs text-slate-400 mt-0.5">Phiếu đơn hàng</div>
-          <div class="text-xl font-black text-[#1E2A3B] mt-1">{{ printData.maDonHang }}</div>
+          <div class="text-xl font-black text-[#5C4428] mt-1">{{ printData.maDonHang }}</div>
           <div class="text-xs text-slate-400">Ngày tạo: {{ formatDateTime(printData.ngayTao) }}</div>
         </div>
 
@@ -377,7 +377,7 @@
             <span class="text-slate-500">Email:</span>        <span>{{ printData.emailKhachHang }}</span>
             <span class="text-slate-500">Điện thoại:</span>   <span>{{ printData.sdtKhachHang || '—' }}</span>
             <span class="text-slate-500">Địa chỉ giao:</span> <span>{{ printData.diaChiGiaoHang || '—' }}</span>
-            <span class="text-slate-500">Ngày giao:</span>    <span class="font-medium text-[#E8634A]">{{ printData.ngayGiaoHang || '—' }}</span>
+            <span class="text-slate-500">Ngày giao:</span>    <span class="font-medium text-[#7A5C3A]">{{ printData.ngayGiaoHang || '—' }}</span>
           </div>
         </div>
 
@@ -395,7 +395,7 @@
             <tbody>
               <tr v-for="item in printData.items" :key="item.tenSanPham"
                 class="border-b border-slate-100">
-                <td class="py-1.5 font-medium text-[#1E2A3B]">{{ item.tenSanPham }}</td>
+                <td class="py-1.5 font-medium text-[#5C4428]">{{ item.tenSanPham }}</td>
                 <td class="py-1.5 text-center">{{ item.soLuong }}</td>
                 <td class="py-1.5 text-right">{{ formatVND(item.donGia) }}</td>
                 <td class="py-1.5 text-right font-semibold">{{ formatVND(item.thanhTien) }}</td>
@@ -414,8 +414,8 @@
             <span class="text-green-600">- {{ formatVND(printData.soTienCoc) }}</span>
           </div>
           <div class="flex justify-between pt-1 border-t border-slate-200">
-            <span class="font-bold text-[#1E2A3B]">Còn lại</span>
-            <span class="font-black text-[#E8634A] text-base">{{ formatVND(printData.conLai) }}</span>
+            <span class="font-bold text-[#5C4428]">Còn lại</span>
+            <span class="font-black text-[#7A5C3A] text-base">{{ formatVND(printData.conLai) }}</span>
           </div>
         </div>
 
@@ -430,9 +430,9 @@
       </div>
       <template #footer>
         <el-button @click="showPrint = false">Đóng</el-button>
-        <el-button type="primary" :style="{ background:'#E8634A', borderColor:'#E8634A' }"
+        <el-button type="primary" :style="{ background:'#7A5C3A', borderColor:'#7A5C3A' }"
           @click="triggerBrowserPrint">
-          🖨️ In ngay
+          <iconify-icon icon="ph:printer-duotone" class="mr-1"></iconify-icon> In ngay
         </el-button>
       </template>
     </el-dialog>
@@ -517,7 +517,7 @@ const FILTER_MAP = {
 }
 
 const AVATAR_COLORS = [
-  { bg: '#FFF0EC', color: '#E8634A' },
+  { bg: '#FDF6EC', color: '#7A5C3A' },
   { bg: '#F0FDF4', color: '#22C55E' },
   { bg: '#EFF6FF', color: '#3B82F6' },
   { bg: '#F5F3FF', color: '#7C3AED' },
@@ -594,10 +594,10 @@ onMounted(fetchOrders)
 
 // ── COMPUTED ──────────────────────────────────────────────────────────────────
 const orderStats = computed(() => [
-  { icon: '📬', count: orders.value.filter(o => o.statusKey === 'new').length,        label: 'Chờ xác nhận' },
-  { icon: '⚙️',  count: orders.value.filter(o => o.statusKey === 'production').length, label: 'Đang sản xuất' },
-  { icon: '✅', count: orders.value.filter(o => o.statusKey === 'done').length,        label: 'Hoàn thành' },
-  { icon: '🚚', count: orders.value.filter(o => o.statusKey === 'delivered').length,   label: 'Đã giao' },
+  { icon: 'ph:clock-countdown-duotone', count: orders.value.filter(o => o.statusKey === 'new').length,        label: 'Chờ xác nhận' },
+  { icon: 'ph:gear-duotone',  count: orders.value.filter(o => o.statusKey === 'production').length, label: 'Đang sản xuất' },
+  { icon: 'ph:check-circle-duotone', count: orders.value.filter(o => o.statusKey === 'done').length,        label: 'Hoàn thành' },
+  { icon: 'ph:truck-duotone', count: orders.value.filter(o => o.statusKey === 'delivered').length,   label: 'Đã giao' },
 ])
 
 const filteredOrders = computed(() => {

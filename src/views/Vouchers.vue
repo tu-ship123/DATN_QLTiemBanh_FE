@@ -4,10 +4,10 @@
     <div class="rounded-[20px] border border-slate-200 bg-white p-6 shadow-sm">
       <div class="flex items-center justify-between">
         <div class="space-y-1">
-          <h1 class="text-3xl font-bold" style="color:#1E2A3B">Khuyến Mãi & Voucher</h1>
+          <h1 class="text-3xl font-bold" style="color:#5C4428">Khuyến Mãi & Voucher</h1>
           <p class="text-sm text-muted">Quản lý mã giảm giá, chương trình ưu đãi</p>
         </div>
-        <button class="btn-primary" @click="openAdd">🎉 Tạo khuyến mãi</button>
+        <button class="btn-primary flex items-center gap-2" @click="openAdd"><iconify-icon icon="ph:ticket-duotone"></iconify-icon> Tạo khuyến mãi</button>
       </div>
     </div>
 
@@ -16,7 +16,7 @@
       <div class="data-card">
         <div class="p-4">
           <div class="text-xs text-muted mb-2">Voucher hoạt động</div>
-          <div class="text-3xl font-bold" style="color:#E8634A">{{ activeCount }}</div>
+          <div class="text-3xl font-bold" style="color:#7A5C3A">{{ activeCount }}</div>
           <div class="text-xs text-muted mt-2">{{ expiringSoonCount }} sắp hết hạn</div>
         </div>
       </div>
@@ -46,12 +46,12 @@
     <!-- Vouchers List -->
     <div class="data-card">
       <div class="data-card-header">
-        <h3 class="font-bold" style="color:#1E2A3B">Danh sách voucher</h3>
+        <h3 class="font-bold" style="color:#5C4428">Danh sách voucher</h3>
         <div class="flex gap-2">
           <select
             v-model="filterStatus"
-            class="border border-[#EDE8E3] rounded-xl px-3 py-2 text-xs"
-            style="color:#1E2A3B"
+            class="border border-[#EDE0CC] rounded-xl px-3 py-2 text-xs"
+            style="color:#5C4428"
           >
             <option>Tất cả</option>
             <option>Hoạt động</option>
@@ -69,7 +69,7 @@
         <div
           v-for="voucher in displayedVouchers"
           :key="voucher.id"
-          class="border border-[#EDE8E3] rounded-lg p-4 hover:bg-[#FFF8F4] transition"
+          class="border border-[#EDE0CC] rounded-lg p-4 hover:bg-[#FFFBF5] transition"
         >
           <div class="flex items-start justify-between mb-3">
             <div class="flex items-center gap-3">
@@ -77,10 +77,10 @@
                 class="w-14 h-14 rounded-xl flex items-center justify-center text-2xl font-bold"
                 :style="{ background: voucher.bg }"
               >
-                {{ voucher.emoji }}
+                <iconify-icon :icon="voucher.icon" class="text-xl text-[#7A5C3A]"></iconify-icon>
               </div>
               <div>
-                <h4 class="font-bold" style="color:#1E2A3B">{{ voucher.name }}</h4>
+                <h4 class="font-bold" style="color:#5C4428">{{ voucher.name }}</h4>
                 <p class="text-sm text-muted">{{ voucher.description }}</p>
               </div>
             </div>
@@ -89,7 +89,7 @@
               <button
                 @click="openEdit(voucher)"
                 class="text-xs px-2 py-1 rounded-lg text-blue-600 hover:bg-blue-50 transition"
-              >✏️ Sửa</button>
+              ><iconify-icon icon="ph:pencil-simple-duotone" class="mr-1"></iconify-icon> Sửa</button>
               <button
                 @click="deleteVoucher(voucher)"
                 class="text-xs px-2 py-1 rounded-lg text-red-500 hover:bg-red-50 transition"
@@ -97,22 +97,22 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-4 gap-4 text-sm mt-3 pt-3 border-t border-[#F5F0ED]">
+          <div class="grid grid-cols-4 gap-4 text-sm mt-3 pt-3 border-t border-[#FDF8F2]">
             <div>
               <div class="text-muted text-xs">Mã voucher</div>
-              <div class="font-mono font-bold" style="color:#E8634A">{{ voucher.code }}</div>
+              <div class="font-mono font-bold" style="color:#7A5C3A">{{ voucher.code }}</div>
             </div>
             <div>
               <div class="text-muted text-xs">Giảm giá</div>
-              <div class="font-bold" style="color:#1E2A3B">{{ voucher.discount }}</div>
+              <div class="font-bold" style="color:#5C4428">{{ voucher.discount }}</div>
             </div>
             <div>
               <div class="text-muted text-xs">Sử dụng</div>
-              <div class="font-bold" style="color:#1E2A3B">{{ voucher.used }}/{{ voucher.limit }}</div>
+              <div class="font-bold" style="color:#5C4428">{{ voucher.used }}/{{ voucher.limit }}</div>
             </div>
             <div class="text-right">
               <div class="text-muted text-xs">Hết hạn</div>
-              <div class="font-bold" style="color:#1E2A3B">{{ voucher.expiry }}</div>
+              <div class="font-bold" style="color:#5C4428">{{ voucher.expiry }}</div>
             </div>
           </div>
         </div>
@@ -122,17 +122,17 @@
     <!-- Active Campaigns -->
     <div class="data-card">
       <div class="data-card-header">
-        <h3 class="font-bold" style="color:#1E2A3B">🚀 Chiến dịch khuyến mãi</h3>
+        <h3 class="font-bold" style="color:#5C4428">🚀 Chiến dịch khuyến mãi</h3>
       </div>
       <div class="space-y-3 p-4">
         <div
           v-for="campaign in campaigns"
           :key="campaign.id"
-          class="border border-[#EDE8E3] rounded-lg p-4"
+          class="border border-[#EDE0CC] rounded-lg p-4"
         >
           <div class="flex items-center justify-between mb-2">
-            <h4 class="font-bold text-sm" style="color:#1E2A3B">{{ campaign.name }}</h4>
-            <span class="text-xs font-semibold" style="color:#E8634A">{{ campaign.period }}</span>
+            <h4 class="font-bold text-sm" style="color:#5C4428">{{ campaign.name }}</h4>
+            <span class="text-xs font-semibold" style="color:#7A5C3A">{{ campaign.period }}</span>
           </div>
           <p class="text-xs text-muted mb-3">{{ campaign.description }}</p>
           <div class="flex items-center justify-between text-xs">
@@ -140,7 +140,7 @@
             <div class="flex items-center gap-2">
               <div class="flex-1 h-2 rounded-full bg-gray-100 w-32 overflow-hidden">
                 <div
-                  class="h-full bg-gradient-to-r from-[#E8634A] to-[#FBB830]"
+                  class="h-full bg-gradient-to-r from-[#7A5C3A] to-[#FBB830]"
                   :style="{ width: campaign.progress + '%' }"
                 ></div>
               </div>
@@ -203,7 +203,7 @@
         <el-button @click="showDialog = false">Hủy</el-button>
         <el-button
           type="primary"
-          :style="{ background: '#E8634A', borderColor: '#E8634A' }"
+          :style="{ background: '#7A5C3A', borderColor: '#7A5C3A' }"
           @click="saveVoucher"
         >
           {{ editingVoucher ? 'Cập nhật' : 'Tạo voucher' }}
@@ -267,8 +267,8 @@ function mapVoucher(v) {
 
   return {
     id: v.id,
-    emoji: v.loaiGiamGia === 'PHAN_TRAM' ? '🎉' : '💰',
-    bg: v.loaiGiamGia === 'PHAN_TRAM' ? '#FFF0EC' : '#EFF6FF',
+    icon: v.loaiGiamGia === 'PHAN_TRAM' ? 'ph:ticket-duotone' : 'ph:coins-duotone',
+    bg: v.loaiGiamGia === 'PHAN_TRAM' ? '#FDF6EC' : '#EFF6FF',
     name: v.maCode,
     description: v.loaiGiamGia === 'PHAN_TRAM'
       ? `Giảm ${v.giaTriGiam}% — Đơn tối thiểu ${Number(v.donHangToiThieu || 0).toLocaleString('vi-VN')}đ`

@@ -1,5 +1,5 @@
 <template>
-  <div class="flex min-h-screen bg-[#FFF8F4]">
+  <div class="chocopine-admin flex min-h-screen bg-[#FFFBF5]">
 
     <!-- Mobile overlay -->
     <div
@@ -10,17 +10,17 @@
 
     <!-- ===== SIDEBAR ===== -->
     <aside
-      class="sidebar w-[260px] bg-white border-r border-[#EDE8E3] h-screen fixed top-0 left-0 flex flex-col z-50 transition-transform duration-300 ease-in-out"
+      class="sidebar w-[260px] bg-white border-r border-[#EDE0CC] h-screen fixed top-0 left-0 flex flex-col z-50 transition-transform duration-300 ease-in-out"
       :class="{ '-translate-x-full': !sidebarOpen && isMobile }"
     >
       <!-- Logo -->
-      <div class="flex items-center gap-3 px-5 py-4 border-b border-[#EDE8E3] shrink-0">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-[#E8634A] to-[#FBB830] flex items-center justify-center shadow-md shadow-[#E8634A]/20">
-          <iconify-icon icon="ph:storefront-duotone" class="text-xl text-white" />
+      <div class="flex items-center gap-3 px-5 py-4 border-b border-[#EDE0CC] shrink-0">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-[#7A5C3A] to-[#B8956A] flex items-center justify-center shadow-md shadow-[#7A5C3A]/20">
+          <iconify-icon icon="ph:cake-duotone" class="text-xl text-white" />
         </div>
         <div>
-          <div class="font-display font-black text-base text-[#1E2A3B] leading-tight">Polycake</div>
-          <div class="text-[9px] font-bold tracking-[0.2em] uppercase text-[#B0A8A3]">Workspace</div>
+          <div class="brand-script-admin">Chocopine</div>
+          <div class="text-[9px] font-bold tracking-[0.2em] uppercase text-[#A68B5C]">Admin</div>
         </div>
       </div>
 
@@ -85,9 +85,8 @@
       </nav>
 
       <!-- User footer -->
-      <div class="p-3 border-t border-[#EDE8E3] shrink-0 bg-white">
-        <div class="flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-colors hover:bg-[#FFF0EC]">
-          <!-- Avatar: initials từ tên thật, màu từ role -->
+      <div class="p-3 border-t border-[#EDE0CC] shrink-0 bg-white">
+        <div class="flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-colors hover:bg-[#FDF6EC]">
           <div
             class="w-9 h-9 rounded-xl text-white text-[11px] font-bold flex items-center justify-center shrink-0"
             :style="{ background: avatarBg }"
@@ -95,8 +94,8 @@
             {{ userInitials }}
           </div>
           <div class="flex-1 min-w-0">
-            <div class="text-[13px] font-bold truncate text-[#1E2A3B]">{{ displayName }}</div>
-            <div class="text-[10px] font-black uppercase tracking-wider text-[#E8634A]">{{ displayRole }}</div>
+            <div class="text-[13px] font-bold truncate text-[#5C4428]">{{ displayName }}</div>
+            <div class="text-[10px] font-black uppercase tracking-wider text-[#7A5C3A]">{{ displayRole }}</div>
           </div>
           <el-dropdown trigger="click">
             <button class="p-1.5 rounded-lg hover:bg-white text-gray-400 transition-colors border border-transparent hover:border-gray-200">
@@ -123,58 +122,53 @@
     <!-- ===== MAIN AREA ===== -->
     <div class="flex-1 flex flex-col md:ml-[260px] min-h-screen transition-all duration-300">
 
-      <!-- Topbar -->
-      <header class="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-[#EDE8E3] h-[68px] px-5 flex items-center justify-between gap-4">
+      <header class="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-[#EDE0CC] h-[68px] px-5 flex items-center justify-between gap-4">
 
         <div class="flex items-center gap-3">
-          <!-- Hamburger (mobile) -->
           <button
             v-if="isMobile"
-            class="p-2 rounded-xl bg-gray-50 text-gray-600 hover:bg-[#FFF0EC] hover:text-[#E8634A] transition-colors border border-gray-100"
+            class="p-2 rounded-xl bg-gray-50 text-gray-600 hover:bg-[#FDF6EC] hover:text-[#7A5C3A] transition-colors border border-gray-100"
             @click="sidebarOpen = !sidebarOpen"
           >
             <iconify-icon icon="ph:list" class="text-xl" />
           </button>
 
-          <!-- Breadcrumb -->
           <el-breadcrumb separator="/" class="hidden sm:block">
             <el-breadcrumb-item v-for="(crumb, i) in currentBreadcrumb" :key="i">
               <span
-                class="transition-colors"
+                class="transition-colors inline-flex items-center gap-1.5"
                 :class="i < currentBreadcrumb.length - 1
-                  ? 'text-[#6B7280] text-sm hover:text-[#E8634A] cursor-pointer'
-                  : 'text-sm font-bold text-[#1E2A3B]'"
+                  ? 'text-[#9A7650] text-sm hover:text-[#7A5C3A] cursor-pointer'
+                  : 'text-sm font-bold text-[#5C4428]'"
               >
-                {{ i === 0 ? '🏠 ' + crumb : crumb }}
+                <iconify-icon v-if="i === 0" icon="ph:house-duotone" class="text-base text-[#7A5C3A]"></iconify-icon>
+                {{ crumb }}
               </span>
             </el-breadcrumb-item>
           </el-breadcrumb>
         </div>
 
         <div class="flex items-center gap-2.5">
-          <!-- Search -->
-          <div class="hidden lg:flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 w-[260px] focus-within:border-[#E8634A] focus-within:ring-2 focus-within:ring-[#E8634A]/20 transition-all">
-            <iconify-icon icon="ph:magnifying-glass" class="text-gray-400 text-lg" />
+          <div class="hidden lg:flex items-center gap-2 bg-[#FDF8F2] border border-[#EDE0CC] rounded-xl px-3 py-2 w-[260px] focus-within:border-[#7A5C3A] focus-within:ring-2 focus-within:ring-[#7A5C3A]/20 transition-all">
+            <iconify-icon icon="ph:magnifying-glass" class="text-[#A68B5C] text-lg" />
             <input
               type="text"
               placeholder="Tìm kiếm nhanh..."
-              class="bg-transparent border-none outline-none w-full text-sm text-[#1E2A3B] placeholder-gray-400"
+              class="bg-transparent border-none outline-none w-full text-sm text-[#5C4428] placeholder-[#A68B5C]"
             />
-            <span class="text-[10px] px-1.5 py-0.5 rounded bg-white border border-gray-200 text-gray-400 font-mono font-bold shadow-sm">⌘K</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-white border border-[#EDE0CC] text-[#A68B5C] font-mono font-bold shadow-sm">⌘K</span>
           </div>
 
-          <!-- Notifications -->
           <el-badge :value="pendingOrderCount || null" :max="99" class="mt-1">
-            <button class="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center hover:bg-[#FFF0EC] hover:text-[#E8634A] hover:border-[#E8634A]/30 transition-all text-gray-500">
+            <button class="w-10 h-10 rounded-xl bg-white border border-[#EDE0CC] flex items-center justify-center hover:bg-[#FDF6EC] hover:text-[#7A5C3A] hover:border-[#7A5C3A]/30 transition-all text-[#9A7650]">
               <iconify-icon icon="ph:bell-duotone" class="text-xl" />
             </button>
           </el-badge>
 
-          <div class="h-5 w-px bg-gray-200 mx-0.5 hidden sm:block" />
+          <div class="h-5 w-px bg-[#EDE0CC] mx-0.5 hidden sm:block" />
 
-          <!-- Quick Add button -->
           <button
-            class="hidden sm:flex items-center gap-2 bg-gradient-to-r from-[#E8634A] to-[#F07A5E] text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-[#E8634A]/25 hover:shadow-[#E8634A]/40 hover:-translate-y-0.5 transition-all"
+            class="hidden sm:flex items-center gap-2 bg-gradient-to-r from-[#7A5C3A] to-[#9A7650] text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-[#7A5C3A]/25 hover:shadow-[#7A5C3A]/40 hover:-translate-y-0.5 transition-all"
             @click="handleAddNew"
           >
             <iconify-icon icon="ph:plus-bold" class="text-base" />
@@ -183,7 +177,6 @@
         </div>
       </header>
 
-      <!-- Page content -->
       <main class="flex-1 p-5 max-w-[1600px] w-full mx-auto">
         <RouterView v-slot="{ Component, route }">
           <Transition name="fade-slide" mode="out-in">
@@ -207,7 +200,6 @@ const route     = useRoute()
 const router    = useRouter()
 const authStore = useAuthStore()
 
-// ── Sidebar mobile ──────────────────────────────────────────────────────────
 const sidebarOpen = ref(true)
 const isMobile    = ref(false)
 
@@ -223,7 +215,6 @@ onMounted(() => {
 })
 onUnmounted(() => window.removeEventListener('resize', checkMobile))
 
-// ── Thông tin user từ authStore (không hardcode) ────────────────────────────
 const displayName = computed(() => {
   const u = authStore.user
   return u?.tenNguoiDung || u?.hoTen || u?.name || u?.email?.split('@')[0] || 'Admin'
@@ -248,35 +239,29 @@ const userInitials = computed(() => {
   return name.slice(0, 2).toUpperCase()
 })
 
-// Màu avatar theo role
 const avatarBg = computed(() => {
   const role = authStore.userRole || ''
-  if (role.includes('ADMIN'))    return '#1E2A3B'
-  if (role.includes('NHAN_VIEN')) return '#3B82F6'
-  return '#6B7280'
+  if (role.includes('ADMIN')) return 'linear-gradient(135deg, #5C4428, #7A5C3A)'
+  if (role.includes('NHAN_VIEN')) return 'linear-gradient(135deg, #7A5C3A, #9A7650)'
+  return '#9A7650'
 })
 
-// ── Badge đơn hàng chờ xử lý — lấy từ API ──────────────────────────────────
 const pendingOrderCount = ref(null)
 
 async function loadPendingCount() {
   try {
     const res = await apiClient.get('/api/v1/admin/dashboard')
     const d = res.data
-    // Dùng tongDon hoặc donChoXacNhan nếu backend trả về
     pendingOrderCount.value = d?.donChoXacNhan ?? d?.tongDon ?? null
   } catch {
-    // Không hiển thị badge nếu không load được — không crash
     pendingOrderCount.value = null
   }
 }
 
-// Badge object (mỗi key tương ứng badgeKey trong menu)
 const badges = computed(() => ({
   orders: pendingOrderCount.value,
 }))
 
-// ── Menu items ───────────────────────────────────────────────────────────────
 const mainMenu = [
   { path: '/admin/dashboard',  icon: 'ph:squares-four-duotone',         label: 'Tổng quan'             },
   { path: '/admin/orders',     icon: 'ph:receipt-duotone',               label: 'Quản lý đơn hàng', badgeKey: 'orders' },
@@ -298,42 +283,42 @@ const systemMenu = [
   { path: '/admin/audit-log', icon: 'ph:clock-countdown-duotone', label: 'Nhật ký hoạt động' },
 ]
 
-// ── Breadcrumb từ route.meta ─────────────────────────────────────────────────
 const currentBreadcrumb = computed(() => route.meta?.breadcrumb ?? ['Trang chủ'])
 
-// ── Active check ─────────────────────────────────────────────────────────────
 const isActive = (path) => route.path.startsWith(path)
 
-// ── Logout ───────────────────────────────────────────────────────────────────
 const handleLogout = async () => {
   await authStore.logout()
   router.push('/login')
 }
 
-// ── Thêm mới: phát event để các page con bắt ────────────────────────────────
 function handleAddNew() {
   window.dispatchEvent(new CustomEvent('open-add-modal'))
 }
 </script>
 
 <style scoped>
-/* Scrollbar sidebar */
+.brand-script-admin {
+  font-family: 'Great Vibes', cursive;
+  font-size: 26px;
+  line-height: 1;
+  color: #5C4428;
+}
+
 .custom-scrollbar::-webkit-scrollbar       { width: 3px }
 .custom-scrollbar::-webkit-scrollbar-track { background: transparent }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px }
-.custom-scrollbar:hover::-webkit-scrollbar-thumb { background: #D1D5DB }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #EDE0CC; border-radius: 10px }
+.custom-scrollbar:hover::-webkit-scrollbar-thumb { background: #D4C4A8 }
 
-/* Nav section label */
 .nav-section-label {
   font-size: 9px;
   font-weight: 700;
   letter-spacing: .18em;
   text-transform: uppercase;
-  color: #B0A8A3;
+  color: #A68B5C;
   padding: 0 10px 4px;
 }
 
-/* Nav item base */
 .nav-item {
   display: flex;
   align-items: center;
@@ -345,28 +330,27 @@ function handleAddNew() {
   transition: background .15s, color .15s;
   font-size: 13px;
   font-weight: 600;
-  color: #5A6474;
+  color: #9A7650;
   text-decoration: none;
 }
 .nav-item:hover {
-  background: #FFF0EC;
-  color: #E8634A;
+  background: #FDF6EC;
+  color: #7A5C3A;
 }
 .nav-item--active {
-  background: linear-gradient(135deg, #E8634A, #F57858);
+  background: linear-gradient(135deg, #7A5C3A, #9A7650);
   color: #fff;
 }
 .nav-item--active:hover {
-  background: linear-gradient(135deg, #E8634A, #F57858);
+  background: linear-gradient(135deg, #7A5C3A, #9A7650);
   color: #fff;
 }
 
-/* Nav icon */
 .nav-icon {
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  background: #F5F0ED;
+  background: #FDF8F2;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -376,7 +360,6 @@ function handleAddNew() {
 .nav-item:hover .nav-icon { background: #fff }
 .nav-icon--active          { background: rgba(255,255,255,0.2) }
 
-/* Badge */
 .nav-badge {
   padding: 2px 6px;
   border-radius: 20px;
@@ -384,12 +367,11 @@ function handleAddNew() {
   font-weight: 700;
   min-width: 20px;
   text-align: center;
-  background: #E8634A;
+  background: #7A5C3A;
   color: #fff;
 }
 .nav-badge--active { background: rgba(255,255,255,0.25); color: #fff }
 
-/* Page transition */
 .fade-slide-enter-active,
 .fade-slide-leave-active {
   transition: all .22s cubic-bezier(.4,0,.2,1);

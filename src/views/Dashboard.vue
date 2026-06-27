@@ -2,7 +2,7 @@
   <div>
     <!-- Page Title -->
     <div class="mb-6">
-      <h1 class="font-display font-black text-2xl" style="color:#1E2A3B">Tổng quan hôm nay</h1>
+      <h1 class="font-display font-black text-2xl" style="color:#5C4428">Tổng quan hôm nay</h1>
       <p class="text-sm text-muted mt-0.5">{{ today }} · Cập nhật lúc {{ updateTime }}</p>
     </div>
 
@@ -18,7 +18,7 @@
           <div
             class="w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
             :style="{ background: stat.bgColor }"
-          >{{ stat.icon }}</div>
+          ><iconify-icon :icon="stat.icon" class="text-xl text-[#7A5C3A]"></iconify-icon></div>
           <span
             class="text-xs font-bold flex items-center gap-1 px-2 py-1 rounded-full"
             :class="stat.trendUp ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'"
@@ -26,7 +26,7 @@
             {{ stat.trendUp ? '↑' : '↓' }} {{ stat.trend }}
           </span>
         </div>
-        <div class="font-display font-black text-2xl mb-0.5" style="color:#1E2A3B">{{ stat.value }}</div>
+        <div class="font-display font-black text-2xl mb-0.5" style="color:#5C4428">{{ stat.value }}</div>
         <div class="text-sm text-muted">{{ stat.label }}</div>
         <div class="mt-3 text-xs text-muted">so với hôm qua</div>
       </div>
@@ -38,7 +38,7 @@
       <div class="data-card xl:col-span-2">
         <div class="data-card-header">
           <div>
-            <div class="font-display font-bold text-base" style="color:#1E2A3B">Phân tích doanh thu</div>
+            <div class="font-display font-bold text-base" style="color:#5C4428">Phân tích doanh thu</div>
             <div class="text-xs text-muted mt-0.5">Năm 2026 · Tất cả sản phẩm</div>
           </div>
           <div class="flex gap-1">
@@ -49,7 +49,7 @@
               :class="period === p
                 ? 'text-white shadow-sm'
                 : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'"
-              :style="period === p ? 'background:linear-gradient(135deg,#E8634A,#F07A5E)' : ''"
+              :style="period === p ? 'background:linear-gradient(135deg,#7A5C3A,#9A7650)' : ''"
               @click="period = p; updateChart()"
             >{{ p }}</button>
           </div>
@@ -62,17 +62,17 @@
       <!-- Recent Orders -->
       <div class="data-card">
         <div class="data-card-header">
-          <div class="font-display font-bold text-base" style="color:#1E2A3B">Hoạt động gần đây</div>
+          <div class="font-display font-bold text-base" style="color:#5C4428">Hoạt động gần đây</div>
           <div class="flex items-center gap-1.5">
             <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
             <span class="text-xs font-semibold text-green-600">Trực tiếp</span>
           </div>
         </div>
-        <div class="divide-y divide-[#F5F0ED] overflow-y-auto" style="max-height:248px">
+        <div class="divide-y divide-[#FDF8F2] overflow-y-auto" style="max-height:248px">
           <div
             v-for="order in recentOrders"
             :key="order.id"
-            class="px-4 py-3 hover:bg-[#FFF8F4] transition cursor-pointer group"
+            class="px-4 py-3 hover:bg-[#FFFBF5] transition cursor-pointer group"
           >
             <div class="flex items-center gap-3">
               <div
@@ -81,13 +81,13 @@
               >{{ order.initials }}</div>
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-1.5 mb-0.5">
-                  <span class="text-sm font-semibold" style="color:#1E2A3B">{{ order.id }}</span>
+                  <span class="text-sm font-semibold" style="color:#5C4428">{{ order.id }}</span>
                   <span class="badge" :class="`badge-${order.statusColor}`">{{ order.status }}</span>
                 </div>
                 <div class="text-xs text-muted truncate">{{ order.product }}</div>
               </div>
               <div class="text-right flex-shrink-0">
-                <div class="text-sm font-bold" style="color:#E8634A">{{ order.amount }}</div>
+                <div class="text-sm font-bold" style="color:#7A5C3A">{{ order.amount }}</div>
                 <div class="text-xs text-muted">{{ order.time }}</div>
               </div>
             </div>
@@ -111,9 +111,9 @@
           </div>
           <span class="badge-primary">3</span>
         </div>
-        <h3 class="font-bold text-sm mb-1" style="color:#1E2A3B">Tin nhắn</h3>
+        <h3 class="font-bold text-sm mb-1" style="color:#5C4428">Tin nhắn</h3>
         <p class="text-xs text-muted">Quản lý liên hệ khách hàng</p>
-        <div class="text-xs font-semibold mt-3" style="color:#E8634A">Xem chi tiết →</div>
+        <div class="text-xs font-semibold mt-3" style="color:#7A5C3A">Xem chi tiết →</div>
       </RouterLink>
 
       <!-- Analytics -->
@@ -123,9 +123,9 @@
             📈
           </div>
         </div>
-        <h3 class="font-bold text-sm mb-1" style="color:#1E2A3B">Phân tích</h3>
+        <h3 class="font-bold text-sm mb-1" style="color:#5C4428">Phân tích</h3>
         <p class="text-xs text-muted">Báo cáo doanh số</p>
-        <div class="text-xs font-semibold mt-3" style="color:#E8634A">Xem chi tiết →</div>
+        <div class="text-xs font-semibold mt-3" style="color:#7A5C3A">Xem chi tiết →</div>
       </RouterLink>
 
       <!-- Inventory -->
@@ -135,9 +135,9 @@
             📦
           </div>
         </div>
-        <h3 class="font-bold text-sm mb-1" style="color:#1E2A3B">Kho hàng</h3>
+        <h3 class="font-bold text-sm mb-1" style="color:#5C4428">Kho hàng</h3>
         <p class="text-xs text-muted">Quản lý tồn kho</p>
-        <div class="text-xs font-semibold mt-3" style="color:#E8634A">Xem chi tiết →</div>
+        <div class="text-xs font-semibold mt-3" style="color:#7A5C3A">Xem chi tiết →</div>
       </RouterLink>
 
       <!-- Promotions -->
@@ -147,9 +147,9 @@
             🎫
           </div>
         </div>
-        <h3 class="font-bold text-sm mb-1" style="color:#1E2A3B">Khuyến mãi</h3>
+        <h3 class="font-bold text-sm mb-1" style="color:#5C4428">Khuyến mãi</h3>
         <p class="text-xs text-muted">Voucher & Ưu đãi</p>
-        <div class="text-xs font-semibold mt-3" style="color:#E8634A">Xem chi tiết →</div>
+        <div class="text-xs font-semibold mt-3" style="color:#7A5C3A">Xem chi tiết →</div>
       </RouterLink>
     </div>
 
@@ -158,25 +158,25 @@
       <!-- Top Products -->
       <div class="data-card">
         <div class="data-card-header">
-          <div class="font-display font-bold text-base" style="color:#1E2A3B">Sản phẩm bán chạy</div>
-          <RouterLink to="/products" class="text-xs font-semibold" style="color:#E8634A">Xem thêm</RouterLink>
+          <div class="font-display font-bold text-base" style="color:#5C4428">Sản phẩm bán chạy</div>
+          <RouterLink to="/products" class="text-xs font-semibold" style="color:#7A5C3A">Xem thêm</RouterLink>
         </div>
         <div class="p-4 space-y-3">
           <div v-for="(p, i) in topProducts" :key="p.name" class="flex items-center gap-3">
             <span class="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black"
-              :style="i === 0 ? 'background:#FFF0EC;color:#E8634A' : 'background:#F5F5F5;color:#9CA3AF'"
+              :style="i === 0 ? 'background:#FDF6EC;color:#7A5C3A' : 'background:#F5F5F5;color:#9CA3AF'"
             >#{{ i + 1 }}</span>
-            <span class="text-xl">{{ p.emoji }}</span>
+            <span class="text-xl text-[#7A5C3A]"><iconify-icon :icon="p.icon"></iconify-icon></span>
             <div class="flex-1 min-w-0">
-              <div class="text-sm font-semibold truncate" style="color:#1E2A3B">{{ p.name }}</div>
+              <div class="text-sm font-semibold truncate" style="color:#5C4428">{{ p.name }}</div>
               <div class="flex items-center gap-2 mt-0.5">
                 <div class="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
-                  <div class="h-full rounded-full" :style="{ width: p.pct + '%', background: 'linear-gradient(90deg,#E8634A,#FBB830)' }"></div>
+                  <div class="h-full rounded-full" :style="{ width: p.pct + '%', background: 'linear-gradient(90deg,#7A5C3A,#FBB830)' }"></div>
                 </div>
                 <span class="text-xs text-muted flex-shrink-0">{{ p.qty }}</span>
               </div>
             </div>
-            <span class="text-sm font-bold" style="color:#1E2A3B; white-space:nowrap">{{ p.revenue }}</span>
+            <span class="text-sm font-bold" style="color:#5C4428; white-space:nowrap">{{ p.revenue }}</span>
           </div>
         </div>
       </div>
@@ -185,27 +185,27 @@
       <div class="data-card xl:col-span-2">
         <div class="data-card-header">
           <div>
-            <div class="font-display font-bold text-base" style="color:#1E2A3B">Lịch sản xuất hôm nay</div>
+            <div class="font-display font-bold text-base" style="color:#5C4428">Lịch sản xuất hôm nay</div>
             <div class="text-xs text-muted mt-0.5">{{ productionOrders.length }} đơn đang xử lý</div>
           </div>
-          <RouterLink to="/orders" class="text-xs font-semibold" style="color:#E8634A">Xem chi tiết</RouterLink>
+          <RouterLink to="/orders" class="text-xs font-semibold" style="color:#7A5C3A">Xem chi tiết</RouterLink>
         </div>
         <div class="p-4">
-          <el-table :data="productionOrders" style="width:100%" :show-header="true" row-class-name="hover:bg-[#FFF8F4]">
+          <el-table :data="productionOrders" style="width:100%" :show-header="true" row-class-name="hover:bg-[#FFFBF5]">
             <el-table-column label="ĐƠN HÀNG" width="120">
               <template #default="{ row }">
-                <span class="font-bold text-sm" style="color:#E8634A">{{ row.id }}</span>
+                <span class="font-bold text-sm" style="color:#7A5C3A">{{ row.id }}</span>
               </template>
             </el-table-column>
             <el-table-column label="SẢN PHẨM">
               <template #default="{ row }">
-                <div class="text-sm font-medium" style="color:#1E2A3B">{{ row.product }}</div>
+                <div class="text-sm font-medium" style="color:#5C4428">{{ row.product }}</div>
                 <div class="text-xs text-muted">{{ row.customer }}</div>
               </template>
             </el-table-column>
             <el-table-column label="THỜI GIAN" width="100">
               <template #default="{ row }">
-                <span class="text-sm" style="color:#1E2A3B">{{ row.deadline }}</span>
+                <span class="text-sm" style="color:#5C4428">{{ row.deadline }}</span>
               </template>
             </el-table-column>
             <el-table-column label="TIẾN ĐỘ" width="130">
@@ -215,10 +215,10 @@
                     :percentage="row.progress"
                     :stroke-width="6"
                     :show-text="false"
-                    :color="row.progress >= 80 ? '#22C55E' : row.progress >= 40 ? '#FBB830' : '#E8634A'"
+                    :color="row.progress >= 80 ? '#22C55E' : row.progress >= 40 ? '#FBB830' : '#7A5C3A'"
                     style="flex:1"
                   />
-                  <span class="text-xs font-semibold" style="color:#1E2A3B">{{ row.progress }}%</span>
+                  <span class="text-xs font-semibold" style="color:#5C4428">{{ row.progress }}%</span>
                 </div>
               </template>
             </el-table-column>
@@ -245,26 +245,26 @@ const period = ref('Tháng')
 const isLoading = ref(true)
 
 const stats = ref([
-  { key:'revenue', icon:'💰', label:'Doanh thu hôm nay', value:'--', trend:'--', trendUp:true,  bgColor:'#FFF0EC' },
-  { key:'orders',  icon:'📦', label:'Đơn hàng mới',      value:'--', trend:'--', trendUp:true,  bgColor:'#EFF6FF' },
-  { key:'prod',    icon:'⏳', label:'Đang sản xuất',     value:'--', trend:'--', trendUp:false, bgColor:'#FFFBEB' },
-  { key:'rating',  icon:'👤', label:'Khách mới',          value:'--', trend:'--', trendUp:true,  bgColor:'#F0FDF4' },
+  { key:'revenue', icon:'ph:coins-duotone', label:'Doanh thu hôm nay', value:'--', trend:'--', trendUp:true,  bgColor:'#FDF6EC' },
+  { key:'orders',  icon:'ph:package-duotone', label:'Đơn hàng mới',      value:'--', trend:'--', trendUp:true,  bgColor:'#FDF8F2' },
+  { key:'prod',    icon:'ph:clock-countdown-duotone', label:'Đang sản xuất',     value:'--', trend:'--', trendUp:false, bgColor:'#FFFBEB' },
+  { key:'rating',  icon:'ph:user-duotone', label:'Khách mới',          value:'--', trend:'--', trendUp:true,  bgColor:'#F0FDF4' },
 ])
 
 const recentOrders = [
-  { id:'#DH2045', product:'Bánh 3D Custom – Mèo Shiba', initials:'NK', avatarBg:'#FFF0EC', avatarColor:'#E8634A', status:'Sản xuất',   statusColor:'warning', amount:'2,500,000đ', time:'2 phút trước' },
+  { id:'#DH2045', product:'Bánh 3D Custom – Mèo Shiba', initials:'NK', avatarBg:'#FDF6EC', avatarColor:'#7A5C3A', status:'Sản xuất',   statusColor:'warning', amount:'2,500,000đ', time:'2 phút trước' },
   { id:'#DH2044', product:'Bánh sinh nhật 3 tầng',      initials:'TH', avatarBg:'#F0FDF4', avatarColor:'#22C55E', status:'Hoàn thành', statusColor:'success', amount:'1,800,000đ', time:'18 phút trước' },
   { id:'#DH2043', product:'Bánh cưới kem tươi',         initials:'LM', avatarBg:'#EFF6FF', avatarColor:'#3B82F6', status:'Chờ nhận',   statusColor:'info',    amount:'4,200,000đ', time:'45 phút trước' },
   { id:'#DH2042', product:'Cupcake set 12 cái',         initials:'PT', avatarBg:'#F5F3FF', avatarColor:'#7C3AED', status:'Sản xuất',   statusColor:'warning', amount:'350,000đ',   time:'1 giờ trước' },
-  { id:'#DH2041', product:'Bánh mousse chanh leo',      initials:'BL', avatarBg:'#FFF0EC', avatarColor:'#E8634A', status:'Hoàn thành', statusColor:'success', amount:'520,000đ',   time:'2 giờ trước' },
+  { id:'#DH2041', product:'Bánh mousse chanh leo',      initials:'BL', avatarBg:'#FDF6EC', avatarColor:'#7A5C3A', status:'Hoàn thành', statusColor:'success', amount:'520,000đ',   time:'2 giờ trước' },
 ]
 
 const topProducts = [
-  { name:'Bánh sinh nhật 3D',     emoji:'🎂', qty:'128 cái', revenue:'64M đ',   pct:100 },
-  { name:'Cupcake nhiều màu',     emoji:'🧁', qty:'96 cái',  revenue:'28.8M đ', pct:75  },
-  { name:'Bánh mousse chanh leo', emoji:'🍰', qty:'72 cái',  revenue:'37.4M đ', pct:56  },
-  { name:'Macaron hỗn hợp',      emoji:'🍬', qty:'64 hộp',  revenue:'16M đ',   pct:50  },
-  { name:'Bánh cưới cao cấp',    emoji:'💍', qty:'18 cái',  revenue:'90M đ',   pct:14  },
+  { name:'Bánh sinh nhật 3D',     icon:'ph:cake-duotone', qty:'128 cái', revenue:'64M đ',   pct:100 },
+  { name:'Cupcake nhiều màu',     icon:'ph:cookie-duotone', qty:'96 cái',  revenue:'28.8M đ', pct:75  },
+  { name:'Bánh mousse chanh leo', icon:'ph:confetti-duotone', qty:'72 cái',  revenue:'37.4M đ', pct:56  },
+  { name:'Macaron hỗn hợp',      icon:'ph:candy-duotone', qty:'64 hộp',  revenue:'16M đ',   pct:50  },
+  { name:'Bánh cưới cao cấp',    icon:'ph:rings-duotone', qty:'18 cái',  revenue:'90M đ',   pct:14  },
 ]
 
 const productionOrders = [
@@ -304,23 +304,23 @@ async function loadKPI() {
     const d = res.data
     stats.value = [
       {
-        key: 'revenue', icon: '💰', label: 'Doanh thu hôm nay',
+        key: 'revenue', icon: 'ph:coins-duotone', label: 'Doanh thu hôm nay',
         value: d.tongDoanhThu != null ? Number(d.tongDoanhThu).toLocaleString('vi-VN') + 'đ' : '0đ',
         trend: d.tangTruongDoanhThu != null ? `${d.tangTruongDoanhThu > 0 ? '+' : ''}${d.tangTruongDoanhThu}%` : '0%',
-        trendUp: (d.tangTruongDoanhThu ?? 0) >= 0, bgColor: '#FFF0EC',
+        trendUp: (d.tangTruongDoanhThu ?? 0) >= 0, bgColor: '#FDF6EC',
       },
       {
-        key: 'orders', icon: '📦', label: 'Đơn hàng mới',
+        key: 'orders', icon: 'ph:package-duotone', label: 'Đơn hàng mới',
         value: d.tongDon ?? 0,
         trend: d.tangTruongDon != null ? `${d.tangTruongDon > 0 ? '+' : ''}${d.tangTruongDon}%` : '0%',
         trendUp: (d.tangTruongDon ?? 0) >= 0, bgColor: '#EFF6FF',
       },
       {
-        key: 'prod', icon: '⏳', label: 'Đang sản xuất',
+        key: 'prod', icon: 'ph:clock-countdown-duotone', label: 'Đang sản xuất',
         value: '--', trend: '--', trendUp: false, bgColor: '#FFFBEB',
       },
       {
-        key: 'customers', icon: '👤', label: 'Khách mới',
+        key: 'customers', icon: 'ph:user-duotone', label: 'Khách mới',
         value: d.khachMoi ?? 0, trend: '--', trendUp: true, bgColor: '#F0FDF4',
       },
     ]
@@ -365,9 +365,9 @@ function initChart() {
       labels,
       datasets: [{
         label: 'Doanh thu', data,
-        borderColor: '#E8634A', backgroundColor: grad,
+        borderColor: '#7A5C3A', backgroundColor: grad,
         borderWidth: 2.5, fill: true, tension: 0.4,
-        pointRadius: 4, pointBackgroundColor: '#E8634A',
+        pointRadius: 4, pointBackgroundColor: '#7A5C3A',
         pointBorderColor: '#fff', pointBorderWidth: 2,
       }]
     },
@@ -376,7 +376,7 @@ function initChart() {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: '#1E2A3B',
+          backgroundColor: '#5C4428',
           titleFont: { family: 'Nunito', weight: '700' },
           bodyFont: { family: 'Be Vietnam Pro' },
           padding: 12, cornerRadius: 12,

@@ -1,13 +1,16 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-[#EEF2FF] to-[#F0F9FF] p-4 flex flex-col gap-4">
+  <div class="min-h-screen bg-[#FFFBF5] p-4 flex flex-col gap-4">
 
     <!-- ── HEADER ──────────────────────────────────────────────── -->
-    <div class="bg-gradient-to-r from-[#3B82F6] to-[#6366F1] rounded-3xl p-5 text-white shadow-lg shadow-blue-200">
+    <div class="bg-gradient-to-r from-[#7A5C3A] to-[#9A7650] rounded-3xl p-5 text-white shadow-lg shadow-[#7A5C3A]/20">
       <div class="flex justify-between items-center">
         <div>
-          <p class="text-blue-200 text-xs font-bold uppercase tracking-wider mb-0.5">Hệ thống giao hàng</p>
-          <h1 class="text-2xl font-black">🚴 Shipper Dashboard</h1>
-          <p class="text-blue-100 text-sm mt-0.5">{{ totalDelivering }} đơn đang cần giao</p>
+          <p class="text-[#F5E6CE] text-xs font-bold uppercase tracking-wider mb-0.5">Hệ thống giao hàng</p>
+          <h1 class="text-2xl font-black flex items-center gap-2">
+            <iconify-icon icon="ph:motorcycle-duotone" class="text-3xl"></iconify-icon>
+            Shipper Dashboard
+          </h1>
+          <p class="text-[#FDF6EC] text-sm mt-0.5">{{ totalDelivering }} đơn đang cần giao</p>
         </div>
         <button @click="fetchOrders" :disabled="loading"
           class="bg-white/20 hover:bg-white/30 p-3 rounded-2xl transition-all">
@@ -22,27 +25,27 @@
       <div class="grid grid-cols-3 gap-3 mt-4">
         <div class="bg-white/15 rounded-2xl p-3 text-center">
           <div class="text-2xl font-black">{{ totalDelivering }}</div>
-          <div class="text-[10px] text-blue-100 font-bold uppercase">Đang giao</div>
+          <div class="text-[10px] text-[#FDF6EC] font-bold uppercase">Đang giao</div>
         </div>
         <div class="bg-white/15 rounded-2xl p-3 text-center">
           <div class="text-2xl font-black">{{ todayCompleted }}</div>
-          <div class="text-[10px] text-blue-100 font-bold uppercase">Hôm nay xong</div>
+          <div class="text-[10px] text-[#FDF6EC] font-bold uppercase">Hôm nay xong</div>
         </div>
         <div class="bg-white/15 rounded-2xl p-3 text-center">
           <div class="text-2xl font-black">{{ formatRevenue(totalRevenue) }}</div>
-          <div class="text-[10px] text-blue-100 font-bold uppercase">Tổng COD</div>
+          <div class="text-[10px] text-[#FDF6EC] font-bold uppercase">Tổng COD</div>
         </div>
       </div>
     </div>
 
     <!-- ── TABS ────────────────────────────────────────────────── -->
-    <div class="bg-white rounded-2xl p-1 flex border border-slate-100 shadow-sm">
+    <div class="bg-white rounded-2xl p-1 flex border border-[#EDE0CC] shadow-sm">
       <button @click="activeTab = 'DANG_GIAO'"
         :class="activeTab === 'DANG_GIAO'
-          ? 'bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white shadow-md'
-          : 'text-slate-500 hover:text-slate-700'"
+          ? 'bg-gradient-to-r from-[#7A5C3A] to-[#9A7650] text-white shadow-md'
+          : 'text-[#9A7650] hover:text-[#5C4428]'"
         class="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2">
-        🚴 Đang giao
+        <iconify-icon icon="ph:motorcycle-duotone"></iconify-icon> Đang giao
         <span :class="activeTab === 'DANG_GIAO' ? 'bg-white/30' : 'bg-slate-100'"
           class="text-xs px-2 py-0.5 rounded-full font-black">{{ totalDelivering }}</span>
       </button>
@@ -51,7 +54,7 @@
           ? 'bg-gradient-to-r from-emerald-500 to-green-400 text-white shadow-md'
           : 'text-slate-500 hover:text-slate-700'"
         class="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2">
-        ✅ Đã giao xong
+        <iconify-icon icon="ph:check-circle-duotone"></iconify-icon> Đã giao xong
         <span :class="activeTab === 'HOAN_THANH' ? 'bg-white/30' : 'bg-slate-100'"
           class="text-xs px-2 py-0.5 rounded-full font-black">{{ todayCompleted }}</span>
       </button>
@@ -59,18 +62,20 @@
 
     <!-- ── LOADING ─────────────────────────────────────────────── -->
     <div v-if="loading" class="flex justify-center py-12">
-      <div class="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      <div class="w-10 h-10 border-4 border-[#7A5C3A] border-t-transparent rounded-full animate-spin"></div>
     </div>
 
     <!-- ── EMPTY STATE ─────────────────────────────────────────── -->
     <div v-else-if="visibleOrders.length === 0"
       class="bg-white rounded-3xl p-10 text-center shadow-sm border border-slate-100">
-      <div class="text-6xl mb-4">{{ activeTab === 'DANG_GIAO' ? '📭' : '🎉' }}</div>
-      <h3 class="font-black text-[#1E2A3B] text-lg">
+      <div class="w-16 h-16 rounded-2xl bg-[#FDF6EC] flex items-center justify-center mx-auto mb-4">
+        <iconify-icon :icon="activeTab === 'DANG_GIAO' ? 'ph:package-duotone' : 'ph:check-circle-duotone'" class="text-4xl text-[#7A5C3A]"></iconify-icon>
+      </div>
+      <h3 class="font-black text-[#5C4428] text-lg">
         {{ activeTab === 'DANG_GIAO' ? 'Chưa có đơn nào cần giao' : 'Chưa có đơn nào hoàn thành hôm nay' }}
       </h3>
       <p class="text-sm text-slate-400 mt-1">
-        {{ activeTab === 'DANG_GIAO' ? 'Tiệm bánh sẽ chuyển đơn khi bánh sẵn sàng.' : 'Hãy hoàn thành các đơn đang giao nhé!' }}
+        {{ activeTab === 'DANG_GIAO' ? 'Chocopine sẽ chuyển đơn khi bánh sẵn sàng.' : 'Hãy hoàn thành các đơn đang giao nhé!' }}
       </p>
     </div>
 
@@ -80,7 +85,7 @@
         class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden hover:shadow-md transition-all">
 
         <!-- Card top bar -->
-        <div :class="activeTab === 'DANG_GIAO' ? 'from-[#3B82F6] to-[#6366F1]' : 'from-emerald-500 to-green-400'"
+        <div :class="activeTab === 'DANG_GIAO' ? 'from-[#7A5C3A] to-[#9A7650]' : 'from-emerald-500 to-green-400'"
           class="bg-gradient-to-r px-5 py-3 flex justify-between items-center">
           <div class="flex items-center gap-3">
             <div class="bg-white/20 rounded-xl px-3 py-1">
@@ -95,11 +100,11 @@
         <div class="p-5 space-y-3">
 
           <!-- Address (primary info for shipper) -->
-          <div class="flex items-start gap-3 bg-blue-50 rounded-2xl p-3.5">
-            <div class="text-2xl flex-shrink-0">📍</div>
+          <div class="flex items-start gap-3 bg-[#FDF6EC] rounded-2xl p-3.5 border border-[#EDE0CC]">
+            <iconify-icon icon="ph:map-pin-duotone" class="text-2xl text-[#7A5C3A] flex-shrink-0"></iconify-icon>
             <div>
-              <p class="text-xs font-bold text-blue-600 uppercase tracking-wide mb-0.5">Địa chỉ giao</p>
-              <p class="text-sm font-semibold text-[#1E2A3B]">{{ order.diaChiGiaoHang || 'Chưa có địa chỉ' }}</p>
+              <p class="text-xs font-bold text-[#7A5C3A] uppercase tracking-wide mb-0.5">Địa chỉ giao</p>
+              <p class="text-sm font-semibold text-[#5C4428]">{{ order.diaChiGiaoHang || 'Chưa có địa chỉ' }}</p>
             </div>
           </div>
 
@@ -107,12 +112,12 @@
           <div class="grid grid-cols-2 gap-3">
             <div class="bg-slate-50 rounded-2xl p-3">
               <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Khách hàng</p>
-              <p class="text-xs font-semibold text-[#1E2A3B] truncate">{{ order.emailNguoiDung }}</p>
-              <p v-if="order.soDienThoai" class="text-xs text-blue-600 font-semibold mt-0.5">📞 {{ order.soDienThoai }}</p>
+              <p class="text-xs font-semibold text-[#5C4428] truncate">{{ order.emailNguoiDung }}</p>
+              <p v-if="order.soDienThoai" class="text-xs text-[#7A5C3A] font-semibold mt-0.5 flex items-center gap-1"><iconify-icon icon="ph:phone-duotone"></iconify-icon> {{ order.soDienThoai }}</p>
             </div>
             <div class="bg-slate-50 rounded-2xl p-3">
               <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Hàng hóa</p>
-              <p class="text-xs font-semibold text-[#1E2A3B]">{{ order.items?.length || 0 }} loại bánh</p>
+              <p class="text-xs font-semibold text-[#5C4428]">{{ order.items?.length || 0 }} loại bánh</p>
               <p class="text-[11px] text-slate-400 mt-0.5 truncate">
                 {{ order.items?.map(i => i.tenSanPham).join(', ') }}
               </p>
@@ -121,14 +126,14 @@
 
           <!-- Expected delivery date -->
           <div v-if="order.ngayGiaoHang" class="flex items-center gap-2 text-sm">
-            <span class="text-amber-500">⏰</span>
+            <iconify-icon icon="ph:clock-duotone" class="text-amber-500"></iconify-icon>
             <span class="text-slate-500 text-xs">Giao trước:</span>
             <span class="text-xs font-bold text-amber-600">{{ formatDate(order.ngayGiaoHang, false) }}</span>
           </div>
 
           <!-- Note -->
           <div v-if="order.ghiChu" class="bg-amber-50 border border-amber-100 rounded-xl p-3 text-xs text-amber-700">
-            📝 {{ order.ghiChu }}
+            <iconify-icon icon="ph:note-duotone" class="inline text-amber-600"></iconify-icon> {{ order.ghiChu }}
           </div>
 
           <!-- ACTION BUTTONS -->
@@ -136,20 +141,20 @@
             <!-- Open map -->
             <a :href="`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.diaChiGiaoHang || '')}`"
               target="_blank"
-              class="flex-1 py-2.5 rounded-xl text-xs font-bold border-2 border-blue-200 text-blue-600 hover:bg-blue-50 transition-all text-center">
-              🗺️ Xem bản đồ
+              class="flex-1 py-2.5 rounded-xl text-xs font-bold border-2 border-[#EDE0CC] text-[#7A5C3A] hover:bg-[#FDF6EC] transition-all text-center flex items-center justify-center gap-1">
+              <iconify-icon icon="ph:map-trifold-duotone"></iconify-icon> Xem bản đồ
             </a>
             <!-- Confirm delivered -->
             <button @click="confirmDelivered(order)" :disabled="updating === order.id"
               class="flex-1 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-emerald-500 to-green-400 text-white hover:opacity-90 transition-all disabled:opacity-60 shadow-md shadow-emerald-200">
               <span v-if="updating === order.id" class="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin mr-1"></span>
-              ✅ Đã giao xong
+              <iconify-icon icon="ph:check-circle-duotone" class="inline"></iconify-icon> Đã giao xong
             </button>
           </div>
 
           <!-- Completed badge -->
           <div v-else class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-center">
-            <p class="text-sm font-bold text-emerald-600">🎉 Đã giao thành công</p>
+            <p class="text-sm font-bold text-emerald-600 flex items-center justify-center gap-1.5"><iconify-icon icon="ph:check-circle-duotone"></iconify-icon> Đã giao thành công</p>
             <p v-if="order.thoiDiemGiao" class="text-xs text-emerald-500 mt-0.5">
               Lúc {{ formatTime(order.thoiDiemGiao) }}
             </p>
@@ -164,14 +169,16 @@
       class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       @click.self="showConfirmModal = false">
       <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 text-center">
-        <div class="text-6xl mb-4">🎉</div>
-        <h3 class="text-xl font-black text-[#1E2A3B] mb-2">Xác nhận đã giao?</h3>
+        <div class="w-16 h-16 rounded-2xl bg-[#FDF6EC] flex items-center justify-center mx-auto mb-4">
+          <iconify-icon icon="ph:check-circle-duotone" class="text-4xl text-[#7A5C3A]"></iconify-icon>
+        </div>
+        <h3 class="text-xl font-black text-[#5C4428] mb-2">Xác nhận đã giao?</h3>
         <p class="text-sm text-slate-500 mb-2">
-          Đơn <strong class="text-blue-600">HD-{{ confirmTarget?.id }}</strong> sẽ chuyển sang <strong class="text-emerald-600">Hoàn thành</strong>.
+          Đơn <strong class="text-[#7A5C3A]">HD-{{ confirmTarget?.id }}</strong> sẽ chuyển sang <strong class="text-emerald-600">Hoàn thành</strong>.
         </p>
         <div class="bg-slate-50 rounded-2xl p-3 mb-5 text-sm text-left">
-          <p class="text-slate-500">📍 {{ confirmTarget?.diaChiGiaoHang }}</p>
-          <p class="font-bold text-[#1E2A3B] mt-1">💰 {{ formatCurrency(confirmTarget?.tongTien) }}</p>
+          <p class="text-slate-500 flex items-center gap-1.5"><iconify-icon icon="ph:map-pin-duotone" class="text-[#7A5C3A]"></iconify-icon> {{ confirmTarget?.diaChiGiaoHang }}</p>
+          <p class="font-bold text-[#5C4428] mt-1 flex items-center gap-1.5"><iconify-icon icon="ph:coins-duotone" class="text-[#7A5C3A]"></iconify-icon> {{ formatCurrency(confirmTarget?.tongTien) }}</p>
         </div>
         <div class="flex gap-3">
           <button @click="showConfirmModal = false"
@@ -263,7 +270,7 @@ async function doDelivered() {
     await apiClient.put(`/api/v1/orders/${confirmTarget.value.id}/process`, {
       trangThai: 'HOAN_THANH'
     })
-    showToast('success', `🎉 HD-${confirmTarget.value.id} đã giao xong!`)
+    showToast('success', `HD-${confirmTarget.value.id} đã giao xong!`)
     showConfirmModal.value = false
     await fetchOrders()
   } catch (e) {

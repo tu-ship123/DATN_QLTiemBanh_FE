@@ -3,14 +3,14 @@
 
     <!-- Breadcrumb -->
     <nav class="flex items-center gap-2 text-sm text-gray-400 mb-8">
-      <RouterLink to="/shop" class="hover:text-[#E8634A] transition">Trang chủ</RouterLink>
+      <RouterLink to="/shop" class="hover:text-[#7A5C3A] transition">Trang chủ</RouterLink>
       <span>/</span>
       <span
-        class="hover:text-[#E8634A] transition cursor-pointer"
+        class="hover:text-[#7A5C3A] transition cursor-pointer"
         @click="router.back()"
       >Cửa hàng</span>
       <span>/</span>
-      <span class="text-[#1E2A3B] font-semibold line-clamp-1">{{ product?.tenSanPham }}</span>
+      <span class="text-[#5C4428] font-semibold line-clamp-1">{{ product?.tenSanPham }}</span>
     </nav>
 
     <!-- Loading skeleton -->
@@ -33,7 +33,7 @@
       <p class="text-sm mt-2">Sản phẩm có thể đã bị xóa hoặc không tồn tại</p>
       <button
         @click="router.push('/shop')"
-        class="mt-6 rounded-full bg-[#E8634A] text-white px-8 py-3 text-sm font-bold hover:bg-[#f37356] transition"
+        class="mt-6 rounded-full bg-[#7A5C3A] text-white px-8 py-3 text-sm font-bold hover:bg-[#9A7650] transition"
       >
         Quay về cửa hàng
       </button>
@@ -59,7 +59,7 @@
             <span class="bg-white text-gray-700 font-bold text-lg px-6 py-3 rounded-full">Hết hàng</span>
           </div>
           <!-- Badge danh mục -->
-          <div class="absolute left-5 top-5 rounded-full bg-white/95 backdrop-blur px-4 py-1.5 text-xs font-bold text-[#E8634A] shadow">
+          <div class="absolute left-5 top-5 rounded-full bg-white/95 backdrop-blur px-4 py-1.5 text-xs font-bold text-[#7A5C3A] shadow">
             {{ product.tenDanhMuc }}
           </div>
         </div>
@@ -70,10 +70,10 @@
 
         <!-- Tên + danh mục -->
         <div>
-          <p class="text-sm font-semibold text-[#E8634A] uppercase tracking-wider mb-1">
+          <p class="text-sm font-semibold text-[#7A5C3A] uppercase tracking-wider mb-1">
             {{ product.tenDanhMuc }}
           </p>
-          <h1 class="text-3xl sm:text-4xl font-black text-[#1E2A3B] leading-tight">
+          <h1 class="text-3xl sm:text-4xl font-black text-[#5C4428] leading-tight">
             {{ product.tenSanPham }}
           </h1>
         </div>
@@ -81,8 +81,10 @@
         <!-- Rating + tồn kho -->
         <div class="flex items-center gap-4">
           <div class="flex items-center gap-1 bg-[#FFF8EC] px-3 py-1.5 rounded-lg">
-            <span class="text-[#FBB830] text-lg">★★★★★</span>
-            <span class="text-sm font-bold text-[#1E2A3B] ml-1">5.0</span>
+            <span class="star-row inline-flex items-center gap-0.5 text-[#FBB830]">
+              <iconify-icon v-for="n in 5" :key="n" icon="ph:star-fill"></iconify-icon>
+            </span>
+            <span class="text-sm font-bold text-[#5C4428] ml-1">5.0</span>
           </div>
           <div class="h-5 w-px bg-gray-200"></div>
           <p class="text-sm text-gray-500 font-medium">
@@ -97,14 +99,14 @@
 
         <!-- Giá -->
         <div class="flex items-end gap-3">
-          <span class="text-4xl font-black text-[#E8634A]">
+          <span class="text-4xl font-black text-[#7A5C3A]">
             {{ formatPrice(product.donGia) }}
           </span>
         </div>
 
         <!-- Mô tả -->
         <div class="bg-gray-50 rounded-2xl p-5">
-          <p class="text-sm font-bold text-[#1E2A3B] mb-2">Mô tả sản phẩm</p>
+          <p class="text-sm font-bold text-[#5C4428] mb-2">Mô tả sản phẩm</p>
           <p class="text-sm text-gray-600 leading-relaxed">
             {{ product.moTa || 'Chưa có mô tả cho sản phẩm này.' }}
           </p>
@@ -112,14 +114,14 @@
 
         <!-- Chọn số lượng -->
         <div class="flex items-center gap-4">
-          <p class="text-sm font-bold text-[#1E2A3B]">Số lượng:</p>
+          <p class="text-sm font-bold text-[#5C4428]">Số lượng:</p>
           <div class="flex items-center gap-3 rounded-full border border-gray-200 bg-white px-4 py-2 shadow-sm">
             <button
               @click="decreaseQty"
               class="w-7 h-7 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition font-bold text-lg"
               :disabled="qty <= 1"
             >−</button>
-            <span class="w-8 text-center font-black text-[#1E2A3B]">{{ qty }}</span>
+            <span class="w-8 text-center font-black text-[#5C4428]">{{ qty }}</span>
             <button
               @click="increaseQty"
               class="w-7 h-7 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition font-bold text-lg"
@@ -133,7 +135,7 @@
           <button
             @click="addToCart"
             :disabled="product.soLuongTon === 0 || cartStore.loading"
-            class="flex-1 rounded-full bg-[#E8634A] text-white px-8 py-4 text-sm font-bold shadow-lg shadow-[#E8634A]/30 hover:bg-[#f37356] hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+            class="flex-1 rounded-full bg-[#7A5C3A] text-white px-8 py-4 text-sm font-bold shadow-lg shadow-[#7A5C3A]/30 hover:bg-[#9A7650] hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
           >
             <el-icon class="mr-2"><ShoppingCart /></el-icon>
             {{ cartStore.loading ? 'Đang thêm...' : 'Thêm vào giỏ hàng' }}
@@ -141,7 +143,7 @@
           <button
             @click="buyNow"
             :disabled="product.soLuongTon === 0 || cartStore.loading"
-            class="flex-1 rounded-full border-2 border-[#E8634A] text-[#E8634A] px-8 py-4 text-sm font-bold hover:bg-[#FFF0EC] hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+            class="flex-1 rounded-full border-2 border-[#7A5C3A] text-[#7A5C3A] px-8 py-4 text-sm font-bold hover:bg-[#FDF6EC] hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
           >
             Mua ngay
           </button>
@@ -150,15 +152,15 @@
         <!-- Thông tin thêm -->
         <div class="border-t border-gray-100 pt-5 space-y-3">
           <div class="flex items-center gap-3 text-sm text-gray-500">
-            <span class="text-[#E8634A]">🎂</span>
+            <iconify-icon icon="ph:truck-duotone" class="text-lg text-[#7A5C3A] shrink-0"></iconify-icon>
             <span>Giao hàng trong ngày với đơn đặt trước 10:00 sáng</span>
           </div>
           <div class="flex items-center gap-3 text-sm text-gray-500">
-            <span class="text-[#E8634A]">🎁</span>
+            <iconify-icon icon="ph:gift-duotone" class="text-lg text-[#7A5C3A] shrink-0"></iconify-icon>
             <span>Hỗ trợ đóng gói quà tặng miễn phí</span>
           </div>
           <div class="flex items-center gap-3 text-sm text-gray-500">
-            <span class="text-[#E8634A]">✨</span>
+            <iconify-icon icon="ph:sparkle-duotone" class="text-lg text-[#7A5C3A] shrink-0"></iconify-icon>
             <span>Có thể tùy chỉnh theo yêu cầu, liên hệ để biết thêm</span>
           </div>
         </div>
@@ -167,7 +169,7 @@
 
     <!-- Sản phẩm liên quan -->
     <section v-if="relatedProducts.length > 0" class="mt-20">
-      <h2 class="text-2xl font-black text-[#1E2A3B] mb-6">Sản phẩm liên quan</h2>
+      <h2 class="text-2xl font-black text-[#5C4428] mb-6">Sản phẩm liên quan</h2>
       <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
         <div
           v-for="item in relatedProducts"
@@ -184,9 +186,9 @@
             />
           </div>
           <div class="p-4 space-y-2">
-            <h3 class="font-bold text-[#1E2A3B] line-clamp-1">{{ item.tenSanPham }}</h3>
+            <h3 class="font-bold text-[#5C4428] line-clamp-1">{{ item.tenSanPham }}</h3>
             <div class="flex items-center justify-between">
-              <span class="font-black text-[#E8634A]">{{ formatPrice(item.donGia) }}</span>
+              <span class="font-black text-[#7A5C3A]">{{ formatPrice(item.donGia) }}</span>
               <span class="text-xs text-gray-400">Còn {{ item.soLuongTon }}</span>
             </div>
           </div>
