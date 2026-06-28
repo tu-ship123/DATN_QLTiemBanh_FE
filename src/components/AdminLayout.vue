@@ -265,6 +265,7 @@ const badges = computed(() => ({
 const mainMenu = [
   { path: '/admin/dashboard',  icon: 'ph:squares-four-duotone',         label: 'Tổng quan'             },
   { path: '/admin/orders',     icon: 'ph:receipt-duotone',               label: 'Quản lý đơn hàng', badgeKey: 'orders' },
+  { path: '/admin/customers',  icon: 'ph:users-duotone',                 label: 'Khách hàng'            },
   { path: '/admin/staff',      icon: 'ph:users-three-duotone',           label: 'Nhân sự & Phân quyền' },
   { path: '/admin/products',   icon: 'ph:cake-duotone',                  label: 'Sản phẩm'              },
   { path: '/admin/reviews',    icon: 'ph:star-duotone',                  label: 'Đánh giá'              },

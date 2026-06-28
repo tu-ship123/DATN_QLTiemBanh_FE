@@ -7,7 +7,9 @@
           <h1 class="text-3xl font-bold" style="color:#5C4428">Khuyến Mãi & Voucher</h1>
           <p class="text-sm text-muted">Quản lý mã giảm giá, chương trình ưu đãi</p>
         </div>
-        <button class="btn-primary flex items-center gap-2" @click="openAdd"><iconify-icon icon="ph:ticket-duotone"></iconify-icon> Tạo khuyến mãi</button>
+        <button class="btn-primary flex items-center gap-2" @click="openAdd">
+          <iconify-icon icon="ph:ticket-duotone"></iconify-icon> Tạo khuyến mãi
+        </button>
       </div>
     </div>
 
@@ -91,13 +93,25 @@
                 class="text-xs px-2 py-1 rounded-lg text-blue-600 hover:bg-blue-50 transition"
               ><iconify-icon icon="ph:pencil-simple-duotone" class="mr-1"></iconify-icon> Sửa</button>
               <button
+                @click="sendPromoEmail(voucher)"
+                class="text-xs px-2 py-1 rounded-lg text-green-600 hover:bg-green-50 transition flex items-center gap-1"
+                :disabled="sendingEmail === voucher.id"
+              >
+                <iconify-icon
+                  :icon="sendingEmail === voucher.id ? 'ph:spinner-duotone' : 'ph:envelope-simple-duotone'"
+                  :class="sendingEmail === voucher.id ? 'animate-spin' : ''"
+                ></iconify-icon>
+                {{ sendingEmail === voucher.id ? 'Đang gửi...' : 'Gửi email KM' }}
+              </button>
+              <button
                 @click="deleteVoucher(voucher)"
                 class="text-xs px-2 py-1 rounded-lg text-red-500 hover:bg-red-50 transition"
               >🗑 Xóa</button>
             </div>
           </div>
 
-          <div class="grid grid-cols-4 gap-4 text-sm mt-3 pt-3 border-t border-[#FDF8F2]">
+          <!-- 5 cột: thêm cột Điểm đổi -->
+          <div class="grid grid-cols-5 gap-4 text-sm mt-3 pt-3 border-t border-[#FDF8F2]">
             <div>
               <div class="text-muted text-xs">Mã voucher</div>
               <div class="font-mono font-bold" style="color:#7A5C3A">{{ voucher.code }}</div>
@@ -109,6 +123,14 @@
             <div>
               <div class="text-muted text-xs">Sử dụng</div>
               <div class="font-bold" style="color:#5C4428">{{ voucher.used }}/{{ voucher.limit }}</div>
+            </div>
+            <!-- CỘT ĐIỂM ĐỔI MỚI -->
+            <div>
+              <div class="text-muted text-xs">Điểm đổi</div>
+              <div class="font-bold flex items-center gap-1" :style="voucher.diemCanDung ? 'color:#F59E0B' : 'color:#9CA3AF'">
+                <iconify-icon v-if="voucher.diemCanDung" icon="ph:star-duotone" class="text-amber-400"></iconify-icon>
+                {{ voucher.diemCanDung ? voucher.diemCanDung + ' điểm' : 'Không đổi điểm' }}
+              </div>
             </div>
             <div class="text-right">
               <div class="text-muted text-xs">Hết hạn</div>
@@ -155,7 +177,7 @@
     <el-dialog
       v-model="showDialog"
       :title="editingVoucher ? 'Chỉnh sửa voucher' : 'Tạo voucher mới'"
-      width="500px"
+      width="520px"
     >
       <el-form :model="form" label-position="top">
         <el-form-item label="Mã voucher *">
@@ -190,6 +212,26 @@
           </el-form-item>
         </div>
 
+        <!-- FIELD ĐIỂM ĐỔI MỚI -->
+        <el-form-item>
+          <template #label>
+            <div class="flex items-center gap-2">
+              <iconify-icon icon="ph:star-duotone" class="text-amber-400"></iconify-icon>
+              <span>Số điểm cần để đổi voucher này</span>
+            </div>
+          </template>
+          <el-input
+            v-model.number="form.diemCanDung"
+            type="number"
+            :min="1"
+            placeholder="Để trống nếu không cho đổi bằng điểm"
+            clearable
+          />
+          <div class="text-xs text-muted mt-1">
+            Nếu để trống, voucher này không thể đổi bằng điểm tích lũy.
+          </div>
+        </el-form-item>
+
         <el-form-item label="Ngày hết hạn *">
           <el-input v-model="form.ngayHetHan" type="datetime-local" style="width:100%" />
         </el-form-item>
@@ -223,6 +265,7 @@ const filterStatus = ref('Tất cả')
 const vouchers = ref([])
 const showDialog = ref(false)
 const editingVoucher = ref(null)
+const sendingEmail = ref(null)
 
 const emptyForm = () => ({
   maCode: '',
@@ -232,6 +275,7 @@ const emptyForm = () => ({
   soLuotToiDa: 100,
   ngayHetHan: '',
   hoatDong: true,
+  diemCanDung: null,   // ← thêm mới
 })
 const form = ref(emptyForm())
 
@@ -278,6 +322,7 @@ function mapVoucher(v) {
     used: v.soLuotDaDung ?? 0,
     limit: v.soLuotToiDa ?? 0,
     expiry: expiry ? expiry.toLocaleDateString('vi-VN') : '--',
+    diemCanDung: v.diemCanDung ?? null,   // ← thêm mới
     status, statusType,
     _raw: v,
   }
@@ -319,13 +364,14 @@ function openAdd() {
 function openEdit(v) {
   editingVoucher.value = v._raw
   form.value = {
-    maCode: v._raw.maCode,
-    loaiGiamGia: v._raw.loaiGiamGia,
-    giaTriGiam: v._raw.giaTriGiam,
+    maCode:          v._raw.maCode,
+    loaiGiamGia:     v._raw.loaiGiamGia,
+    giaTriGiam:      v._raw.giaTriGiam,
     donHangToiThieu: v._raw.donHangToiThieu ?? 0,
-    soLuotToiDa: v._raw.soLuotToiDa ?? 100,
-    ngayHetHan: v._raw.ngayHetHan ? v._raw.ngayHetHan.slice(0, 16) : '',
-    hoatDong: v._raw.hoatDong ?? true,
+    soLuotToiDa:     v._raw.soLuotToiDa ?? 100,
+    ngayHetHan:      v._raw.ngayHetHan ? v._raw.ngayHetHan.slice(0, 16) : '',
+    hoatDong:        v._raw.hoatDong ?? true,
+    diemCanDung:     v._raw.diemCanDung ?? null,   // ← thêm mới
   }
   showDialog.value = true
 }
@@ -333,6 +379,9 @@ function openEdit(v) {
 async function saveVoucher() {
   if (!form.value.maCode || !form.value.giaTriGiam || !form.value.ngayHetHan) {
     return ElMessage.warning('Vui lòng điền đầy đủ thông tin bắt buộc!')
+  }
+  if (form.value.diemCanDung !== null && form.value.diemCanDung < 1) {
+    return ElMessage.warning('Số điểm cần đổi phải >= 1!')
   }
   const payload = {
     maCode:          form.value.maCode.toUpperCase(),
@@ -342,6 +391,7 @@ async function saveVoucher() {
     soLuotToiDa:     Number(form.value.soLuotToiDa) || 100,
     ngayHetHan:      form.value.ngayHetHan,
     hoatDong:        form.value.hoatDong,
+    diemCanDung:     form.value.diemCanDung ? Number(form.value.diemCanDung) : null,   // ← thêm mới
   }
   try {
     if (editingVoucher.value) {
@@ -355,6 +405,31 @@ async function saveVoucher() {
     await fetchVouchers()
   } catch (err) {
     ElMessage.error(err.response?.data?.message || err.response?.data || 'Lưu thất bại!')
+  }
+}
+
+
+async function sendPromoEmail(v) {
+  try {
+    await ElMessageBox.confirm(
+      `Gửi email khuyến mãi voucher "${v.code}" đến tất cả khách hàng?\n\nThao tác này sẽ gửi email đến toàn bộ khách hàng đang hoạt động.`,
+      'Xác nhận gửi email khuyến mãi',
+      {
+        type: 'info',
+        confirmButtonText: 'Gửi ngay',
+        cancelButtonText: 'Hủy',
+        confirmButtonClass: 'el-button--success',
+      }
+    )
+    sendingEmail.value = v.id
+    const res = await apiClient.post(`/api/v1/admin/vouchers/${v.id}/send-email`)
+    ElMessage.success(res.data || 'Gửi email thành công!')
+  } catch (err) {
+    if (err !== 'cancel') {
+      ElMessage.error(err.response?.data || 'Gửi email thất bại!')
+    }
+  } finally {
+    sendingEmail.value = null
   }
 }
 

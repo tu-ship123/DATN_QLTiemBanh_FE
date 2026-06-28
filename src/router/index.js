@@ -89,6 +89,7 @@ const routes = [
     children: [
       { path: 'dashboard',   name: 'Dashboard',   component: () => import('@/views/Dashboard.vue'),       meta: { title: 'Tổng quan',               breadcrumb: ['Trang chủ', 'Tổng quan'] } },
       { path: 'orders',      name: 'Orders',      component: () => import('@/views/Orders.vue'),          meta: { title: 'Quản lý đơn hàng',        breadcrumb: ['Trang chủ', 'Đơn hàng'] } },
+      { path: 'customers',   name: 'Customers',   component: () => import('@/views/Customers.vue'),       meta: { title: 'Khách hàng',               breadcrumb: ['Trang chủ', 'Khách hàng'] } },
       { path: 'categories',  name: 'Categories',  component: () => import('@/views/CategoryView.vue'),    meta: { title: 'Danh mục',                breadcrumb: ['Trang chủ', 'Danh mục'] } }, // ← THÊM MỚI
       { path: 'products',    name: 'Products',    component: () => import('@/views/Products.vue'),        meta: { title: 'Sản phẩm',                breadcrumb: ['Trang chủ', 'Sản phẩm'] } },
       { path: 'staff',       name: 'Staff',       component: () => import('@/views/Staff.vue'),           meta: { title: 'Nhân sự & Phân quyền',    breadcrumb: ['Trang chủ', 'Nhân sự'] } },
