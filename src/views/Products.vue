@@ -130,7 +130,7 @@
       <div class="flex items-center justify-between mb-6">
         <div>
           <h1 class="font-display font-black text-2xl" style="color:#5C4428">Quản lý sản phẩm</h1>
-          <p class="text-sm text-muted mt-0.5">{{ productStore.products.length }} sản phẩm · {{ productStore.products.filter(p => p.trangThai).length }} đang bán</p>
+          <p class="text-sm text-muted mt-0.5">{{ adminProducts.length }} sản phẩm · {{ adminProducts.filter(p => p.trangThai === 'DANG_BAN').length }} đang bán</p>
         </div>
         <div class="flex gap-2">
           <div class="flex bg-white border border-[var(--color-border)] rounded-xl p-1">
@@ -258,7 +258,6 @@
       </div>
 
       <AdminProductModal
-        v-if="showProductDialog"
         v-model:visible="showProductDialog"
         :editing-product="editingProduct"
         @save="handleSaveProduct"
@@ -330,9 +329,24 @@ const handleImageError = (e) => {
 }
 
 // ======================= LOAD DATA =======================
+// Admin/staff dùng API riêng để thấy cả sản phẩm TAM_AN
+const adminProducts = ref([])
+
+async function loadProducts() {
+  if (isCustomer.value) {
+    await productStore.fetchAllProducts()
+  } else {
+    try {
+      const { data } = await apiClient.get('/api/v1/admin/products')
+      adminProducts.value = data
+    } catch (e) {
+      ElMessage.error('Không thể tải danh sách sản phẩm')
+    }
+  }
+}
+
 onMounted(async () => {
-  // Lấy dữ liệu chuẩn xác thông qua Store giống như Shop.vue
-  await productStore.fetchAllProducts()
+  await loadProducts()
   categoryStore.fetchAllCategories()
 
   // Chỉ load ratings ở trang khách hàng
@@ -343,9 +357,10 @@ onMounted(async () => {
 
 // ======================= FILTER & SORT =======================
 const displayedProducts = computed(() => {
-  let result = productStore.products
+  // Admin/staff dùng adminProducts (thấy cả TAM_AN), khách hàng dùng productStore
+  let result = isCustomer.value ? productStore.products : adminProducts.value
 
-  // Nếu là khách hàng, chỉ hiện bánh đang bán (trangThai = true) và còn hàng (soLuongTon > 0)
+  // Nếu là khách hàng, chỉ hiện bánh đang bán và còn hàng
   if (isCustomer.value) {
     result = result.filter(p => p.trangThai !== false && p.soLuongTon > 0)
   }
@@ -415,7 +430,7 @@ function openEdit(product) { editingProduct.value = product; showProductDialog.v
 
 function handleSaveProduct() {
   // Sau khi AdminProductModal lưu thành công, reload lại danh sách
-  productStore.fetchAllProducts()
+  loadProducts()
   showProductDialog.value = false
 }
 
@@ -424,8 +439,8 @@ function deleteProduct(product) {
     confirmButtonText: 'Xóa', cancelButtonText: 'Hủy', type: 'warning' 
   }).then(async () => { 
       try {
-        await apiClient.delete(`/api/v1/products/${product.id}`)
-        productStore.fetchAllProducts()
+        await apiClient.delete(`/api/v1/admin/products/${product.id}`)
+        loadProducts()
         ElMessage.success('Đã xoá sản phẩm thành công') 
       } catch(e) {
         ElMessage.error(e.response?.data || 'Có lỗi xảy ra, không thể xóa sản phẩm')

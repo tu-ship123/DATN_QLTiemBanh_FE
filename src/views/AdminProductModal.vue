@@ -9,24 +9,64 @@
     <el-form :model="form" label-position="top" v-loading="saving">
       <div class="grid grid-cols-2 gap-4">
 
-        <!-- Upload ảnh -->
+        <!-- Ảnh sản phẩm -->
         <el-form-item label="Ảnh sản phẩm" class="col-span-2">
-          <div class="flex items-center gap-4">
+          <div class="flex items-center gap-4 w-full">
+            <!-- Preview -->
             <div class="w-24 h-24 rounded-xl overflow-hidden bg-slate-100 border border-dashed border-gray-300 flex items-center justify-center shrink-0">
-              <img v-if="form.anhSanPham && !isPlaceholder" :src="form.anhSanPham" class="w-full h-full object-cover" alt="Xem trước ảnh" />
-              <span v-else class="text-gray-300 text-3xl"><iconify-icon icon="ph:cake-duotone"></iconify-icon></span>
+              <img v-if="form.anhSanPham && !isPlaceholder" :src="form.anhSanPham"
+                class="w-full h-full object-cover" alt="Xem trước ảnh"
+                @error="form.anhSanPham = defaultImage" />
+              <span v-else class="text-gray-300 text-3xl">
+                <iconify-icon icon="ph:cake-duotone"></iconify-icon>
+              </span>
             </div>
-            <div class="flex flex-col gap-2">
-              <label class="btn-secondary cursor-pointer inline-flex items-center gap-1.5 text-sm px-3 py-1.5 w-fit">
-                <el-icon><Upload /></el-icon> Tải ảnh lên
-                <input type="file" accept="image/*" class="hidden" @change="handleFileChange" />
-              </label>
+
+            <div class="flex flex-col gap-2 flex-1">
+              <!-- Tab chọn kiểu ảnh -->
+              <div class="flex gap-2">
+                <button type="button" @click="imageMode = 'upload'"
+                  class="text-xs px-3 py-1.5 rounded-lg font-semibold border transition-all"
+                  :class="imageMode === 'upload'
+                    ? 'bg-[#7A5C3A] text-white border-[#7A5C3A]'
+                    : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'">
+                  📁 Tải ảnh lên
+                </button>
+                <button type="button" @click="imageMode = 'url'"
+                  class="text-xs px-3 py-1.5 rounded-lg font-semibold border transition-all"
+                  :class="imageMode === 'url'
+                    ? 'bg-[#7A5C3A] text-white border-[#7A5C3A]'
+                    : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'">
+                  🔗 Nhập URL
+                </button>
+              </div>
+
+              <!-- Upload file -->
+              <template v-if="imageMode === 'upload'">
+                <label class="btn-secondary cursor-pointer inline-flex items-center gap-1.5 text-sm px-3 py-1.5 w-fit">
+                  <el-icon><Upload /></el-icon> Chọn ảnh từ máy
+                  <input type="file" accept="image/*" class="hidden" @change="handleFileChange" />
+                </label>
+                <p class="text-xs text-muted">PNG, JPG tối đa 5MB</p>
+              </template>
+
+              <!-- Nhập URL -->
+              <template v-if="imageMode === 'url'">
+                <el-input
+                  v-model="form.anhSanPham"
+                  placeholder="https://example.com/banh.jpg"
+                  size="small"
+                  clearable
+                />
+                <p class="text-xs text-muted">Dán link ảnh từ internet</p>
+              </template>
+
+              <!-- Xóa ảnh -->
               <button v-if="form.anhSanPham && !isPlaceholder" type="button"
                 class="text-xs text-red-400 hover:text-red-500 text-left w-fit"
                 @click="form.anhSanPham = defaultImage">
                 Xóa ảnh
               </button>
-              <p class="text-xs text-muted">PNG, JPG tối đa 5MB</p>
             </div>
           </div>
         </el-form-item>
@@ -58,19 +98,9 @@
           <el-input-number v-model="form.soLuongTon" :min="0" style="width:100%" />
         </el-form-item>
 
-        <!-- Thời gian làm -->
-        <el-form-item label="Thời gian làm (giờ)">
-          <el-input-number v-model="form.thoiGianLam" :min="1" :max="72" style="width:100%" />
-        </el-form-item>
-
         <!-- Mô tả -->
         <el-form-item label="Mô tả" class="col-span-2">
           <el-input v-model="form.moTa" type="textarea" :rows="3" placeholder="Mô tả chi tiết sản phẩm..." />
-        </el-form-item>
-
-        <!-- Thành phần -->
-        <el-form-item label="Thành phần / Nguyên liệu" class="col-span-2">
-          <el-input v-model="form.thanhPhan" placeholder="Bột mì, trứng, đường, kem tươi..." />
         </el-form-item>
 
         <!-- Trạng thái -->
@@ -100,7 +130,7 @@
 </template>
 
 <script setup>
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Upload } from '@element-plus/icons-vue'
 import { productService } from '../services/productService'
@@ -113,9 +143,9 @@ const props = defineProps({
 const emit = defineEmits(['update:visible', 'save'])
 
 const categoryStore = useCategoryStore()
-const saving = ref(false)
+const saving    = ref(false)
+const imageMode = ref('upload') // 'upload' | 'url'
 
-// Fetch categories nếu chưa có
 if (!categoryStore.categories.length) {
   categoryStore.fetchAdminCategories()
 }
@@ -127,9 +157,7 @@ const emptyForm = () => ({
   danhMucId:       null,
   donGia:          0,
   soLuongTon:      0,
-  thoiGianLam:     4,
   moTa:            '',
-  thanhPhan:       '',
   anhSanPham:      defaultImage,
   trangThaiActive: true,
   isBestseller:    false,
@@ -138,36 +166,59 @@ const emptyForm = () => ({
 
 const form = ref(emptyForm())
 
-// isPlaceholder: ảnh đang là ảnh mặc định
 const isPlaceholder = computed(() =>
   !form.value.anhSanPham || form.value.anhSanPham === defaultImage
 )
 
-// Khi dialog mở: nếu sửa thì map data vào form, nếu thêm thì form trống
-watch(() => props.visible, (val) => {
-  if (val) {
-    if (props.editingProduct) {
-      const p = props.editingProduct
-      form.value = {
-        tenSanPham:      p.tenSanPham      || '',
-        danhMucId:       p.danhMucId       || null,
-        donGia:          p.donGia          || 0,
-        soLuongTon:      p.soLuongTon      || 0,
-        thoiGianLam:     p.thoiGianLam     || 4,
-        moTa:            p.moTa            || '',
-        thanhPhan:       p.thanhPhan       || '',
-        anhSanPham:      p.anhSanPham      || defaultImage,
-        trangThaiActive: p.trangThai !== false,  // DANG_BAN = true, TAM_AN = false
-        isBestseller:    p.isBestseller    || false,
-        choPhepTuyChinh: p.choPhepTuyChinh || false,
-      }
-    } else {
-      form.value = emptyForm()
-    }
+// Hàm đổ data vào form
+function fillForm(p) {
+  form.value = {
+    tenSanPham:      p.tenSanPham      || '',
+    danhMucId:       p.danhMucId       || null,
+    donGia:          p.donGia          || 0,
+    soLuongTon:      p.soLuongTon      || 0,
+    moTa:            p.moTa            || '',
+    anhSanPham:      p.anhSanPham      || defaultImage,
+    trangThaiActive: p.trangThai === 'DANG_BAN',
+    isBestseller:    p.isBestseller    || false,
+    choPhepTuyChinh: p.choPhepTuyChinh || false,
+  }
+  imageMode.value = (p.anhSanPham && p.anhSanPham.startsWith('http') && p.anhSanPham !== defaultImage)
+    ? 'url' : 'upload'
+}
+
+// Fill form ngay khi component mount (v-if tạo lại component mỗi lần mở)
+onMounted(() => {
+  if (props.editingProduct) {
+    fillForm(props.editingProduct)
+  } else {
+    form.value      = emptyForm()
+    imageMode.value = 'upload'
   }
 })
 
-// Upload ảnh — đọc base64 để preview, gán vào form.anhSanPham
+// Watch visible: fallback khi dùng v-show
+watch(() => props.visible, (val) => {
+  if (!val) return
+  if (props.editingProduct) {
+    fillForm(props.editingProduct)
+  } else {
+    form.value      = emptyForm()
+    imageMode.value = 'upload'
+  }
+})
+
+// Watch editingProduct: trường hợp visible đã true, chỉ đổi sản phẩm cần sửa
+watch(() => props.editingProduct, (p) => {
+  if (!props.visible) return
+  if (p) {
+    fillForm(p)
+  } else {
+    form.value      = emptyForm()
+    imageMode.value = 'upload'
+  }
+})
+
 function handleFileChange(e) {
   const file = e.target.files?.[0]
   if (!file) return
@@ -180,19 +231,17 @@ function handleFileChange(e) {
 }
 
 function resetForm() {
-  form.value = emptyForm()
+  form.value      = emptyForm()
+  imageMode.value = 'upload'
 }
 
-// Build payload đúng field name backend nhận
 function buildPayload() {
   return {
     tenSanPham:      form.value.tenSanPham,
     danhMucId:       form.value.danhMucId,
     donGia:          Number(form.value.donGia),
     soLuongTon:      Number(form.value.soLuongTon),
-    thoiGianLam:     Number(form.value.thoiGianLam),
     moTa:            form.value.moTa,
-    thanhPhan:       form.value.thanhPhan,
     anhSanPham:      isPlaceholder.value ? null : form.value.anhSanPham,
     trangThai:       form.value.trangThaiActive ? 'DANG_BAN' : 'TAM_AN',
     isBestseller:    form.value.isBestseller,
@@ -201,34 +250,26 @@ function buildPayload() {
 }
 
 async function handleSave() {
-  // Validate
   if (!form.value.tenSanPham?.trim()) {
-    ElMessage.warning('Vui lòng nhập tên sản phẩm')
-    return
+    ElMessage.warning('Vui lòng nhập tên sản phẩm'); return
   }
   if (!form.value.donGia || form.value.donGia <= 0) {
-    ElMessage.warning('Vui lòng nhập giá bán hợp lệ')
-    return
+    ElMessage.warning('Vui lòng nhập giá bán hợp lệ'); return
   }
   if (!form.value.danhMucId) {
-    ElMessage.warning('Vui lòng chọn danh mục')
-    return
+    ElMessage.warning('Vui lòng chọn danh mục'); return
   }
 
   saving.value = true
   try {
     const payload = buildPayload()
-
     if (props.editingProduct) {
-      // CẬP NHẬT
       await productService.admin.update(props.editingProduct.id, payload)
       ElMessage.success('Cập nhật sản phẩm thành công!')
     } else {
-      // THÊM MỚI
       await productService.admin.create(payload)
       ElMessage.success('Thêm sản phẩm thành công!')
     }
-
     emit('save')
     emit('update:visible', false)
   } catch (err) {

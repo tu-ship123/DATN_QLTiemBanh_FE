@@ -4,7 +4,7 @@
       <div>
         <h1 class="font-display font-black text-2xl" style="color:#5C4428">Nhân sự & Phân quyền</h1>
         <p class="text-sm text-muted mt-0.5">
-          {{ staffStore.totalStaff }} nhân viên · {{ roles.length }} vai trò
+          {{ staffStore.totalStaff }} tài khoản · {{ roles.length }} vai trò
         </p>
       </div>
       <button class="btn-primary" @click="openAddDialog">
@@ -25,7 +25,7 @@
           <input v-model="search" type="text" placeholder="Tìm nhân viên..." />
         </div>
         <el-select v-model="filterRole" placeholder="Tất cả vai trò" clearable style="width:160px">
-          <el-option v-for="r in roles" :key="r.name" :label="r.name" :value="r.name" />
+          <el-option v-for="r in roles" :key="r.name" :label="r.label" :value="r.name" />
         </el-select>
       </div>
 
@@ -52,7 +52,7 @@
             <div class="flex-1 min-w-0">
               <div class="font-semibold" style="color:#5C4428">{{ s.name }}</div>
               <div class="text-xs text-muted mt-0.5">{{ s.email }}</div>
-              <span class="badge mt-1.5" :class="`badge-${roleColor(s.role)}`">{{ s.role }}</span>
+              <span class="badge mt-1.5" :class="`badge-${roleColor(s.role)}`">{{ roleLabel(s.role) }}</span>
             </div>
 
             <!-- Dropdown actions -->
@@ -126,13 +126,14 @@
           <div class="flex items-center gap-3">
             <iconify-icon :icon="role.icon" class="text-2xl text-[#7A5C3A]"></iconify-icon>
             <div>
-              <div class="font-display font-bold text-base" style="color:#5C4428">{{ role.name }}</div>
+              <div class="font-display font-bold text-base" style="color:#5C4428">{{ role.label }}</div>
               <div class="text-xs text-muted">
                 {{ staffStore.staffList.filter(s => s.role === role.name).length }} nhân viên
               </div>
             </div>
           </div>
           <span class="badge" :class="`badge-${roleColor(role.name)}`">{{ role.level }}</span>
+          <span class="badge badge-gray ml-1">{{ role.name }}</span>
         </div>
         <div class="p-4">
           <div class="text-xs font-bold text-muted uppercase tracking-wider mb-3">Quyền hạn</div>
@@ -167,7 +168,7 @@
           </el-form-item>
           <el-form-item label="Vai trò" required>
             <el-select v-model="staffForm.role" style="width:100%">
-              <el-option v-for="r in roles" :key="r.name" :label="r.name" :value="r.name" />
+              <el-option v-for="r in roles" :key="r.name" :label="r.label" :value="r.name" />
             </el-select>
           </el-form-item>
           <!-- Chỉ hiện ô mật khẩu khi THÊM MỚI — BE sẽ tự gửi email first login -->
@@ -411,17 +412,37 @@ async function confirmDeactivate(s) {
 
 // ── Roles (tĩnh — không cần API) ─────────────────────────────────────────────
 const roles = [
-  { name:'Super Admin',  icon:'ph:crown-duotone', level:'Cấp 1', permissions:['Tất cả quyền','Quản lý hệ thống','Phân quyền','Báo cáo tài chính','Xoá dữ liệu'] },
-  { name:'Quản lý',      icon:'ph:briefcase-duotone', level:'Cấp 2', permissions:['Đơn hàng','Sản phẩm','Nhân viên','Kho','Báo cáo','Voucher'] },
-  { name:'Thu ngân',     icon:'ph:coins-duotone', level:'Cấp 3', permissions:['Xem đơn','Tạo đơn','Thanh toán','Xuất hoá đơn'] },
-  { name:'Thợ làm bánh', icon:'ph:cooking-pot-duotone', level:'Cấp 3', permissions:['Xem đơn cần làm','Cập nhật tiến độ','Kho nguyên liệu'] },
-  { name:'Giao hàng',    icon:'🚚', level:'Cấp 4', permissions:['Xem đơn cần giao','Xác nhận giao','Chụp ảnh giao hàng'] },
-  { name:'Marketing',    icon:'📣', level:'Cấp 3', permissions:['Voucher','Khuyến mãi','Đánh giá','Tin nhắn KH'] },
+  {
+    name: 'ROLE_ADMIN',
+    label: 'Admin',
+    icon: 'ph:crown-duotone',
+    level: 'Cấp 1',
+    permissions: ['Toàn quyền hệ thống', 'Quản lý nhân sự', 'Quản lý sản phẩm', 'Quản lý đơn hàng', 'Xem báo cáo', 'Phân quyền tài khoản']
+  },
+  {
+    name: 'ROLE_NHAN_VIEN',
+    label: 'Nhân viên',
+    icon: 'ph:briefcase-duotone',
+    level: 'Cấp 2',
+    permissions: ['Quản lý sản phẩm', 'Quản lý đơn hàng', 'Bếp bánh', 'Giao hàng', 'Bán hàng tại quầy']
+  },
+  {
+    name: 'ROLE_KHACH_HANG',
+    label: 'Khách hàng',
+    icon: 'ph:user-duotone',
+    level: 'Cấp 3',
+    permissions: ['Xem sản phẩm', 'Đặt hàng online', 'Xem lịch sử đơn hàng', 'Đánh giá sản phẩm']
+  },
 ]
 
 const roleColor = (role) => {
-  const m = { 'Super Admin':'danger','Quản lý':'primary','Thu ngân':'success','Thợ làm bánh':'warning','Giao hàng':'info','Marketing':'purple' }
+  const m = { 'ROLE_ADMIN': 'danger', 'ROLE_NHAN_VIEN': 'primary', 'ROLE_KHACH_HANG': 'success' }
   return m[role] || 'gray'
+}
+
+const roleLabel = (role) => {
+  const r = roles.find(r => r.name === role)
+  return r ? r.label : role
 }
 
 // ── Computed: lọc danh sách nhân viên ─────────────────────────────────────────
