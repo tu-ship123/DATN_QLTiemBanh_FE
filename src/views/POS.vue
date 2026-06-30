@@ -208,7 +208,7 @@
     <!-- ═══════════════════════════════════════════════ -->
     <!-- MODAL: VietQR                                   -->
     <!-- ═══════════════════════════════════════════════ -->
-    <el-dialog v-model="showQRModal" title="Thanh toán VietQR / Chuyển khoản" width="440px" center align-center :close-on-click-modal="!submitting">
+    <el-dialog v-model="showQRModal" title="Thanh toán VietQR / Chuyển khoản" width="440px" center align-center :close-on-click-modal="!submitting && !qrData" :close-on-press-escape="!submitting && !qrData" :before-close="handleCloseQRModal">
       <div class="space-y-4">
 
         <!-- Bước 1: Nhập ghi chú, chưa tạo đơn -->
@@ -259,13 +259,13 @@
 
       </div>
       <template #footer>
-        <el-button @click="cancelQR" :disabled="submitting">Huỷ</el-button>
+        <el-button @click="cancelQR" :disabled="submitting" :loading="cancelling">Huỷ</el-button>
         <el-button v-if="!qrData" type="primary" :loading="submitting" @click="submitOrder('VIET_QR')"
           style="background-color: #E8634A; border-color: #E8634A;">
           <iconify-icon icon="ph:qr-code-duotone" class="mr-1 text-base"></iconify-icon>
           Tạo mã QR
         </el-button>
-        <el-button v-else type="success" @click="confirmQRPaid">
+        <el-button v-else type="success" :loading="confirmingQR" @click="confirmQRPaid">
           <iconify-icon icon="ph:check-circle-duotone" class="mr-1 text-base"></iconify-icon>
           Đã nhận tiền
         </el-button>
@@ -399,6 +399,7 @@ const ghiChu     = ref('')
 
 const showCashModal    = ref(false)
 const showQRModal      = ref(false)
+const cancelling       = ref(false)
 const showSuccessModal = ref(false)
 const showCongDiem       = ref(false)
 const congDiemDonHangId  = ref(null)
@@ -433,6 +434,7 @@ async function doCongDiem() {
 const cashGiven        = ref('')
 const change           = ref(0)
 const submitting       = ref(false)
+const confirmingQR     = ref(false)
 const qrData           = ref(null)       // Response từ API tạo đơn QR
 const qrImgError       = ref(false)
 const lastReceipt      = ref(null)       // receiptText từ BE để in sau
@@ -521,10 +523,35 @@ function calcChange() {
   change.value = Number(cashGiven.value) - subtotal.value
 }
 
-function cancelQR() {
-  if (submitting.value) return
+async function cancelQR() {
+  if (submitting.value || cancelling.value || confirmingQR.value) return
+
+  // Nếu đã tạo đơn lên server (đã trừ kho, đang chờ khách quét) → gọi API hủy thật
+  if (qrData.value?.donHangId) {
+    cancelling.value = true
+    try {
+      await apiClient.delete(`/api/v1/pos/orders/${qrData.value.donHangId}/cancel`)
+      ElMessage.info('Đã hủy hóa đơn và hoàn lại tồn kho.')
+      await loadProducts()
+    } catch (err) {
+      console.error('Lỗi hủy hóa đơn POS:', err)
+      const msg = err.response?.data
+      ElMessage.error(typeof msg === 'string' ? msg : (msg?.message || 'Hủy hóa đơn thất bại, vui lòng kiểm tra lại!'))
+      cancelling.value = false
+      return // Hủy thất bại thì không đóng modal, để nhân viên thử lại
+    }
+    cancelling.value = false
+  }
+
   showQRModal.value = false
   qrData.value = null
+}
+
+// Bắt sự kiện đóng dialog (click ra ngoài / nút X / phím Esc) → đi qua cùng luồng hủy ở trên
+function handleCloseQRModal(done) {
+  cancelQR().then(() => {
+    if (!showQRModal.value) done()
+  })
 }
 
 // ─── GỌI API TẠO ĐƠN POS ────────────────────────────────────────────────────
@@ -540,7 +567,8 @@ async function submitOrder(phuongThuc) {
       items: cart.value.map(i => ({
         sanPhamId: i.id,
         soLuong: i.qty
-      }))
+      })),
+      phuongThucThanhToan: phuongThuc
     }
 
     const res = await apiClient.post('/api/v1/pos/orders', payload)
@@ -576,16 +604,29 @@ async function submitOrder(phuongThuc) {
 }
 
 // ─── XÁC NHẬN ĐÃ NHẬN TIỀN QR ───────────────────────────────────────────────
-function confirmQRPaid() {
-  showQRModal.value = false
-  successData.value = { ...qrData.value, phuongThuc: 'VIET_QR' }
-  showSuccessModal.value = true
-  // Mở popup cộng điểm
-  congDiemDonHangId.value = qrData.value.donHangId
-  showCongDiem.value = true
-  loadProducts()
-  cart.value = []
-  qrData.value = null
+async function confirmQRPaid() {
+  if (!qrData.value?.donHangId || confirmingQR.value) return
+  confirmingQR.value = true
+  try {
+    // Đơn mua tại quầy (POS) -> xác nhận xong là hoàn tất luôn, không qua sản xuất/giao hàng
+    await apiClient.put(`/api/v1/pos/orders/${qrData.value.donHangId}/confirm-paid`)
+
+    showQRModal.value = false
+    successData.value = { ...qrData.value, phuongThuc: 'VIET_QR' }
+    showSuccessModal.value = true
+    // Mở popup cộng điểm
+    congDiemDonHangId.value = qrData.value.donHangId
+    showCongDiem.value = true
+    await loadProducts()
+    cart.value = []
+    qrData.value = null
+  } catch (err) {
+    console.error('Lỗi xác nhận thanh toán QR:', err)
+    const msg = err.response?.data
+    ElMessage.error(typeof msg === 'string' ? msg : (msg?.message || 'Xác nhận thanh toán thất bại, vui lòng thử lại!'))
+  } finally {
+    confirmingQR.value = false
+  }
 }
 
 // ─── ĐƠN MỚI ─────────────────────────────────────────────────────────────────

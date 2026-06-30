@@ -294,7 +294,7 @@
 
 <script setup>
 import { ref, computed, onBeforeUnmount, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useCartStore } from '@/stores/cartStore'
 import { useAuthStore } from '@/stores/authStore'
 import { orderService } from '@/services/orderService'
@@ -308,6 +308,7 @@ const showQrModal = ref(false)
 const showSuccessModal = ref(false)
 const qrImageUrl = ref('')
 const sePayMemo = ref('')
+const currentOrderId = ref(null)
 let checkOrderInterval = null
 
 const defaultImage = 'https://images.unsplash.com/photo-1562440499-64c9a111f713?auto=format&fit=crop&w=800&q=80'
@@ -410,6 +411,7 @@ const handleDatHang = async () => {
       }, 2500)
 
     } else if (form.value.phuongThucThanhToan === 'SEPAY') {
+      currentOrderId.value = newOrder.id
       sePayMemo.value = `DH${newOrder.id}`
       qrImageUrl.value = `https://qr.sepay.vn/img?acc=${BANK_CONFIG.accountNo}&bank=${BANK_CONFIG.bank}&amount=${cartStore.tongThanhToan}&des=${encodeURIComponent(sePayMemo.value)}`
       showQrModal.value = true
@@ -440,6 +442,7 @@ const batDauTheoDoiDonHang = (orderId) => {
       const response = await orderService.getOrderById(orderId)
       if (response.data.trangThai === 'DA_XAC_NHAN') {
         clearInterval(checkOrderInterval)
+        currentOrderId.value = null
         showQrModal.value = false
         await cartStore.xoaToanBo()
         // Hiện modal thành công rồi redirect
@@ -455,12 +458,37 @@ const batDauTheoDoiDonHang = (orderId) => {
   }, 3000)
 }
 
-const huyTheoDoiQr = () => {
+// Hủy đơn SePay đang chờ thanh toán (dùng chung cho nút ✕, route-leave guard)
+const huyDonSePayDangCho = async () => {
   if (checkOrderInterval) clearInterval(checkOrderInterval)
+  const orderId = currentOrderId.value
+  currentOrderId.value = null
+  if (!orderId) return
+  try {
+    await orderService.cancelMyOrder(orderId)
+  } catch (err) {
+    // Nếu đơn đã được thanh toán/xử lý đúng lúc bấm hủy thì bỏ qua lỗi, không chặn người dùng
+    console.warn('Không thể hủy đơn (có thể đã được xử lý):', err)
+  }
+}
+
+const huyTheoDoiQr = async () => {
   showQrModal.value = false
-  showToast('Đã đóng QR. Bạn có thể thanh toán sau trong lịch sử đơn hàng.', 'info')
+  await huyDonSePayDangCho()
+  showToast('Đã hủy đơn hàng chờ thanh toán.', 'info')
   router.push('/shop/orders')
 }
+
+// Khi người dùng bấm nút "Lùi" của trình duyệt (hoặc điều hướng đi nơi khác)
+// trong lúc đang hiện mã QR chờ thanh toán → tự động hủy đơn đó luôn.
+onBeforeRouteLeave(async (to, from, next) => {
+  if (showQrModal.value && currentOrderId.value) {
+    showQrModal.value = false
+    await huyDonSePayDangCho()
+    showToast('Bạn đã thoát màn thanh toán QR, đơn hàng đã được hủy.', 'info')
+  }
+  next()
+})
 
 onBeforeUnmount(() => {
   if (checkOrderInterval) clearInterval(checkOrderInterval)

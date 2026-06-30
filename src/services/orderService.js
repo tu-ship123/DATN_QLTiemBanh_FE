@@ -23,6 +23,11 @@ export const orderService = {
     return apiClient.put(`/api/v1/orders/${id}/cancel`);
   },
 
+  /** Nhân viên hủy hóa đơn POS khi bấm Huỷ / đóng mã QR trước khi khách thanh toán */
+  cancelPosOrder(id) {
+    return apiClient.delete(`/api/v1/pos/orders/${id}/cancel`);
+  },
+
   // ── NHÂN VIÊN / TIỆM BÁNH ─────────────────────────────────────────────────
 
   /** Lấy toàn bộ đơn hàng (ADMIN / NHAN_VIEN) */
