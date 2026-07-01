@@ -137,12 +137,13 @@ const handleLogout = async () => {
 const sidebarOpen = ref(true)
 const isMobile    = ref(false)
 const staffMenu = [
-  { path: '/staff-area/checkin',  icon: 'ph:fingerprint-duotone',  label: 'Chấm công' },
-  { path: '/staff-area/orders',   icon: 'ph:receipt-duotone',      label: 'Quản lý đơn hàng' },
-  { path: '/staff-area/bakery',   icon: 'ph:cake-duotone',         label: 'Bếp bánh' },
-  { path: '/staff-area/shipper',  icon: 'ph:motorcycle-duotone',   label: 'Giao Hàng' },
-  { path: '/staff-area/products', icon: 'ph:shopping-bag-duotone', label: 'Danh sách bánh' },
-  { path: '/staff-area/pos',      icon: 'ph:storefront-duotone',   label: 'Bán hàng tại quầy' },
+  { path: '/staff-area/checkin',   icon: 'ph:fingerprint-duotone',      label: 'Chấm công' },
+  { path: '/staff-area/orders',    icon: 'ph:receipt-duotone',          label: 'Quản lý đơn hàng' },
+  { path: '/staff-area/bakery',    icon: 'ph:cake-duotone',             label: 'Bếp bánh' },
+  { path: '/staff-area/shipper',   icon: 'ph:motorcycle-duotone',       label: 'Giao Hàng' },
+  { path: '/staff-area/products',  icon: 'ph:shopping-bag-duotone',     label: 'Danh sách bánh' },
+  { path: '/staff-area/pos',       icon: 'ph:storefront-duotone',       label: 'Bán hàng tại quầy' },
+  { path: '/staff-area/end-shift', icon: 'ph:flag-checkered-duotone',   label: 'Kết Ca – Báo cáo' },
 ]
 
 const currentBreadcrumb = computed(
