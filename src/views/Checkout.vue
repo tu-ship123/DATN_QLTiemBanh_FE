@@ -388,7 +388,8 @@ const handleDatHang = async () => {
   const danhSachSanPham = cartStore.items.map(item => ({
     sanPhamId: item.sanPhamId,
     soLuong: item.soLuong,
-    donGia: Number(item.donGia) || Number(item.thanhTien) / item.soLuong
+    donGia: Number(item.donGia) || Number(item.thanhTien) / item.soLuong,
+    thietKeBanhJson: item.thietKeBanhJson || null
   }))
 
   if (danhSachSanPham.length === 0) {

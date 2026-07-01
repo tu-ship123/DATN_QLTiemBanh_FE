@@ -384,6 +384,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import apiClient from '@/services/apiService'
 import { productService } from '@/services/ProductService'
+import { formatPrice } from '@/utils/format'
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
 const allProducts     = ref([])
@@ -671,9 +672,6 @@ function printReceiptText(text) {
 }
 
 // ─── UTILS ────────────────────────────────────────────────────────────────────
-function formatPrice(n) {
-  return Number(n || 0).toLocaleString('vi-VN') + 'đ'
-}
 function handleImgError(e) {
   e.target.style.display = 'none'
 }

@@ -301,7 +301,7 @@ import { authService } from '../services/authService';
 import {
   Cake, User, Mail, Phone, Lock, Eye, EyeOff,
   ChefHat, PartyPopper
-} from 'lucide-vue-next';
+} from '@lucide/vue';
 
 const EmailIcon = shallowRef({
   render() {

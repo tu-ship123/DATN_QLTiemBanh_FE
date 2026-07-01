@@ -60,11 +60,11 @@ export const useCartStore = defineStore('cart', {
     },
 
     // ─── Thêm sản phẩm ─────────────────────────────────────────────────────
-    async themVaoGio(sanPhamId, soLuong = 1, thietKeBanhJson = null) {
+    async themVaoGio(sanPhamId, soLuong = 1, thietKeBanhJson = null, donGiaTuyChinh = null) {
       this.loading = true;
       this.error = null;
       try {
-        const res = await cartService.themVaoGio({ sanPhamId, soLuong, thietKeBanhJson });
+        const res = await cartService.themVaoGio({ sanPhamId, soLuong, thietKeBanhJson, donGiaTuyChinh });
         this.gioHang = res.data;
         return { success: true };
       } catch (err) {

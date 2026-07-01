@@ -7,7 +7,7 @@
           <h1 class="text-3xl font-bold" style="color:#5C4428">Tin nhắn</h1>
           <p class="text-sm text-muted">Quản lý liên hệ và tin nhắn khách hàng</p>
         </div>
-        <button class="btn-primary">📝 Soạn tin</button>
+        <button class="btn-primary flex items-center gap-2"><iconify-icon icon="ph:pencil-simple-duotone" /> Soạn tin</button>
       </div>
     </div>
 

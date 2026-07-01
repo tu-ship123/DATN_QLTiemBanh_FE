@@ -120,14 +120,15 @@
               </button>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="view">👁 Xem chi tiết</el-dropdown-item>
-                  <el-dropdown-item command="edit"><iconify-icon icon="ph:pencil-simple-duotone" class="mr-1"></iconify-icon> Chỉnh sửa</el-dropdown-item>
-                  <el-dropdown-item command="status">🔄 Đổi trạng thái</el-dropdown-item>
-                  <el-dropdown-item command="print"><iconify-icon icon="ph:printer-duotone" class="mr-1"></iconify-icon> In đơn</el-dropdown-item>
-                  <el-dropdown-item command="override" divided>⚡ Ghi đè (Override)</el-dropdown-item>
-                  <el-dropdown-item command="refund">💸 Hoàn tiền (Refund)</el-dropdown-item>
+                  <el-dropdown-item command="view"><iconify-icon icon="ph:eye-duotone" class="mr-1" /> Xem chi tiết</el-dropdown-item>
+                  <el-dropdown-item command="edit"><iconify-icon icon="ph:pencil-simple-duotone" class="mr-1" /> Chỉnh sửa</el-dropdown-item>
+                  <el-dropdown-item command="status"><iconify-icon icon="ph:arrows-clockwise-duotone" class="mr-1" /> Đổi trạng thái</el-dropdown-item>
+                  <el-dropdown-item command="print"><iconify-icon icon="ph:printer-duotone" class="mr-1" /> In đơn</el-dropdown-item>
+                  <el-dropdown-item command="print-production"><iconify-icon icon="ph:factory-duotone" class="mr-1" /> In phiếu xuất xưởng</el-dropdown-item>
+                  <el-dropdown-item command="override" divided><iconify-icon icon="ph:lightning-duotone" class="mr-1" /> Ghi đè (Override)</el-dropdown-item>
+                  <el-dropdown-item command="refund"><iconify-icon icon="ph:currency-circle-dollar-duotone" class="mr-1" /> Hoàn tiền (Refund)</el-dropdown-item>
                   <el-dropdown-item command="delete" divided>
-                    <span style="color:#EF4444">🗑 Huỷ đơn + hoàn kho</span>
+                    <span style="color:#EF4444" class="flex items-center gap-1"><iconify-icon icon="ph:trash-duotone" /> Huỷ đơn + hoàn kho</span>
                   </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
@@ -183,7 +184,9 @@
         </div>
 
         <div class="bg-amber-50 rounded-2xl p-4 border border-amber-100" v-if="selectedOrder.note">
-          <div class="text-xs font-bold text-amber-700 uppercase tracking-wider mb-1">📝 Ghi chú đặc biệt</div>
+          <div class="text-xs font-bold text-amber-700 uppercase tracking-wider mb-1 flex items-center gap-1">
+            <iconify-icon icon="ph:note-pencil-duotone" /> Ghi chú đặc biệt
+          </div>
           <div class="text-sm text-amber-800">{{ selectedOrder.note }}</div>
         </div>
       </div>
@@ -319,7 +322,7 @@
     </el-dialog>
 
     <!-- ── DIALOG: ĐỔI TRẠNG THÁI ──────────────────────────────────────────── -->
-    <el-dialog v-model="showStatus" title="🔄 Đổi trạng thái đơn hàng" width="420px">
+    <el-dialog v-model="showStatus" title="Đổi trạng thái đơn hàng" width="420px">
       <div v-if="selectedOrder" class="mb-4 text-sm">
         <div class="bg-slate-50 px-3 py-2 rounded-lg mb-3">
           Đơn <strong class="text-[#7A5C3A]">{{ selectedOrder.id }}</strong> — hiện tại:
@@ -334,12 +337,12 @@
       <el-form label-position="top">
         <el-form-item label="Chuyển sang trạng thái" required>
           <el-select v-model="statusData.trangThaiMoi" style="width:100%">
-            <el-option label="✅ Đã xác nhận"   value="DA_XAC_NHAN" />
-            <el-option label="🔧 Đang làm"      value="DANG_LAM" />
-            <el-option label="📦 Sẵn sàng"      value="SAN_SANG" />
+            <el-option label="Đã xác nhận"   value="DA_XAC_NHAN" />
+            <el-option label="Đang làm"      value="DANG_LAM" />
+            <el-option label="Sẵn sàng"      value="SAN_SANG" />
             <el-option label="Đang giao"     value="DANG_GIAO" />
-            <el-option label="✅ Hoàn thành"    value="HOAN_THANH" />
-            <el-option label="❌ Huỷ đơn"       value="DA_HUY" />
+            <el-option label="Hoàn thành"    value="HOAN_THANH" />
+            <el-option label="Huỷ đơn"       value="DA_HUY" />
           </el-select>
         </el-form-item>
         <el-form-item v-if="statusData.trangThaiMoi === 'DA_HUY'" label="Lý do huỷ" required>
@@ -420,7 +423,9 @@
         </div>
 
         <div v-if="printData.ghiChu" class="mt-3 bg-amber-50 border border-amber-200 rounded-xl p-3">
-          <div class="text-xs font-bold text-amber-700 mb-1">📝 Ghi chú</div>
+          <div class="text-xs font-bold text-amber-700 mb-1 flex items-center gap-1">
+            <iconify-icon icon="ph:note-pencil-duotone" /> Ghi chú
+          </div>
           <div class="text-amber-800 whitespace-pre-line">{{ printData.ghiChu }}</div>
         </div>
 
@@ -433,6 +438,68 @@
         <el-button type="primary" :style="{ background:'#7A5C3A', borderColor:'#7A5C3A' }"
           @click="triggerBrowserPrint">
           <iconify-icon icon="ph:printer-duotone" class="mr-1"></iconify-icon> In ngay
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- ── DIALOG: IN PHIẾU XUẤT XƯỞNG ──────────────────────────────────────── -->
+    <el-dialog v-model="showPrintProduction" title="Phiếu xuất xưởng" width="560px">
+      <div v-if="printLoading" class="flex justify-center py-10">
+        <div class="w-8 h-8 border-4 border-[#7A5C3A] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+      <div v-else-if="printData" id="print-production-area" class="text-sm text-slate-700 font-sans p-2">
+        <div class="text-center mb-5">
+          <div class="text-lg font-black text-[#7A5C3A] brand-print" style="font-family:'Great Vibes',cursive;font-size:1.5rem;">Chocopine</div>
+          <div class="text-xs text-slate-400 mt-0.5 font-bold tracking-wider">PHIẾU XUẤT XƯỞNG / SẢN XUẤT</div>
+          <div class="text-xl font-black text-[#5C4428] mt-1">{{ printData.maDonHang }}</div>
+          <div class="text-base text-red-600 font-bold mt-2 bg-red-50 p-2 rounded inline-block" v-if="printData.ngayGiaoHang">NGÀY GIAO: {{ printData.ngayGiaoHang }}</div>
+        </div>
+
+        <hr class="border-dashed border-slate-300 mb-4" />
+
+        <div class="mb-4">
+          <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Thông tin liên hệ (Tuỳ chọn)</div>
+          <div class="grid grid-cols-2 gap-1 text-sm">
+            <span class="text-slate-500">Khách hàng:</span>       <span class="font-medium">{{ printData.tenKhachHang }}</span>
+            <span class="text-slate-500">Điện thoại:</span>       <span class="font-medium">{{ printData.sdtKhachHang || '—' }}</span>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Sản phẩm cần làm</div>
+          <table class="w-full text-sm border-collapse">
+            <thead>
+              <tr class="border-b-2 border-slate-300 text-xs text-slate-500 uppercase">
+                <th class="text-left pb-2 pt-1">Tên sản phẩm</th>
+                <th class="text-center pb-2 pt-1 w-24">Số lượng</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in printData.items" :key="item.tenSanPham"
+                class="border-b border-slate-200">
+                <td class="py-3 font-bold text-[#5C4428] text-base">{{ item.tenSanPham }}</td>
+                <td class="py-3 text-center font-black text-lg">{{ item.soLuong }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div v-if="printData.ghiChu" class="mt-4 bg-amber-50 border-2 border-amber-300 rounded-xl p-4">
+          <div class="text-sm font-black text-amber-800 mb-2 flex items-center gap-1 uppercase">
+            <iconify-icon icon="ph:warning-circle-duotone" class="text-lg" /> LƯU Ý ĐẶC BIỆT
+          </div>
+          <div class="text-amber-900 whitespace-pre-line font-bold text-base">{{ printData.ghiChu }}</div>
+        </div>
+
+        <div v-if="printData.tenNhanVien" class="mt-6 text-xs text-slate-400 text-right italic">
+          Người in: {{ printData.tenNhanVien }} - {{ new Date().toLocaleString('vi-VN') }}
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="showPrintProduction = false">Đóng</el-button>
+        <el-button type="primary" :style="{ background:'#7A5C3A', borderColor:'#7A5C3A' }"
+          @click="triggerBrowserPrintProduction">
+          <iconify-icon icon="ph:printer-duotone" class="mr-1"></iconify-icon> In phiếu xuất xưởng
         </el-button>
       </template>
     </el-dialog>
@@ -475,6 +542,7 @@ const statusData = ref({ trangThaiMoi: '', lyDoHuy: '' })
 
 // Print dialog
 const showPrint = ref(false)
+const showPrintProduction = ref(false)
 const printData = ref(null)
 const printLoading = ref(false)
 
@@ -649,6 +717,8 @@ function handleRowAction(cmd, row) {
     showStatus.value = true
   } else if (cmd === 'print') {
     openPrint(row)
+  } else if (cmd === 'print-production') {
+    openPrintProduction(row)
   } else if (cmd === 'refund') {
     refundData.value = { amount: '', reason: '' }
     showRefund.value = true
@@ -814,6 +884,32 @@ function triggerBrowserPrint() {
   style.innerHTML = `@media print { body * { visibility: hidden !important; }
     #print-area, #print-area * { visibility: visible !important; }
     #print-area { position: fixed; top: 0; left: 0; width: 100%; } }`
+  document.head.appendChild(style)
+  window.print()
+  setTimeout(() => document.getElementById('__print_style__')?.remove(), 1000)
+}
+
+async function openPrintProduction(row) {
+  showPrintProduction.value = true
+  printLoading.value = true
+  printData.value = null
+  try {
+    const res = await orderService.getPrintData(row._id)
+    printData.value = res.data
+  } catch (err) {
+    ElMessage.error('Không thể tải dữ liệu in phiếu!')
+    showPrintProduction.value = false
+  } finally {
+    printLoading.value = false
+  }
+}
+
+function triggerBrowserPrintProduction() {
+  const style = document.createElement('style')
+  style.id = '__print_style__'
+  style.innerHTML = `@media print { body * { visibility: hidden !important; }
+    #print-production-area, #print-production-area * { visibility: visible !important; }
+    #print-production-area { position: absolute; left: 0; top: 0; width: 100%; } }`
   document.head.appendChild(style)
   window.print()
   setTimeout(() => document.getElementById('__print_style__')?.remove(), 1000)
