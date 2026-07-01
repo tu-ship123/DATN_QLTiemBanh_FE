@@ -203,6 +203,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { formatPrice } from '@/utils/format'
 
 const allProducts = [
   { id: 1,  name: 'Banh sinh nhat 3D',    icon: 'ph:cake-duotone', price: 350000,  category: 'banh' },
@@ -368,7 +369,4 @@ function printBill() {
   setTimeout(() => { w.print(); w.close() }, 300)
 }
 
-function formatPrice(n) {
-  return Number(n).toLocaleString('vi-VN') + 'd'
-}
 </script>

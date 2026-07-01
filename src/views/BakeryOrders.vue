@@ -70,7 +70,13 @@
 
             <!-- Order ID + time -->
             <div class="flex justify-between items-start mb-2">
-              <span class="text-sm font-black text-[#7A5C3A]">HD-{{ order.id }}</span>
+              <span class="text-sm font-black text-[#7A5C3A] flex items-center gap-1.5">
+                HD-{{ order.id }}
+                <span v-if="order.coThietKe3D" title="Đơn có thiết kế bánh 3D"
+                  class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-[#FBB830]/15 text-[#7A5C3A] text-[9px] font-black uppercase tracking-wide">
+                  <iconify-icon icon="ph:cube-duotone"></iconify-icon> 3D
+                </span>
+              </span>
               <span class="text-[10px] text-slate-400 font-medium">{{ formatTime(order.ngayTao) }}</span>
             </div>
 
@@ -184,6 +190,15 @@
             <p class="text-xs font-bold text-amber-600 mb-1">📝 Ghi chú</p>
             <p class="text-sm text-amber-800">{{ selectedOrder.ghiChu }}</p>
           </div>
+
+          <!-- Xem thiết kế bánh 3D (chỉ xem, dành cho bếp tham khảo khi làm bánh) -->
+          <button v-if="selectedOrder.coThietKe3D" type="button" @click="openDesignViewer(selectedOrder)"
+            :disabled="loadingDesign"
+            class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold border-2 border-[#7A5C3A]/30 text-[#7A5C3A] hover:bg-[#7A5C3A]/5 transition-all disabled:opacity-60">
+            <iconify-icon icon="ph:cube-duotone" class="text-lg"></iconify-icon>
+            <span v-if="loadingDesign">Đang tải thiết kế...</span>
+            <span v-else>Xem thiết kế bánh 3D</span>
+          </button>
         </div>
 
         <!-- Modal footer actions -->
@@ -213,6 +228,24 @@
             class="px-4 py-2.5 rounded-xl text-sm font-bold bg-red-50 text-red-500 hover:bg-red-100 transition-all">
             Hủy đơn
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 3D CAKE DESIGN VIEWER MODAL (chỉ xem, cho bếp tham khảo) ──────── -->
+    <div v-if="showDesignModal"
+      class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] flex items-center justify-center p-4"
+      @click.self="showDesignModal = false">
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
+        <div class="bg-gradient-to-r from-[#7A5C3A] to-[#FBB830] px-6 py-5 flex justify-between items-center">
+          <div>
+            <h2 class="text-lg font-black text-white">Thiết kế bánh 3D · HD-{{ designOrderId }}</h2>
+            <p class="text-white/80 text-xs">Chỉ xem — dùng để bếp tham khảo khi làm bánh</p>
+          </div>
+          <button @click="showDesignModal = false" class="text-white/80 hover:text-white text-2xl font-light">✕</button>
+        </div>
+        <div class="p-5 max-h-[75vh] overflow-y-auto">
+          <CakeDesignViewer3D :design="designData" />
         </div>
       </div>
     </div>
@@ -285,6 +318,8 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import apiClient from '@/services/apiService'
+import { orderService } from '@/services/orderService'
+import CakeDesignViewer3D from '@/components/cake3d/CakeDesignViewer3D.vue'
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
 const orders         = ref([])
@@ -299,6 +334,12 @@ const cancelReason     = ref('')
 const showShipperModal = ref(false)
 const shipperTarget    = ref(null)
 const toast            = ref({ show: false, type: '', message: '' })
+
+// ── 3D CAKE DESIGN VIEWER (chỉ xem) ─────────────────────────────────────────────
+const showDesignModal = ref(false)
+const designData       = ref(null)
+const designOrderId    = ref(null)
+const loadingDesign    = ref(false)
 let   autoRefreshTimer = null
 
 // ── CONSTANTS ─────────────────────────────────────────────────────────────────
@@ -388,6 +429,22 @@ async function updateStatus(status) {
 function openDetail(order) {
   selectedOrder.value = order
   showDetail.value = true
+}
+
+/** Bếp bấm "Xem thiết kế bánh 3D" -> gọi API lấy JSON thiết kế đã lưu ở đơn hàng
+ *  (GET /api/v1/orders/{id}/design) rồi mở modal viewer CHỈ XEM (CakeDesignViewer3D). */
+async function openDesignViewer(order) {
+  loadingDesign.value = true
+  try {
+    const res = await orderService.getOrder3DDesign(order.id)
+    designData.value = res.data
+    designOrderId.value = order.id
+    showDesignModal.value = true
+  } catch (e) {
+    showToast('error', e.response?.data || 'Không tải được dữ liệu thiết kế 3D của đơn này')
+  } finally {
+    loadingDesign.value = false
+  }
 }
 
 function confirmCancel(order) {
