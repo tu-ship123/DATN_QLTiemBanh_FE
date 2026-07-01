@@ -14,28 +14,36 @@
     <!-- ── STATS ── -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4" v-if="stats">
       <div class="data-card flex items-center gap-4">
-        <div class="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-2xl shrink-0">⭐</div>
+        <div class="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center shrink-0">
+          <iconify-icon icon="ph:star-duotone" class="text-2xl" style="color:#F59E0B" />
+        </div>
         <div>
           <p class="text-xs text-muted">Điểm TB</p>
           <p class="text-2xl font-bold text-[#7A5C3A]">{{ stats.trungBinhSao }}</p>
         </div>
       </div>
       <div class="data-card flex items-center gap-4">
-        <div class="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-2xl shrink-0">💬</div>
+        <div class="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center shrink-0">
+          <iconify-icon icon="ph:chat-teardrop-dots-duotone" class="text-2xl" style="color:#3B82F6" />
+        </div>
         <div>
           <p class="text-xs text-muted">Tổng đánh giá</p>
           <p class="text-2xl font-bold text-slate-800">{{ stats.tong }}</p>
         </div>
       </div>
       <div class="data-card flex items-center gap-4">
-        <div class="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center text-2xl shrink-0">🕐</div>
+        <div class="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center shrink-0">
+          <iconify-icon icon="ph:clock-countdown-duotone" class="text-2xl" style="color:#F97316" />
+        </div>
         <div>
           <p class="text-xs text-muted">Chưa trả lời</p>
           <p class="text-2xl font-bold text-orange-500">{{ stats.chuaTraLoi }}</p>
         </div>
       </div>
       <div class="data-card flex items-center gap-4">
-        <div class="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-2xl shrink-0">🚫</div>
+        <div class="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center shrink-0">
+          <iconify-icon icon="ph:eye-slash-duotone" class="text-2xl" style="color:#6B7280" />
+        </div>
         <div>
           <p class="text-xs text-muted">Đang ẩn</p>
           <p class="text-2xl font-bold text-slate-500">{{ stats.biAn }}</p>
@@ -129,26 +137,30 @@
             <!-- Phản hồi của tiệm -->
             <div v-if="dg.phanHoiCuaTiem"
               class="mt-3 bg-amber-50 border border-amber-100 rounded-xl p-3">
-              <p class="text-xs font-semibold text-[#7A5C3A] mb-1">💬 Phản hồi từ Chocopine</p>
+              <p class="text-xs font-semibold text-[#7A5C3A] mb-1 flex items-center gap-1">
+                <iconify-icon icon="ph:chat-circle-duotone" /> Phản hồi từ Chocopine
+              </p>
               <p class="text-sm text-slate-700">{{ dg.phanHoiCuaTiem }}</p>
             </div>
 
             <!-- Actions -->
             <div class="flex gap-2 mt-3 flex-wrap">
-              <button class="btn-secondary text-xs px-3 py-1.5"
+              <button class="btn-secondary text-xs px-3 py-1.5 flex items-center gap-1"
                 @click="openReply(dg)">
-                {{ dg.phanHoiCuaTiem ? '✏️ Sửa phản hồi' : '💬 Trả lời' }}
+                <iconify-icon :icon="dg.phanHoiCuaTiem ? 'ph:pencil-simple-duotone' : 'ph:chat-circle-duotone'" />
+                {{ dg.phanHoiCuaTiem ? 'Sửa phản hồi' : 'Trả lời' }}
               </button>
 
-              <button class="btn-secondary text-xs px-3 py-1.5"
+              <button class="btn-secondary text-xs px-3 py-1.5 flex items-center gap-1"
                 @click="toggleHide(dg)">
-                {{ dg.biAn ? '👁️ Hiện' : '🚫 Ẩn' }}
+                <iconify-icon :icon="dg.biAn ? 'ph:eye-duotone' : 'ph:eye-slash-duotone'" />
+                {{ dg.biAn ? 'Hiện' : 'Ẩn' }}
               </button>
 
               <button v-if="isAdmin"
-                class="text-xs px-3 py-1.5 rounded-xl text-red-400 hover:text-red-500 hover:bg-red-50 transition-all"
+                class="text-xs px-3 py-1.5 rounded-xl text-red-400 hover:text-red-500 hover:bg-red-50 transition-all flex items-center gap-1"
                 @click="confirmDelete(dg)">
-                🗑️ Xóa
+                <iconify-icon icon="ph:trash-duotone" /> Xóa
               </button>
             </div>
           </div>

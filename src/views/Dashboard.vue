@@ -106,8 +106,8 @@
       <!-- Messages -->
       <RouterLink to="/messages" class="action-card group cursor-pointer">
         <div class="flex items-center justify-between mb-3">
-          <div class="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-2xl group-hover:bg-blue-100 transition">
-            💬
+          <div class="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition">
+            <iconify-icon icon="ph:chat-teardrop-dots-duotone" class="text-2xl" style="color:#3B82F6" />
           </div>
           <span class="badge-primary">3</span>
         </div>
@@ -119,8 +119,8 @@
       <!-- Analytics -->
       <RouterLink to="/analytics" class="action-card group cursor-pointer">
         <div class="flex items-center justify-between mb-3">
-          <div class="w-12 h-12 rounded-2xl bg-purple-50 flex items-center justify-center text-2xl group-hover:bg-purple-100 transition">
-            📈
+          <div class="w-12 h-12 rounded-2xl bg-purple-50 flex items-center justify-center group-hover:bg-purple-100 transition">
+            <iconify-icon icon="ph:chart-line-up-duotone" class="text-2xl" style="color:#7C3AED" />
           </div>
         </div>
         <h3 class="font-bold text-sm mb-1" style="color:#5C4428">Phân tích</h3>
@@ -131,8 +131,8 @@
       <!-- Inventory -->
       <RouterLink to="/inventory" class="action-card group cursor-pointer">
         <div class="flex items-center justify-between mb-3">
-          <div class="w-12 h-12 rounded-2xl bg-yellow-50 flex items-center justify-center text-2xl group-hover:bg-yellow-100 transition">
-            📦
+          <div class="w-12 h-12 rounded-2xl bg-yellow-50 flex items-center justify-center group-hover:bg-yellow-100 transition">
+            <iconify-icon icon="ph:package-duotone" class="text-2xl" style="color:#D97706" />
           </div>
         </div>
         <h3 class="font-bold text-sm mb-1" style="color:#5C4428">Kho hàng</h3>
@@ -143,8 +143,8 @@
       <!-- Promotions -->
       <RouterLink to="/vouchers" class="action-card group cursor-pointer">
         <div class="flex items-center justify-between mb-3">
-          <div class="w-12 h-12 rounded-2xl bg-pink-50 flex items-center justify-center text-2xl group-hover:bg-pink-100 transition">
-            🎫
+          <div class="w-12 h-12 rounded-2xl bg-pink-50 flex items-center justify-center group-hover:bg-pink-100 transition">
+            <iconify-icon icon="ph:ticket-duotone" class="text-2xl" style="color:#EC4899" />
           </div>
         </div>
         <h3 class="font-bold text-sm mb-1" style="color:#5C4428">Khuyến mãi</h3>

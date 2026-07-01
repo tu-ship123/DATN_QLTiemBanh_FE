@@ -13,8 +13,16 @@
     </div>
 
     <el-tabs v-model="activeTab" class="mb-6">
-      <el-tab-pane label="👥 Danh sách nhân viên" name="staff" />
-      <el-tab-pane label="🔑 Phân quyền & Vai trò" name="roles" />
+      <el-tab-pane name="staff">
+        <template #label>
+          <span class="flex items-center gap-1.5"><iconify-icon icon="ph:users-duotone" class="text-lg" /> Danh sách nhân viên</span>
+        </template>
+      </el-tab-pane>
+      <el-tab-pane name="roles">
+        <template #label>
+          <span class="flex items-center gap-1.5"><iconify-icon icon="ph:key-duotone" class="text-lg" /> Phân quyền & Vai trò</span>
+        </template>
+      </el-tab-pane>
     </el-tabs>
 
     <!-- STAFF TAB -->
@@ -104,7 +112,7 @@
           <div class="mt-3 text-xs text-muted flex items-center gap-1.5">
             <span class="flex items-center gap-1.5"><iconify-icon icon="ph:phone-duotone" class="text-[#7A5C3A]"></iconify-icon> {{ s.phone }}</span>
             <span>·</span>
-            <span>🗓 Từ {{ s.joinDate }}</span>
+            <span class="flex items-center gap-1.5"><iconify-icon icon="ph:calendar-duotone" class="text-[#7A5C3A]"></iconify-icon> Từ {{ s.joinDate }}</span>
           </div>
         </div>
 

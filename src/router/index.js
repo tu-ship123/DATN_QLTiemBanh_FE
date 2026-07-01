@@ -90,8 +90,9 @@ const routes = [
       { path: 'dashboard',   name: 'Dashboard',   component: () => import('@/views/Dashboard.vue'),       meta: { title: 'Tổng quan',               breadcrumb: ['Trang chủ', 'Tổng quan'] } },
       { path: 'orders',      name: 'Orders',      component: () => import('@/views/Orders.vue'),          meta: { title: 'Quản lý đơn hàng',        breadcrumb: ['Trang chủ', 'Đơn hàng'] } },
       { path: 'customers',   name: 'Customers',   component: () => import('@/views/Customers.vue'),       meta: { title: 'Khách hàng',               breadcrumb: ['Trang chủ', 'Khách hàng'] } },
-      { path: 'categories',  name: 'Categories',  component: () => import('@/views/CategoryView.vue'),    meta: { title: 'Danh mục',                breadcrumb: ['Trang chủ', 'Danh mục'] } }, // ← THÊM MỚI
+      { path: 'categories',  name: 'Categories',  component: () => import('@/views/Categoryview.vue'),   meta: { title: 'Danh mục',                breadcrumb: ['Trang chủ', 'Danh mục'] } },
       { path: 'products',    name: 'Products',    component: () => import('@/views/Products.vue'),        meta: { title: 'Sản phẩm',                breadcrumb: ['Trang chủ', 'Sản phẩm'] } },
+      { path: 'decor-items', name: 'DecorItems',  component: () => import('@/views/DecorItems.vue'),      meta: { title: 'Phụ kiện trang trí',      breadcrumb: ['Trang chủ', 'Phụ kiện trang trí'] } },
       { path: 'staff',       name: 'Staff',       component: () => import('@/views/Staff.vue'),           meta: { title: 'Nhân sự & Phân quyền',    breadcrumb: ['Trang chủ', 'Nhân sự'] } },
       { path: 'inventory',   name: 'Inventory',   component: () => import('@/views/Inventory.vue'),       meta: { title: 'Kho hàng',                breadcrumb: ['Trang chủ', 'Kho hàng'] } },
       { path: 'vouchers',    name: 'Vouchers',    component: () => import('@/views/Vouchers.vue'),        meta: { title: 'Voucher',                 breadcrumb: ['Trang chủ', 'Voucher'] } },
@@ -128,19 +129,26 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
 
-
+  // Route công khai → cho qua ngay
   if (to.meta.public) {
     return next();
   }
 
-  // Cần đăng nhập nhưng chưa có token
+  // Cần đăng nhập nhưng chưa có token → về trang login
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     return next('/login');
   }
 
-  // Chỉ dành cho Admin
-  if (to.meta.adminOnly && !authStore.isAdmin) {
-    return next('/login');
+  // Kiểm tra quyền theo danh sách roles trong meta
+  if (to.meta.roles && to.meta.roles.length > 0) {
+    const userRole = authStore.userRole; // VD: "ROLE_ADMIN"
+    const hasPermission = to.meta.roles.some(r => userRole === r || userRole.includes(r.replace('ROLE_', '')));
+    if (!hasPermission) {
+      // Chuyển về trang phù hợp với quyền hiện tại
+      if (authStore.isAdmin) return next('/admin/dashboard');
+      if (authStore.isNhanVien) return next('/staff-area/checkin');
+      return next('/login');
+    }
   }
 
   next();

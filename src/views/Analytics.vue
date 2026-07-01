@@ -29,21 +29,21 @@
       </div>
       <div class="data-card">
         <div class="p-4">
-          <div class="text-xs text-muted mb-2">📦 Tổng đơn hàng</div>
+          <div class="text-xs text-muted mb-2 flex items-center gap-1"><iconify-icon icon="ph:package-duotone" class="text-[#3B82F6]" /> Tổng đơn hàng</div>
           <div class="text-3xl font-bold" style="color:#3B82F6">284</div>
           <div class="text-xs text-green-600 mt-2">↑ 12 đơn so với ngày hôm qua</div>
         </div>
       </div>
       <div class="data-card">
         <div class="p-4">
-          <div class="text-xs text-muted mb-2">👥 Khách hàng mới</div>
+          <div class="text-xs text-muted mb-2 flex items-center gap-1"><iconify-icon icon="ph:users-duotone" class="text-[#22C55E]" /> Khách hàng mới</div>
           <div class="text-3xl font-bold" style="color:#22C55E">47</div>
           <div class="text-xs text-muted mt-2">Tăng từ các quảng cáo</div>
         </div>
       </div>
       <div class="data-card">
         <div class="p-4">
-          <div class="text-xs text-muted mb-2">⭐ Tỉ lệ hoàn thành</div>
+          <div class="text-xs text-muted mb-2 flex items-center gap-1"><iconify-icon icon="ph:star-duotone" class="text-[#F59E0B]" /> Tỉ lệ hoàn thành</div>
           <div class="text-3xl font-bold" style="color:#F59E0B">94.8%</div>
           <div class="text-xs text-muted mt-2">98 đơn hoàn thành/104</div>
         </div>

@@ -25,14 +25,27 @@ const onRerefreshed = (token) => {
 };
 
 // ─── Request Interceptor: tự động gắn Bearer Token ───────────────────────────
+// Danh sách endpoint auth không cần token (tránh gắn token cũ gây lỗi 403)
+const AUTH_PUBLIC_PATHS = [
+  '/api/v1/auth/login',
+  '/api/v1/auth/register',
+  '/api/v1/auth/forgot-password',
+  '/api/v1/auth/reset-password',
+  '/api/v1/auth/refresh',
+];
+
 apiClient.interceptors.request.use(
   (config) => {
+    // Không gắn token cho các endpoint public (login, register, ...)
+    const isAuthEndpoint = AUTH_PUBLIC_PATHS.some(p => config.url?.includes(p));
+    if (isAuthEndpoint) return config;
+
     const authStore = useAuthStore();
     // Ưu tiên lấy token từ Pinia, dự phòng bằng sessionStorage
     let token = authStore.accessToken || sessionStorage.getItem('accessToken');
     
     if (token) {
-      // [ĐÃ THÊM]: Dọn dẹp dấu ngoặc kép thừa nếu lỡ lưu dạng chuỗi JSON
+      // Dọn dẹp dấu ngoặc kép thừa nếu lỡ lưu dạng chuỗi JSON
       token = token.replace(/['"]/g, ''); 
       config.headers.Authorization = `Bearer ${token}`;
     }
