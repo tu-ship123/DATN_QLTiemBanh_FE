@@ -105,8 +105,8 @@
               </button>
               <button
                 @click="deleteVoucher(voucher)"
-                class="text-xs px-2 py-1 rounded-lg text-red-500 hover:bg-red-50 transition"
-              >🗑 Xóa</button>
+                class="text-xs px-2 py-1 rounded-lg text-red-500 hover:bg-red-50 transition flex items-center gap-1"
+              ><iconify-icon icon="ph:trash-duotone"></iconify-icon> Xóa</button>
             </div>
           </div>
 
@@ -144,7 +144,7 @@
     <!-- Active Campaigns -->
     <div class="data-card">
       <div class="data-card-header">
-        <h3 class="font-bold" style="color:#5C4428">🚀 Chiến dịch khuyến mãi</h3>
+        <h3 class="font-bold flex items-center gap-1.5" style="color:#5C4428"><iconify-icon icon="ph:rocket-launch-duotone" class="text-blue-500 text-lg"></iconify-icon> Chiến dịch khuyến mãi</h3>
       </div>
       <div class="space-y-3 p-4">
         <div

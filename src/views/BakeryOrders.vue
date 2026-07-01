@@ -160,10 +160,10 @@
           <!-- Customer info -->
           <div class="bg-slate-50 rounded-2xl p-4 space-y-2">
             <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Thông tin khách hàng</p>
-            <p class="text-sm text-slate-700">📧 {{ selectedOrder.emailNguoiDung }}</p>
+            <p class="text-sm text-slate-700 flex items-center gap-1.5"><iconify-icon icon="ph:envelope-duotone" class="text-[#7A5C3A]" /> {{ selectedOrder.emailNguoiDung }}</p>
             <p v-if="selectedOrder.soDienThoai" class="text-sm text-slate-700 flex items-center gap-1.5"><iconify-icon icon="ph:phone-duotone" class="text-[#7A5C3A]"></iconify-icon> {{ selectedOrder.soDienThoai }}</p>
             <p v-if="selectedOrder.diaChiGiaoHang" class="text-sm text-slate-700 flex items-center gap-1.5"><iconify-icon icon="ph:map-pin-duotone" class="text-[#7A5C3A]"></iconify-icon> {{ selectedOrder.diaChiGiaoHang }}</p>
-            <p v-if="selectedOrder.ngayGiaoHang" class="text-sm text-slate-700">📅 Giao dự kiến: {{ formatDate(selectedOrder.ngayGiaoHang, false) }}</p>
+            <p v-if="selectedOrder.ngayGiaoHang" class="text-sm text-slate-700 flex items-center gap-1.5"><iconify-icon icon="ph:calendar-duotone" class="text-[#7A5C3A]" /> Giao dự kiến: {{ formatDate(selectedOrder.ngayGiaoHang, false) }}</p>
           </div>
 
           <!-- Items -->
@@ -187,7 +187,7 @@
 
           <!-- Note -->
           <div v-if="selectedOrder.ghiChu" class="bg-amber-50 border border-amber-200 rounded-xl p-3">
-            <p class="text-xs font-bold text-amber-600 mb-1">📝 Ghi chú</p>
+            <p class="text-xs font-bold text-amber-600 mb-1 flex items-center gap-1"><iconify-icon icon="ph:note-pencil-duotone" /> Ghi chú</p>
             <p class="text-sm text-amber-800">{{ selectedOrder.ghiChu }}</p>
           </div>
 
@@ -205,18 +205,18 @@
         <div class="px-6 py-4 border-t border-slate-100 flex gap-3">
           <button v-if="selectedOrder.trangThai === 'CHO_XAC_NHAN'"
             @click="updateStatus('DA_XAC_NHAN')" :disabled="updating === selectedOrder.id"
-            class="flex-1 py-2.5 rounded-xl text-sm font-bold bg-green-500 text-white hover:bg-green-600 transition-all disabled:opacity-60">
-            ✅ Xác nhận đơn
+            class="flex-1 py-2.5 rounded-xl text-sm font-bold bg-green-500 text-white hover:bg-green-600 transition-all disabled:opacity-60 flex items-center justify-center gap-1">
+            <iconify-icon icon="ph:check-circle-duotone" /> Xác nhận đơn
           </button>
           <button v-if="selectedOrder.trangThai === 'DA_XAC_NHAN'"
             @click="updateStatus('DANG_LAM')" :disabled="updating === selectedOrder.id"
-            class="flex-1 py-2.5 rounded-xl text-sm font-bold bg-orange-500 text-white hover:bg-orange-600 transition-all disabled:opacity-60">
-            🔧 Bắt đầu làm
+            class="flex-1 py-2.5 rounded-xl text-sm font-bold bg-orange-500 text-white hover:bg-orange-600 transition-all disabled:opacity-60 flex items-center justify-center gap-1">
+            <iconify-icon icon="ph:wrench-duotone" /> Bắt đầu làm
           </button>
           <button v-if="selectedOrder.trangThai === 'DANG_LAM'"
             @click="updateStatus('SAN_SANG')" :disabled="updating === selectedOrder.id"
-            class="flex-1 py-2.5 rounded-xl text-sm font-bold bg-purple-500 text-white hover:bg-purple-600 transition-all disabled:opacity-60">
-            📦 Bánh sẵn sàng
+            class="flex-1 py-2.5 rounded-xl text-sm font-bold bg-purple-500 text-white hover:bg-purple-600 transition-all disabled:opacity-60 flex items-center justify-center gap-1">
+            <iconify-icon icon="ph:package-duotone" /> Bánh sẵn sàng
           </button>
           <button v-if="selectedOrder.trangThai === 'SAN_SANG'"
             @click="confirmHandToShipper(selectedOrder)" :disabled="updating === selectedOrder.id"
@@ -307,7 +307,7 @@
       <div v-if="toast.show"
         :class="toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'"
         class="fixed bottom-6 right-6 z-[100] text-white px-5 py-3 rounded-2xl shadow-xl font-semibold text-sm flex items-center gap-2">
-        <span>{{ toast.type === 'success' ? '✅' : '❌' }}</span>
+        <iconify-icon :icon="toast.type === 'success' ? 'ph:check-circle-duotone' : 'ph:x-circle-duotone'" class="text-xl" />
         {{ toast.message }}
       </div>
     </transition>
@@ -351,13 +351,13 @@ const columns = [
 ]
 
 const statusMap = {
-  CHO_XAC_NHAN: '⏳ Chờ xác nhận',
-  DA_XAC_NHAN:  '✅ Đã xác nhận',
-  DANG_LAM:     '🔧 Đang sản xuất',
-  SAN_SANG:     '📦 Sẵn sàng giao',
+  CHO_XAC_NHAN: 'Chờ xác nhận',
+  DA_XAC_NHAN:  'Đã xác nhận',
+  DANG_LAM:     'Đang sản xuất',
+  SAN_SANG:     'Sẵn sàng giao',
   DANG_GIAO:    'Đang giao hàng',
   HOAN_THANH:   'Hoàn thành',
-  DA_HUY:       '❌ Đã hủy',
+  DA_HUY:       'Đã hủy',
 }
 
 const badgeClass = {

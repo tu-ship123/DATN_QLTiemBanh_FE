@@ -138,7 +138,7 @@
               class="px-3 py-1.5 rounded-lg text-sm font-medium transition"
               :class="viewMode === v ? 'bg-[#7A5C3A] text-white' : 'text-gray-400 hover:text-gray-600'"
               @click="viewMode = v">
-              {{ v === 'grid' ? '⊞' : '☰' }}
+              <iconify-icon :icon="v === 'grid' ? 'ph:grid-four' : 'ph:list-bullets'" class="text-base" />
             </button>
           </div>
           <button class="btn-primary" @click="openAdd">
@@ -189,7 +189,9 @@
             <div class="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-transparent"></div>
             <div class="absolute top-3 right-3 flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 transition">
               <button class="w-8 h-8 bg-white rounded-xl shadow flex items-center justify-center text-[#7A5C3A]" @click.stop="openEdit(product)" title="Sửa"><iconify-icon icon="ph:pencil-simple-duotone"></iconify-icon></button>
-              <button class="w-8 h-8 bg-white rounded-xl shadow flex items-center justify-center text-sm text-red-500" @click.stop="deleteProduct(product)" title="Xoá">🗑</button>
+              <button class="w-8 h-8 bg-white rounded-xl shadow flex items-center justify-center text-red-400 hover:text-red-500 hover:bg-red-50 transition" @click.stop="deleteProduct(product)" title="Xoá">
+                <iconify-icon icon="ph:trash-duotone" />
+              </button>
             </div>
             <div class="absolute top-3 left-3">
               <span v-if="!product.trangThai" class="px-2 py-1 rounded bg-gray-500 text-white text-[10px] font-bold uppercase shadow">Tạm ẩn</span>
@@ -250,7 +252,9 @@
             <template #default="{ row }">
               <div class="flex items-center justify-center gap-3">
                 <button class="btn-secondary py-1 px-3 text-xs" @click="openEdit(row)">Sửa</button>
-                <button class="text-red-400 hover:text-red-500 text-sm" title="Xoá" @click="deleteProduct(row)">🗑</button>
+                <button class="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-400 hover:text-red-500 transition" title="Xoà" @click="deleteProduct(row)">
+                  <iconify-icon icon="ph:trash-duotone" />
+                </button>
               </div>
             </template>
           </el-table-column>

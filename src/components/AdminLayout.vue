@@ -275,8 +275,9 @@ const mainMenu = [
 ]
 
 const secondMenu = [
-  { path: '/admin/inventory', icon: 'ph:package-duotone', label: 'Kho hàng'           },
-  { path: '/admin/vouchers',  icon: 'ph:ticket-duotone',  label: 'Voucher & Khuyến mãi' },
+  { path: '/admin/inventory',   icon: 'ph:package-duotone',   label: 'Kho hàng'              },
+  { path: '/admin/decor-items', icon: 'ph:sparkle-duotone',   label: 'Phụ kiện trang trí'    },
+  { path: '/admin/vouchers',    icon: 'ph:ticket-duotone',    label: 'Voucher & Khuyến mãi'  },
 ]
 
 const systemMenu = [
