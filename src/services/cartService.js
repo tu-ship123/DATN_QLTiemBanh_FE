@@ -32,4 +32,28 @@ export const cartService = {
   xoaToanBoGio() {
     return apiClient.delete(BASE);
   },
+
+  /** Áp dụng mã giảm giá vào giỏ hàng
+   * @param {string} maCode
+   */
+  apDungMaGiamGia(maCode) {
+    return apiClient.post(`${BASE}/discount`, { maCode });
+  },
+
+  /** Gỡ mã giảm giá khỏi giỏ hàng */
+  xoaMaGiamGia() {
+    return apiClient.delete(`${BASE}/discount`);
+  },
+
+  /** Áp dụng voucher cá nhân (đổi bằng điểm) vào giỏ hàng
+   * @param {number} voucherKhachHangId
+   */
+  apDungVoucherKhachHang(voucherKhachHangId) {
+    return apiClient.post(`${BASE}/voucher`, { voucherKhachHangId });
+  },
+
+  /** Gỡ voucher cá nhân khỏi giỏ hàng */
+  xoaVoucherKhachHang() {
+    return apiClient.delete(`${BASE}/voucher`);
+  },
 };

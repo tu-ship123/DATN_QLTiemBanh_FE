@@ -176,6 +176,14 @@
               <span>Phí giao hàng</span>
               <span class="font-bold text-[#5C4428]">{{ cartStore.phiShip === 0 ? 'Miễn phí' : formatCurrency(cartStore.phiShip) }}</span>
             </div>
+            <!-- Dòng giảm giá — mã giảm giá HOẶC voucher cá nhân đang áp dụng từ giỏ hàng -->
+            <div v-if="cartStore.soTienGiam > 0" class="flex justify-between text-green-700">
+              <span class="flex items-center gap-1">
+                <iconify-icon icon="ph:tag-duotone" class="text-sm"></iconify-icon>
+                {{ cartStore.coApDungMaGiamGia ? `Mã ${cartStore.maGiamGiaCode}` : cartStore.tenVoucherKhachHang || 'Giảm giá voucher' }}
+              </span>
+              <span class="font-black">-{{ formatCurrency(cartStore.soTienGiam) }}</span>
+            </div>
             <div class="h-px bg-[#EDE0CC] my-3"></div>
             <div class="flex justify-between items-center">
               <span class="text-sm font-bold text-[#5C4428]">Tổng thanh toán</span>

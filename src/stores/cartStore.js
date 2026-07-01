@@ -19,6 +19,22 @@ export const useCartStore = defineStore('cart', {
 
     tongThanhToan: (state) => state.gioHang?.tongThanhToan || 0,
 
+    // ─── Mã giảm giá đang áp dụng (đồng bộ với backend, không còn là state ảo ở FE) ──
+    maGiamGiaCode: (state) => state.gioHang?.maGiamGiaCode || null,
+
+    loaiGiamGia: (state) => state.gioHang?.loaiGiamGia || null,
+
+    soTienGiam: (state) => state.gioHang?.soTienGiam || 0,
+
+    coApDungMaGiamGia: (state) => !!state.gioHang?.maGiamGiaCode,
+
+    // ─── Voucher cá nhân (đổi bằng điểm) đang áp dụng ở giỏ hàng ────────────
+    voucherKhachHangId: (state) => state.gioHang?.voucherKhachHangId || null,
+
+    tenVoucherKhachHang: (state) => state.gioHang?.tenVoucherKhachHang || null,
+
+    coApDungVoucherKhachHang: (state) => !!state.gioHang?.voucherKhachHangId,
+
     soLuongBadge: (state) => state.gioHang?.tongSoLuong || 0,
   },
 
@@ -92,6 +108,59 @@ export const useCartStore = defineStore('cart', {
       } catch (err) {
         this.error = err.response?.data || 'Xóa thất bại.';
         console.error('[CartStore] xoaToanBo:', err);
+      }
+    },
+
+    // ─── Áp dụng mã giảm giá ────────────────────────────────────────────────
+    // Trả về { success, message } để component tự hiển thị toast/lỗi phù hợp
+    async apDungMaGiamGia(maCode) {
+      this.error = null;
+      try {
+        const res = await cartService.apDungMaGiamGia(maCode);
+        this.gioHang = res.data;
+        return { success: true };
+      } catch (err) {
+        const message = err.response?.data?.message || err.response?.data || 'Mã giảm giá không hợp lệ.';
+        return { success: false, message };
+      }
+    },
+
+    // ─── Gỡ mã giảm giá ─────────────────────────────────────────────────────
+    async xoaMaGiamGia() {
+      this.error = null;
+      try {
+        const res = await cartService.xoaMaGiamGia();
+        this.gioHang = res.data;
+        return { success: true };
+      } catch (err) {
+        const message = err.response?.data?.message || err.response?.data || 'Gỡ mã thất bại.';
+        return { success: false, message };
+      }
+    },
+
+    // ─── Áp dụng voucher cá nhân (đổi bằng điểm) ────────────────────────────
+    async apDungVoucherKhachHang(voucherKhachHangId) {
+      this.error = null;
+      try {
+        const res = await cartService.apDungVoucherKhachHang(voucherKhachHangId);
+        this.gioHang = res.data;
+        return { success: true };
+      } catch (err) {
+        const message = err.response?.data?.message || err.response?.data || 'Áp dụng voucher thất bại.';
+        return { success: false, message };
+      }
+    },
+
+    // ─── Gỡ voucher cá nhân ──────────────────────────────────────────────────
+    async xoaVoucherKhachHang() {
+      this.error = null;
+      try {
+        const res = await cartService.xoaVoucherKhachHang();
+        this.gioHang = res.data;
+        return { success: true };
+      } catch (err) {
+        const message = err.response?.data?.message || err.response?.data || 'Gỡ voucher thất bại.';
+        return { success: false, message };
       }
     },
 

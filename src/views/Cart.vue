@@ -143,19 +143,37 @@
               <span class="text-xs font-black text-[#5C4428] uppercase tracking-wider font-sans">Mã Giảm Giá</span>
             </div>
 
-            <!-- Đã áp voucher -->
-            <div v-if="appliedVoucher"
+            <!-- Đã áp mã giảm giá -->
+            <div v-if="cartStore.coApDungMaGiamGia"
               class="flex items-center justify-between gap-2 bg-green-50 border border-green-200 rounded-xl px-3 py-2.5">
               <div class="flex items-center gap-2 min-w-0">
                 <iconify-icon icon="ph:check-circle-fill" class="text-green-600 text-base flex-shrink-0"></iconify-icon>
                 <div class="min-w-0">
-                  <p class="text-xs font-black text-green-700 truncate">{{ appliedVoucher.tenVoucher || appliedVoucher.maCode }}</p>
+                  <p class="text-xs font-black text-green-700 truncate">{{ cartStore.maGiamGiaCode }}</p>
                   <p class="text-[10px] text-green-600 font-medium">
-                    Giảm {{ appliedVoucher.loaiGiam === 'PHAN_TRAM' ? appliedVoucher.giaTriGiam + '%' : formatCurrency(appliedVoucher.giaTriGiam) }}
+                    Giảm {{ formatCurrency(cartStore.soTienGiam) }}
                   </p>
                 </div>
               </div>
               <button @click="boVoucher"
+                class="text-[10px] font-bold text-red-500 hover:text-red-700 flex-shrink-0 px-2 py-1 rounded-lg hover:bg-red-50 transition-colors">
+                Bỏ
+              </button>
+            </div>
+
+            <!-- Đã áp voucher cá nhân (đổi bằng điểm) -->
+            <div v-else-if="cartStore.coApDungVoucherKhachHang"
+              class="flex items-center justify-between gap-2 bg-green-50 border border-green-200 rounded-xl px-3 py-2.5">
+              <div class="flex items-center gap-2 min-w-0">
+                <iconify-icon icon="ph:check-circle-fill" class="text-green-600 text-base flex-shrink-0"></iconify-icon>
+                <div class="min-w-0">
+                  <p class="text-xs font-black text-green-700 truncate">{{ cartStore.tenVoucherKhachHang }}</p>
+                  <p class="text-[10px] text-green-600 font-medium">
+                    Giảm {{ formatCurrency(cartStore.soTienGiam) }}
+                  </p>
+                </div>
+              </div>
+              <button @click="boVoucherKhachHang"
                 class="text-[10px] font-bold text-red-500 hover:text-red-700 flex-shrink-0 px-2 py-1 rounded-lg hover:bg-red-50 transition-colors">
                 Bỏ
               </button>
@@ -226,10 +244,10 @@
             <span class="text-sm font-bold text-[#5C4428] font-sans">Thành tiền</span>
             <div class="text-right">
               <div v-if="soTienGiam > 0" class="text-xs text-[#A68B5C] line-through font-sans mb-0.5">
-                {{ formatCurrency(cartStore.tongThanhToan) }}
+                {{ formatCurrency(tongTruocGiam) }}
               </div>
               <span style="font-family:'Playfair Display',serif;font-size:24px;font-weight:950;color:#7A5C3A;">
-                {{ formatCurrency(tongThanhToanSauGiam) }}
+                {{ formatCurrency(cartStore.tongThanhToan) }}
               </span>
             </div>
           </div>
@@ -322,14 +340,14 @@
             <!-- Danh sách -->
             <div
               v-for="v in danhSachVoucher" :key="v.id"
-              @click="v.conHieuLuc && chonVoucher(v)"
-              class="rounded-[16px] border-2 p-4 transition-all cursor-pointer select-none"
+              @click="v.conHieuLuc && cartStore.voucherKhachHangId !== v.id && chonVoucher(v)"
+              class="rounded-[16px] border-2 p-4 transition-all select-none"
               :class="[
                 !v.conHieuLuc
                   ? 'border-[#EDE0CC] bg-gray-50 opacity-50 cursor-not-allowed'
-                  : appliedVoucher?.id === v.id
-                    ? 'border-[#7A5C3A] bg-[#FDF6EC] shadow-md'
-                    : 'border-[#EDE0CC] bg-white hover:border-[#C4A882] hover:shadow-sm'
+                  : cartStore.voucherKhachHangId === v.id
+                    ? 'border-[#7A5C3A] bg-[#FDF6EC] shadow-md cursor-default'
+                    : 'border-[#EDE0CC] bg-white hover:border-[#C4A882] hover:shadow-sm cursor-pointer'
               ]"
             >
               <div class="flex items-start gap-3">
@@ -337,9 +355,11 @@
                 <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
                   :style="v.conHieuLuc ? 'background:linear-gradient(135deg,#7A5C3A,#9A7650)' : 'background:#D1C9BE'">
                   <iconify-icon
+                    v-if="!(chonVoucherLoadingId === v.id)"
                     :icon="v.loaiGiam === 'PHAN_TRAM' ? 'ph:percent-duotone' : 'ph:tag-duotone'"
                     class="text-white text-base">
                   </iconify-icon>
+                  <iconify-icon v-else icon="ph:circle-notch" class="text-white text-base animate-spin"></iconify-icon>
                 </div>
 
                 <div class="flex-1 min-w-0">
@@ -356,7 +376,7 @@
                       </p>
                     </div>
                     <!-- Badge đang áp dụng -->
-                    <span v-if="appliedVoucher?.id === v.id"
+                    <span v-if="cartStore.voucherKhachHangId === v.id"
                       class="flex-shrink-0 text-[9px] font-black uppercase tracking-wider bg-[#7A5C3A] text-white px-2 py-0.5 rounded-full">
                       Đang dùng
                     </span>
@@ -435,16 +455,21 @@ const formatDate = (dateStr) => {
   return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`
 }
 
-// ─── Voucher state ────────────────────────────────────────────────────────────
+// ─── Mã giảm giá (đồng bộ thật với backend qua cartStore) ───────────────────
 const voucherInput = ref('')
 const voucherError = ref('')
 const voucherLoading = ref(false)
-const appliedVoucher = ref(null)   // { id, tenVoucher, loaiGiam, giaTriGiam, donHangToiThieu, ... }
 
-// ─── Modal voucher ────────────────────────────────────────────────────────────
+// ─── Modal "Voucher của tôi" ─────────────────────────────────────────────────
+// Voucher cá nhân đổi bằng điểm thưởng (VoucherKhachHang) — hệ thống KHÁC với
+// "Mã giảm giá" (MaGiamGia) ở trên, nhưng đều được lưu ở giỏ hàng phía backend
+// (mỗi đơn chỉ áp dụng 1 trong 2). Chọn 1 voucher ở đây sẽ tự động gỡ mã giảm
+// giá đang áp (nếu có), và tự động mang theo khi checkout.
 const showVoucherModal = ref(false)
 const voucherListLoading = ref(false)
 const danhSachVoucher = ref([])
+// id của voucher đang gọi API áp dụng (để hiện icon loading trên đúng thẻ voucher đó)
+const chonVoucherLoadingId = ref(null)
 
 const moModalVoucher = async () => {
   showVoucherModal.value = true
@@ -464,83 +489,69 @@ const dongModalVoucher = () => {
   showVoucherModal.value = false
 }
 
-// ─── Tính số tiền giảm ───────────────────────────────────────────────────────
-const soTienGiam = computed(() => {
-  if (!appliedVoucher.value) return 0
-  const tongTien = cartStore.tongThanhToan
-  const v = appliedVoucher.value
-  if (!v.conHieuLuc && v.trangThai !== undefined) return 0
-
-  // Kiểm tra đơn tối thiểu
-  if (v.donHangToiThieu > 0 && tongTien < v.donHangToiThieu) return 0
-
-  if (v.loaiGiam === 'PHAN_TRAM') {
-    return Math.round(tongTien * (v.giaTriGiam / 100))
+const chonVoucher = async (v) => {
+  chonVoucherLoadingId.value = v.id
+  try {
+    const result = await cartStore.apDungVoucherKhachHang(v.id)
+    if (result.success) {
+      showToast(`Đã áp dụng "${v.tenVoucher}"! 🎉`)
+      dongModalVoucher()
+    } else {
+      showToast(result.message, 'error')
+    }
+  } finally {
+    chonVoucherLoadingId.value = null
   }
-  return Math.min(Number(v.giaTriGiam) || 0, tongTien)
-})
+}
 
-const tongThanhToanSauGiam = computed(() => {
-  return Math.max(0, cartStore.tongThanhToan - soTienGiam.value)
-})
+// ─── Số tiền giảm & tổng sau giảm — lấy trực tiếp từ backend (đã tính đúng) ──
+// Lưu ý: cartStore.tongThanhToan (BE trả về) = tongTienHang - soTienGiam + phiShip,
+// tức ĐÃ LÀ số tiền SAU khi giảm giá + cộng phí ship. Vì vậy không cần biến
+// "tongThanhToanSauGiam" nào khác — chỉ cần dùng thẳng cartStore.tongThanhToan.
+const soTienGiam = computed(() => cartStore.soTienGiam)
 
-// ─── Áp dụng voucher bằng mã nhập tay ───────────────────────────────────────
+// Giá gốc TRƯỚC khi giảm giá (dùng để hiển thị dòng gạch ngang khi có voucher)
+const tongTruocGiam = computed(() => cartStore.tongTienHang + cartStore.phiShip)
+
+// ─── Áp dụng mã giảm giá (gọi backend thật, mã sẽ được lưu ở giỏ hàng và
+// tự động mang qua khi checkout) ──────────────────────────────────────────────
 const apDungVoucher = async () => {
-  const ma = voucherInput.value.trim().toUpperCase()
+  const ma = voucherInput.value.trim()
   if (!ma) return
   voucherError.value = ''
   voucherLoading.value = true
   try {
-    // Lấy danh sách voucher của khách rồi tìm theo mã
-    const res = await apiClient.get('/api/v1/loyalty/voucher')
-    const list = res.data || []
-    const found = list.find(v => (v.tenVoucher || '').toUpperCase() === ma || (v.maCode || '').toUpperCase() === ma)
-    if (!found) {
-      voucherError.value = 'Mã voucher không hợp lệ hoặc không thuộc tài khoản của bạn.'
-      return
+    const result = await cartStore.apDungMaGiamGia(ma)
+    if (result.success) {
+      voucherInput.value = ''
+      showToast('Áp dụng mã giảm giá thành công! 🎉')
+    } else {
+      voucherError.value = result.message
     }
-    if (!found.conHieuLuc) {
-      voucherError.value = 'Voucher này đã hết hạn hoặc không còn hiệu lực.'
-      return
-    }
-    if (found.donHangToiThieu > 0 && cartStore.tongThanhToan < found.donHangToiThieu) {
-      voucherError.value = `Đơn hàng tối thiểu ${formatCurrency(found.donHangToiThieu)} để dùng voucher này.`
-      return
-    }
-    appliedVoucher.value = found
-    danhSachVoucher.value = list
-    voucherInput.value = ''
-    showToast('Áp dụng voucher thành công! 🎉')
-  } catch (err) {
-    voucherError.value = 'Không thể kiểm tra voucher. Vui lòng thử lại.'
   } finally {
     voucherLoading.value = false
   }
 }
 
-// ─── Chọn voucher từ modal ───────────────────────────────────────────────────
-const chonVoucher = (v) => {
-  if (!v.conHieuLuc) return
-  if (v.donHangToiThieu > 0 && cartStore.tongThanhToan < v.donHangToiThieu) {
-    showToast(`Cần đơn tối thiểu ${formatCurrency(v.donHangToiThieu)} để dùng voucher này.`, 'error')
-    return
-  }
-  if (appliedVoucher.value?.id === v.id) {
-    appliedVoucher.value = null
-    showToast('Đã bỏ chọn voucher.')
+// ─── Bỏ mã giảm giá (gọi backend, gỡ khỏi giỏ hàng thật) ────────────────────
+const boVoucher = async () => {
+  voucherError.value = ''
+  const result = await cartStore.xoaMaGiamGia()
+  if (result.success) {
+    showToast('Đã bỏ mã giảm giá.')
   } else {
-    appliedVoucher.value = v
-    showToast('Áp dụng voucher thành công! 🎉')
+    showToast(result.message, 'error')
   }
-  dongModalVoucher()
 }
 
-// ─── Bỏ voucher ──────────────────────────────────────────────────────────────
-const boVoucher = () => {
-  appliedVoucher.value = null
-  voucherInput.value = ''
-  voucherError.value = ''
-  showToast('Đã bỏ voucher.')
+// ─── Bỏ voucher cá nhân (gọi backend, gỡ khỏi giỏ hàng thật) ────────────────
+const boVoucherKhachHang = async () => {
+  const result = await cartStore.xoaVoucherKhachHang()
+  if (result.success) {
+    showToast('Đã bỏ voucher.')
+  } else {
+    showToast(result.message, 'error')
+  }
 }
 
 // ─── Tăng / Giảm số lượng ────────────────────────────────────────────────────
@@ -567,18 +578,15 @@ const xacNhanXoa = async (item) => {
 const xoaToanBo = async () => {
   if (!confirm('Xóa toàn bộ giỏ hàng?')) return
   await cartStore.xoaToanBo()
-  appliedVoucher.value = null
   if (cartStore.error) showToast(cartStore.error, 'error')
   else showToast('Đã xóa toàn bộ giỏ hàng!')
 }
 
 // ─── Thanh toán ──────────────────────────────────────────────────────────────
+// Mã giảm giá (nếu có) đã được lưu ở giỏ hàng phía backend, Checkout sẽ tự
+// đọc lại giỏ hàng nên không cần truyền gì thêm qua query nữa.
 const thanhToan = () => {
-  // Truyền thông tin voucher và tổng tiền sau giảm sang trang Checkout nếu cần
-  router.push({
-    name: 'Checkout',
-    query: appliedVoucher.value ? { voucherId: appliedVoucher.value.id } : {}
-  })
+  router.push({ name: 'Checkout' })
 }
 
 // ─── Khởi tạo ────────────────────────────────────────────────────────────────

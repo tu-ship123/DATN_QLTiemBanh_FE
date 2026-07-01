@@ -217,13 +217,21 @@
             <div class="space-y-3.5 text-xs font-medium text-[#9A7650]">
               <div class="flex justify-between">
                 <span>Giá sản phẩm ({{ activeOrder.items?.length }} món)</span>
-                <span class="font-bold text-[#5C4428]">{{ formatCurrency(activeOrder.tongTien - activeOrder.phiShip) }}</span>
+                <span class="font-bold text-[#5C4428]">{{ formatCurrency(tongTienHangCuaDon(activeOrder)) }}</span>
               </div>
               <div class="flex justify-between">
                 <span>Phí giao hàng</span>
                 <span class="font-bold text-[#5C4428]">{{ formatCurrency(activeOrder.phiShip) }}</span>
               </div>
-              
+              <!-- Dòng giảm giá — mã giảm giá HOẶC voucher cá nhân đã dùng cho đơn này -->
+              <div v-if="activeOrder.soTienGiam > 0" class="flex justify-between text-green-700">
+                <span class="flex items-center gap-1">
+                  <iconify-icon icon="ph:tag-duotone" class="text-sm"></iconify-icon>
+                  {{ activeOrder.maGiamGiaCode ? `Mã ${activeOrder.maGiamGiaCode}` : activeOrder.tenVoucherKhachHang || 'Giảm giá' }}
+                </span>
+                <span class="font-black">-{{ formatCurrency(activeOrder.soTienGiam) }}</span>
+              </div>
+
               <div class="h-px bg-[#FDF6EC] my-3"></div>
               <div class="flex justify-between items-center">
                 <span class="text-sm font-bold text-[#5C4428]">Thành tiền</span>
@@ -501,6 +509,14 @@ const guiDanhGia = async () => {
 const formatCurrency = (value) => {
   if (!value && value !== 0) return '0đ'
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value).replace('₫', 'đ')
+}
+
+// Giá sản phẩm (chưa gồm ship, chưa trừ giảm giá) của 1 đơn — tính từ danh sách
+// item thay vì "tongTien - phiShip", vì tongTien đã trừ giảm giá rồi nên phép
+// trừ đó sẽ ra thiếu tiền khi đơn có áp mã giảm giá/voucher.
+const tongTienHangCuaDon = (order) => {
+  if (!order?.items) return 0
+  return order.items.reduce((sum, item) => sum + (item.giaBan || 0) * (item.soLuong || 0), 0)
 }
 
 const formatDate = (dateString, includeTime = true) => {
