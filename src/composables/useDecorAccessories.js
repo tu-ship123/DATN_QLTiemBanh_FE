@@ -1,5 +1,5 @@
 import { computed, reactive } from 'vue'
-import { accessoryService } from '@/services/accessoryService'
+import { accessoryService } from '@/services/AccessoryService'
 
 /**
  * T050/T051/T052 - State dùng chung giữa DecorPanel (sidebar) và CakeBuilder3D (canvas 3D),

@@ -242,6 +242,19 @@
         </div>
 
         <div>
+          <label class="block text-xs font-bold mb-1" style="color:#7A5C3A">Model 3D (.glb)</label>
+          <el-input v-model="form.model3dUrl" placeholder="/models/ten-file.glb hoặc URL CDN ngoài">
+            <template #prefix>
+              <iconify-icon icon="ph:cube-duotone" style="color:#A68B5C" />
+            </template>
+          </el-input>
+          <div class="text-xs text-muted mt-1">
+            Bỏ trống nếu chưa có file model — bánh 3D sẽ tự hiển thị hình mẫu dựng sẵn thay thế.
+            File .glb cần được bỏ sẵn vào thư mục <code>fe/public/models/</code> của dự án.
+          </div>
+        </div>
+
+        <div>
           <label class="block text-xs font-bold mb-1" style="color:#7A5C3A">Tên phụ kiện <span class="text-red-400">*</span></label>
           <el-input v-model="form.tenPhuKien" placeholder="VD: Nến sinh nhật, Hoa hồng sáp..." maxlength="150" show-word-limit>
             <template #prefix>
@@ -319,6 +332,7 @@ const form = ref({
   donGia: 0,
   soLuongTon: 0,
   anhPhuKien: '',
+  model3dUrl: '',
   hoatDong: true,
 })
 
@@ -405,7 +419,7 @@ function confirmDelete(item) {
 // ── Dialog helpers ─────────────────────────────────────────────────────────────
 function openAdd() {
   editingItem.value = null
-  form.value = { tenPhuKien: '', donGia: 0, soLuongTon: 0, anhPhuKien: '', hoatDong: true }
+  form.value = { tenPhuKien: '', donGia: 0, soLuongTon: 0, anhPhuKien: '', model3dUrl: '', hoatDong: true }
   dialogVisible.value = true
 }
 
@@ -416,6 +430,7 @@ function openEdit(item) {
     donGia: item.donGia,
     soLuongTon: item.soLuongTon,
     anhPhuKien: item.anhPhuKien || '',
+    model3dUrl: item.model3dUrl || '',
     hoatDong: item.hoatDong,
   }
   dialogVisible.value = true

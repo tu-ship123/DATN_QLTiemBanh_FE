@@ -274,8 +274,8 @@
           <div class="bg-[#FDF6EC] rounded-2xl p-4 text-xs text-[#5C4428] border border-[#EDE0CC] text-left space-y-2">
             <p class="flex justify-between"><span class="text-[#A68B5C] font-bold">Người nhận:</span> <span class="font-bold">{{ form.tenNguoiNhan }}</span></p>
             <p class="flex justify-between"><span class="text-[#A68B5C] font-bold">Số điện thoại:</span> <span class="font-bold">{{ form.soDienThoai }}</span></p>
-            <p class="flex justify-between"><span class="text-[#A68B5C] font-bold">Tổng tiền:</span> <span class="font-black text-[#7A5C3A]">{{ formatCurrency(cartStore.tongThanhToan) }}</span></p>
-            <p class="flex justify-between"><span class="text-[#A68B5C] font-bold">Thanh toán:</span> <span class="font-bold">COD khi nhận hàng</span></p>
+            <p class="flex justify-between"><span class="text-[#A68B5C] font-bold">Tổng tiền:</span> <span class="font-black text-[#7A5C3A]">{{ formatCurrency(successAmount) }}</span></p>
+            <p class="flex justify-between"><span class="text-[#A68B5C] font-bold">Thanh toán:</span> <span class="font-bold">{{ form.phuongThucThanhToan === 'SEPAY' ? 'Đã thanh toán qua SePay' : 'COD khi nhận hàng' }}</span></p>
           </div>
           <div class="flex items-center gap-2 text-xs text-[#A68B5C] justify-center">
             <svg class="w-4 h-4 animate-spin text-[#7A5C3A]" viewBox="0 0 24 24" fill="none">
@@ -318,6 +318,9 @@ const qrImageUrl = ref('')
 const sePayMemo = ref('')
 const currentOrderId = ref(null)
 let checkOrderInterval = null
+// Chụp lại tổng tiền TRƯỚC khi xoá giỏ hàng, vì modal thành công hiển thị
+// sau khi cartStore.xoaToanBo() đã chạy → cartStore.tongThanhToan lúc đó bằng 0.
+const successAmount = ref(0)
 
 const defaultImage = 'https://images.unsplash.com/photo-1562440499-64c9a111f713?auto=format&fit=crop&w=800&q=80'
 
@@ -411,6 +414,7 @@ const handleDatHang = async () => {
     const newOrder = response.data
 
     if (form.value.phuongThucThanhToan === 'COD') {
+      successAmount.value = cartStore.tongThanhToan
       await cartStore.xoaToanBo()
       // Hiện modal thành công → tự redirect sau 2.5s
       showSuccessModal.value = true
@@ -453,6 +457,7 @@ const batDauTheoDoiDonHang = (orderId) => {
         clearInterval(checkOrderInterval)
         currentOrderId.value = null
         showQrModal.value = false
+        successAmount.value = cartStore.tongThanhToan
         await cartStore.xoaToanBo()
         // Hiện modal thành công rồi redirect
         showSuccessModal.value = true

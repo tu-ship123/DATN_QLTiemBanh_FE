@@ -71,9 +71,9 @@ import { onMounted, watch } from 'vue'
 import { useDecorAccessories } from '@/composables/useDecorAccessories'
 import { formatPrice } from '@/utils/format'
 
-const emit = defineEmits(['change'])
+const emit = defineEmits(['change', 'request-add', 'request-remove'])
 
-const { state, ensureLoaded, canAdd, addOne, removeOne, selectedItems, total } = useDecorAccessories()
+const { state, ensureLoaded, canAdd, selectedItems, total } = useDecorAccessories()
 
 onMounted(ensureLoaded)
 
@@ -81,12 +81,16 @@ onMounted(ensureLoaded)
 // bất kể thay đổi đến từ nút +/- ở đây hay từ kéo-thả/xóa trên canvas (T051/T052)
 watch(total, (value) => emit('change', { total: value, items: selectedItems.value }), { immediate: true })
 
+// Bấm "+"/"-" ở đây KHÔNG tự tăng/giảm số đếm nữa (trước đây làm vậy khiến số lượng
+// và tổng tiền hiển thị lệch với những gì thực sự có trên bánh 3D). Thay vào đó phát
+// sự kiện để Design.vue gọi CakeBuilder3D tự đặt/gỡ đúng 1 phụ kiện thật trên bánh -
+// hàm đó mới là nơi thật sự cập nhật state.quantities (qua addOne/removeOne nội bộ).
 function increase(item) {
-  addOne(item)
+  emit('request-add', item)
 }
 
 function decrease(item) {
-  removeOne(item.id)
+  emit('request-remove', item)
 }
 
 // T051 - bắt đầu kéo 1 phụ kiện từ sidebar để thả lên bánh

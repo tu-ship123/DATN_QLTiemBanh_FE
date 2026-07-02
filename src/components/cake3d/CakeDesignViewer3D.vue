@@ -40,10 +40,10 @@
         <iconify-icon icon="ph:pen-nib-duotone"></iconify-icon> Lời chúc: “{{ parsed.loiChuc }}”
       </div>
 
-      <div v-if="parsed.checklist.length" class="checklist-toppings">
+      <div v-if="checklistItems.length" class="checklist-toppings">
         <p class="checklist-title" style="margin-top: 10px;">Topping / phụ kiện cần gắn</p>
         <ul>
-          <li v-for="t in parsed.checklist" :key="t.ten">
+          <li v-for="(t, idx) in checklistItems" :key="t.ten + '-' + idx">
             <span>{{ t.ten }}</span>
             <span class="topping-qty">x{{ t.soLuong }}</span>
           </li>
@@ -54,18 +54,20 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { loadCakeShapeObject3D, buildAccessoryMesh, SIZE_CM } from '@/composables/useCakeSceneKit'
 
 /**
- * Viewer CHỈ XEM (read-only) dành cho nhân viên bếp: dựng lại nhanh hình dáng bánh +
- * vị trí topping từ JSON thiết kế đã lưu ở đơn hàng (GET /api/v1/orders/{id}/design),
- * kèm 1 bảng thông số rõ ràng bên dưới để bếp không cần đoán qua hình 3D.
+ * Viewer CHỈ XEM (read-only) dành cho nhân viên bếp: dựng lại hình dáng bánh + vị trí
+ * phụ kiện từ JSON thiết kế đã lưu ở đơn hàng (GET /api/v1/orders/{id}/design), kèm 1 bảng
+ * thông số rõ ràng bên dưới để bếp không cần đoán qua hình 3D.
  *
+ * Component này DÙNG CHUNG hàm dựng hình bánh + phụ kiện với CakeBuilder3D.vue (qua
+ * useCakeSceneKit.js), nên hình vẽ ra Y CHANG những gì khách đã thấy lúc thiết kế -
+ * không phải bản đoán lại riêng theo từ khoá tên phụ kiện như trước.
  * Không có bất kỳ thao tác chỉnh sửa nào ở đây (không kéo-thả, không đổi màu...).
- * Component này KHÔNG dùng lại code của CakeBuilder3D.vue (bên đó dành cho khách chỉnh sửa),
- * mà tự dựng 1 scene Three.js đơn giản, nhẹ hơn, chỉ để xoay/zoom xem.
  */
 
 const props = defineProps({
@@ -76,6 +78,17 @@ const props = defineProps({
 
 const containerRef = ref(null)
 const parsed = ref(null)
+
+/** Danh sách marker ở parsed.markers là TỪNG PHỤ KIỆN RIÊNG LẺ (để vẽ đúng vị trí 3D thật);
+ *  checklist chữ bên dưới thì gộp lại theo tên cho dễ đọc (VD "Bánh quy Oreo x5" thay vì 5 dòng x1). */
+const checklistItems = computed(() => {
+  const list = parsed.value?.markers || []
+  const grouped = new Map()
+  for (const m of list) {
+    grouped.set(m.ten, (grouped.get(m.ten) || 0) + (m.soLuong || 1))
+  }
+  return [...grouped.entries()].map(([ten, soLuong]) => ({ ten, soLuong }))
+})
 
 let scene, camera, renderer, controls, animationId, resizeObserver
 
@@ -110,25 +123,35 @@ function normalizeDesign(raw) {
         ten: t.ten_phu_kien || t.tenPhuKien || `Phụ kiện ${i + 1}`,
         soLuong: t.so_luong || t.soLuong || 1,
         viTri: t.vi_tri || t.viTri || null,
+        model3dUrl: t.model_3d_url || t.model3dUrl || null,
       })),
     }
   }
 
-  // Trường hợp B: dữ liệu thô kiểu snapshot CakeBuilder3D: { shape, size, tierCount, frostingColor, message, accessories }
+  // Trường hợp B: dữ liệu thô kiểu snapshot thật từ CakeBuilder3D.captureSnapshot():
+  // { shape, size, tierCount, frostingColor, message, accessories: [{ tenPhuKien, position:{x,y,z}, rotationY }] }
+  // Từ giờ mỗi phần tử accessories = 1 phụ kiện thật đã gắn, có toạ độ 3D thật -> dùng thẳng,
+  // không gộp/đoán vị trí vòng tròn nữa (chỉ dùng circularLayout dự phòng cho đơn hàng CŨ lưu trước khi sửa lỗi này).
+  //
+  // LƯU Ý (đã sửa lỗi): trước đây chieuCaoCm/duongKinhCm luôn bị bỏ trống ở nhánh này ->
+  // bên bếp mở đơn lên KHÔNG BAO GIỜ thấy số cm dù khách rõ ràng đã chọn size (S/M/L) lúc
+  // thiết kế. Giờ tra lại đúng bảng SIZE_CM (dùng CHUNG với CakeBuilder3D.vue) theo raw.size
+  // để hiện đúng số cm khách đã chọn - y hệt những gì khách nhìn thấy ở CakeBuilder3D.
   const accessories = Array.isArray(raw.accessories) ? raw.accessories : []
-  const grouped = new Map()
-  for (const acc of accessories) {
-    const ten = acc.tenPhuKien || acc.ten_phu_kien || 'Phụ kiện'
-    grouped.set(ten, (grouped.get(ten) || 0) + 1)
-  }
   return {
     hinhDangKey: mapShapeKey(raw.shape),
     mauNen: raw.frostingColor || '#FCEFE3',
     soTang: raw.tierCount || 1,
     loiChuc: raw.message || '',
-    chieuCaoCm: null,
-    duongKinhCm: null,
-    markers: [...grouped.entries()].map(([ten, soLuong]) => ({ ten, soLuong, viTri: null })),
+    chieuCaoCm: null, // hệ thống hiện chưa lưu chiều cao riêng theo cm (chỉ có hệ số scale 3D)
+    duongKinhCm: SIZE_CM[raw.size] || null,
+    markers: accessories.map((acc) => ({
+      ten: acc.tenPhuKien || acc.ten_phu_kien || 'Phụ kiện',
+      soLuong: acc.soLuong ?? acc.so_luong ?? 1, // dữ liệu cũ (đã gộp trước khi sửa) mới có field này
+      viTri: acc.position || acc.viTri || null,
+      rotationY: acc.rotationY || 0,
+      model3dUrl: acc.model3dUrl || null,
+    })),
   }
 }
 
@@ -188,33 +211,23 @@ function clearScene() {
   }
 }
 
-function buildCakeGroup(data) {
+
+/** Dựng lại đúng scene bánh bằng CHUNG bộ hàm với CakeBuilder3D.vue (useCakeSceneKit.js):
+ *  cùng model 3D thật / cùng hình mẫu dựng sẵn cho cốt bánh, cùng cách chọn model cho phụ
+ *  kiện (ưu tiên model3dUrl thật, dự phòng đoán theo tên) -> hình vẽ ra y hệt bên khách. */
+async function buildCakeGroup(data) {
   const group = new THREE.Group()
-  const tierTotal = Math.min(Math.max(data.soTang || 1, 1), 3)
-  const tierHeight = tierTotal > 1 ? 0.42 : 0.55
-  let cumulativeY = 0
+  const { object3d } = await loadCakeShapeObject3D(data.hinhDangKey, data.mauNen, data.soTang || 1)
+  group.add(object3d)
 
-  for (let i = 0; i < tierTotal; i++) {
-    const scaleXZ = Math.max(0.42, 1 - i * 0.22)
-    const geometry = buildTierGeometry(data.hinhDangKey, scaleXZ, tierHeight)
-    const material = new THREE.MeshStandardMaterial({ color: data.mauNen, roughness: 0.55 })
-    const mesh = new THREE.Mesh(geometry, material)
-    mesh.position.y = cumulativeY + tierHeight / 2
-    group.add(mesh)
-    cumulativeY += tierHeight
-  }
-
-  // Marker topping: quả cầu nhỏ đặt tại vi_tri đã lưu, hoặc rải đều quanh mặt bánh nếu không có toạ độ
   const totalMarkers = data.markers.reduce((sum, m) => sum + (m.soLuong || 1), 0)
   let idx = 0
   for (const m of data.markers) {
     for (let i = 0; i < (m.soLuong || 1); i++) {
       const pos = m.viTri || circularLayout(idx, totalMarkers)
-      const marker = new THREE.Mesh(
-        new THREE.SphereGeometry(0.06, 16, 16),
-        new THREE.MeshStandardMaterial({ color: markerColor(m.ten) })
-      )
+      const marker = await buildAccessoryMesh({ id: m.ten, tenPhuKien: m.ten, model3dUrl: m.model3dUrl })
       marker.position.set(pos.x, pos.y ?? 0.6, pos.z)
+      marker.rotation.y = m.rotationY || 0
       group.add(marker)
       idx += 1
     }
@@ -223,41 +236,25 @@ function buildCakeGroup(data) {
   return group
 }
 
+/** Dự phòng: chỉ dùng khi đơn hàng CŨ (lưu trước khi sửa lỗi thiếu toạ độ 3D) không có
+ *  vị trí thật cho phụ kiện -> rải đều quanh mặt bánh thay vì chồng hết lên 1 điểm. */
 function circularLayout(index, total) {
   const angle = (index / Math.max(total, 1)) * Math.PI * 2
   const radius = 0.45
   return { x: Math.cos(angle) * radius, y: 0.62, z: Math.sin(angle) * radius }
 }
 
-function markerColor(ten) {
-  const n = (ten || '').toLowerCase()
-  if (/nến|candle/.test(n)) return 0xe25822
-  if (/hoa|flower|macaron/.test(n)) return 0xf28fb0
-  if (/trái cây|fruit|dâu/.test(n)) return 0x6fbf73
-  if (/oreo/.test(n)) return 0x3b2e2a
-  if (/topper/.test(n)) return 0xffffff
-  return 0xf6c453
-}
-
-function buildTierGeometry(shapeKey, scaleXZ, height) {
-  if (shapeKey === 'square') {
-    const size = 1.2 * scaleXZ
-    return new THREE.BoxGeometry(size, height, size)
-  }
-  if (shapeKey === 'heart') {
-    const size = 1.1 * scaleXZ
-    return new THREE.BoxGeometry(size, height, size) // xấp xỉ đơn giản cho bản xem nhanh
-  }
-  const r = 0.75 * scaleXZ
-  return new THREE.CylinderGeometry(r, r * 1.03, height, 40)
-}
+let renderToken = 0
 
 function render(data) {
   if (!scene) return
   clearScene()
   if (!data) return
-  const group = buildCakeGroup(data)
-  scene.add(group)
+  const myToken = ++renderToken
+  buildCakeGroup(data).then((group) => {
+    // Nếu design đổi lần nữa trong lúc đang load model (async) -> renderToken đã đổi, bỏ kết quả cũ
+    if (scene && renderToken === myToken) scene.add(group)
+  })
 }
 
 function refresh() {

@@ -5,7 +5,10 @@
       <div class="flex items-center justify-between">
         <div class="space-y-1">
           <h1 class="text-3xl font-bold" style="color:#5C4428">Khuyến Mãi & Voucher</h1>
-          <p class="text-sm text-muted">Quản lý mã giảm giá, chương trình ưu đãi</p>
+          <p class="text-sm text-muted">
+            Quản lý mã giảm giá, chương trình ưu đãi
+            <span v-if="lastUpdated" class="text-xs text-[#9A7650]">· Cập nhật lúc {{ lastUpdated.toLocaleTimeString('vi-VN') }}</span>
+          </p>
         </div>
         <button class="btn-primary flex items-center gap-2" @click="openAdd">
           <iconify-icon icon="ph:ticket-duotone"></iconify-icon> Tạo khuyến mãi
@@ -49,7 +52,20 @@
     <div class="data-card">
       <div class="data-card-header">
         <h3 class="font-bold" style="color:#5C4428">Danh sách voucher</h3>
-        <div class="flex gap-2">
+        <div class="flex items-center gap-2">
+          <button
+            @click="fetchVouchers"
+            :disabled="loading"
+            class="text-xs px-3 py-2 rounded-xl border border-[#EDE0CC] flex items-center gap-1.5 hover:bg-[#FFFBF5] transition"
+            style="color:#7A5C3A"
+            title="Làm mới số liệu mới nhất từ hệ thống"
+          >
+            <iconify-icon
+              icon="ph:arrow-clockwise-duotone"
+              :class="loading ? 'animate-spin' : ''"
+            ></iconify-icon>
+            Làm mới
+          </button>
           <select
             v-model="filterStatus"
             class="border border-[#EDE0CC] rounded-xl px-3 py-2 text-xs"
@@ -256,7 +272,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import apiClient from '../services/apiService'
 
@@ -266,6 +282,7 @@ const vouchers = ref([])
 const showDialog = ref(false)
 const editingVoucher = ref(null)
 const sendingEmail = ref(null)
+const lastUpdated = ref(null)
 
 const emptyForm = () => ({
   maCode: '',
@@ -285,13 +302,31 @@ async function fetchVouchers() {
   try {
     const res = await apiClient.get('/api/v1/admin/vouchers')
     vouchers.value = Array.isArray(res.data) ? res.data : []
+    lastUpdated.value = new Date()
   } catch (err) {
     ElMessage.error('Không thể tải danh sách voucher')
   } finally {
     loading.value = false
   }
 }
-onMounted(() => fetchVouchers())
+
+// Số liệu "Sử dụng"/"Lượt sử dụng" phụ thuộc vào hành động của khách hàng
+// (nhập mã ở giỏ hàng, hoặc dùng voucher cá nhân đổi bằng điểm) diễn ra ở tab/
+// thiết bị khác — trang admin cần tự làm mới định kỳ, không chỉ fetch 1 lần lúc
+// mount, để không bị hiển thị số liệu cũ khi có đơn hàng mới dùng mã.
+let pollTimer = null
+function onVisibilityChange() {
+  if (document.visibilityState === 'visible') fetchVouchers()
+}
+onMounted(() => {
+  fetchVouchers()
+  pollTimer = setInterval(fetchVouchers, 20000) // tự làm mới mỗi 20s
+  document.addEventListener('visibilitychange', onVisibilityChange)
+})
+onUnmounted(() => {
+  if (pollTimer) clearInterval(pollTimer)
+  document.removeEventListener('visibilitychange', onVisibilityChange)
+})
 
 // ── Map response → hiển thị ───────────────────────────────────────────────────
 function mapVoucher(v) {

@@ -70,12 +70,19 @@
           v-for="item in cartStore.items" :key="item.id"
           class="flex flex-col gap-5 sm:flex-row sm:items-center p-6 bg-white border border-[#EDE0CC] rounded-[20px] transition-all duration-200 hover:border-[#C4A882] hover:shadow-[0_8px_24px_rgba(122,92,58,0.08)]"
         >
-          <img
-            :src="item.anhSanPham || defaultImage"
-            :alt="item.tenSanPham"
-            class="h-32 w-full max-w-[160px] object-cover flex-shrink-0 rounded-[16px] border border-[#EDE0CC]"
-            @error="e => e.target.src = defaultImage"
-          />
+          <div class="relative flex-shrink-0">
+            <img
+              :src="item.anhSanPham || defaultImage"
+              :alt="item.tenSanPham"
+              class="h-32 w-full max-w-[160px] object-cover rounded-[16px] border border-[#EDE0CC]"
+              @error="e => e.target.src = defaultImage"
+            />
+            <span v-if="item.thietKeBanhJson"
+              title="Bánh thiết kế 3D tùy chỉnh"
+              class="absolute top-2 left-2 flex items-center gap-1 bg-[#7A5C3A] text-white text-[10px] font-bold px-2 py-1 rounded-full shadow">
+              <iconify-icon icon="ph:cube-duotone"></iconify-icon> 3D
+            </span>
+          </div>
 
           <div class="flex-1 space-y-3 font-sans">
             <!-- Tên + Thành tiền -->
@@ -113,8 +120,16 @@
               </div>
             </div>
 
-            <!-- Nút xóa -->
-            <div class="pt-1">
+            <!-- Nút xem thiết kế 3D + Nút xóa -->
+            <div class="pt-1 flex items-center gap-2">
+              <button
+                v-if="item.thietKeBanhJson"
+                @click="moXemThietKe(item)"
+                class="text-[11px] font-bold text-[#7A5C3A] border border-[#7A5C3A]/30 rounded-xl px-4 py-1.5 hover:bg-[#7A5C3A]/5 transition-all"
+              >
+                <iconify-icon icon="ph:cube-duotone" class="mr-1"></iconify-icon>
+                Xem thiết kế 3D
+              </button>
               <button
                 @click="xacNhanXoa(item)"
                 :disabled="cartStore.loading"
@@ -407,6 +422,26 @@
       </div>
     </Transition>
 
+    <!-- ===== MODAL: Xem lại thiết kế bánh 3D ===== -->
+    <Transition name="modal">
+      <div v-if="showDesignModal"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] flex items-center justify-center p-4"
+        @click.self="dongXemThietKe">
+        <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
+          <div class="bg-gradient-to-r from-[#7A5C3A] to-[#FBB830] px-6 py-5 flex justify-between items-center">
+            <div>
+              <h2 class="text-lg font-black text-white">Thiết kế bánh 3D</h2>
+              <p class="text-white/80 text-xs">{{ designItemName }}</p>
+            </div>
+            <button @click="dongXemThietKe" class="text-white/80 hover:text-white text-2xl font-light">✕</button>
+          </div>
+          <div class="p-5 max-h-[75vh] overflow-y-auto">
+            <CakeDesignViewer3D :design="designData" />
+          </div>
+        </div>
+      </div>
+    </Transition>
+
     <!-- ===== TOAST ===== -->
     <Transition name="toast">
       <div
@@ -428,6 +463,7 @@ import { RouterLink, useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cartStore'
 import { useAuthStore } from '@/stores/authStore'
 import apiClient from '@/services/apiService'
+import CakeDesignViewer3D from '@/components/cake3d/CakeDesignViewer3D.vue'
 
 const router = useRouter()
 const cartStore = useCartStore()
@@ -453,6 +489,30 @@ const formatDate = (dateStr) => {
   if (!dateStr) return ''
   const d = new Date(dateStr)
   return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`
+}
+
+// ─── Xem lại thiết kế bánh 3D của 1 item trong giỏ ───────────────────────────
+// item.thietKeBanhJson là chuỗi JSON thô (được lưu nguyên lúc "Thêm vào giỏ"
+// từ CakeBuilder3D/Design.vue) -> parse ra object rồi truyền cho
+// CakeDesignViewer3D (component này tự nhận diện được cả 2 dạng schema).
+const showDesignModal = ref(false)
+const designData = ref(null)
+const designItemName = ref('')
+
+const moXemThietKe = (item) => {
+  if (!item.thietKeBanhJson) return
+  try {
+    designData.value = JSON.parse(item.thietKeBanhJson)
+    designItemName.value = item.tenSanPham
+    showDesignModal.value = true
+  } catch (e) {
+    showToast('Không đọc được dữ liệu thiết kế bánh của sản phẩm này', 'error')
+  }
+}
+
+const dongXemThietKe = () => {
+  showDesignModal.value = false
+  designData.value = null
 }
 
 // ─── Mã giảm giá (đồng bộ thật với backend qua cartStore) ───────────────────

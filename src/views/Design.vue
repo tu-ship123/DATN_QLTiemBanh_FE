@@ -49,7 +49,7 @@
             </button>
           </div>
         </div>
-        <DecorPanel @change="handleDecorChange" />
+        <DecorPanel @change="handleDecorChange" @request-add="handleRequestAdd" @request-remove="handleRequestRemove" />
       </section>
 
 
@@ -93,6 +93,21 @@ const selectingTemplateId = ref(null)
 function handleDecorChange({ total, items }) {
   accessoriesTotal.value = total
   selectedAccessories.value = items
+}
+
+/** Sidebar bấm "+" -> nhờ CakeBuilder3D tự đặt 1 phụ kiện thật lên bánh (không chỉ tăng số đếm),
+ *  để tổng tiền hiển thị luôn khớp với những gì thực sự có trên mô hình 3D. */
+function handleRequestAdd(item) {
+  const ok = builderRef.value?.addAccessoryFromStepper(item)
+  if (ok === false) {
+    alert('Không thể thêm phụ kiện này lên bánh lúc này (đã hết hàng hoặc bánh chưa sẵn sàng), thử lại nhé!')
+  }
+}
+
+/** Sidebar bấm "-" -> nhờ CakeBuilder3D gỡ đúng 1 phụ kiện GẦN NHẤT của loại đó khỏi bánh
+ *  (không chỉ giảm số đếm), tránh tình trạng bấm trừ nhưng phụ kiện vẫn còn nằm trên bánh. */
+function handleRequestRemove(item) {
+  builderRef.value?.removeAccessoryFromStepper(item.id)
 }
 
 function handleDesignChange(design) {
@@ -139,16 +154,12 @@ async function datBanhNay() {
     const marker = await apiClient.get('/api/v1/products/custom-cake-marker')
     const sanPhamDaiDienId = marker.data.id
 
-    // Snapshot dạng thô của CakeBuilder3D - CakeDesignViewer3D.vue bên bếp đã hỗ trợ sẵn đọc đúng dạng này
-    const thietKe = {
-      shape: currentDesign.value.shape,
-      size: currentDesign.value.size,
-      tierCount: currentDesign.value.tierCount,
-      frostingColor: currentDesign.value.frostingColor,
-      message: currentDesign.value.message,
-      messageColor: currentDesign.value.messageColor,
-      accessories: selectedAccessories.value,
-    }
+    // Lấy đúng trạng thái 3D mới nhất tại thời điểm bấm nút (không dùng currentDesign.value/
+    // selectedAccessories.value nữa vì 2 cái đó KHÔNG có toạ độ 3D thật của từng phụ kiện -
+    // đây chính là lý do nhân viên bếp mở lên thấy khác hẳn lúc khách xếp).
+    // captureSnapshot() trả về đúng những gì đang có trên bánh: shape/size/tierCount/màu/lời chúc
+    // + accessories dạng [{ uid, phuKienId, tenPhuKien, position:{x,y,z}, rotationY }] thật 100%.
+    const thietKe = builderRef.value?.captureSnapshot() || currentDesign.value
 
     const result = await cartStore.themVaoGio(
       sanPhamDaiDienId,
