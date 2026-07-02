@@ -238,6 +238,7 @@ import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import Chart from 'chart.js/auto'
 import { dashboardService } from '../services/dashboardService'
+import { orderService } from '../services/orderService'
 
 const today = new Date().toLocaleDateString('vi-VN', { weekday:'long', day:'numeric', month:'long', year:'numeric' })
 const updateTime = ref(new Date().toLocaleTimeString('vi-VN', { hour:'2-digit', minute:'2-digit' }))
@@ -251,29 +252,46 @@ const stats = ref([
   { key:'rating',  icon:'ph:user-duotone', label:'Khách mới',          value:'--', trend:'--', trendUp:true,  bgColor:'#F0FDF4' },
 ])
 
-const recentOrders = [
-  { id:'#DH2045', product:'Bánh 3D Custom – Mèo Shiba', initials:'NK', avatarBg:'#FDF6EC', avatarColor:'#7A5C3A', status:'Sản xuất',   statusColor:'warning', amount:'2,500,000đ', time:'2 phút trước' },
-  { id:'#DH2044', product:'Bánh sinh nhật 3 tầng',      initials:'TH', avatarBg:'#F0FDF4', avatarColor:'#22C55E', status:'Hoàn thành', statusColor:'success', amount:'1,800,000đ', time:'18 phút trước' },
-  { id:'#DH2043', product:'Bánh cưới kem tươi',         initials:'LM', avatarBg:'#EFF6FF', avatarColor:'#3B82F6', status:'Chờ nhận',   statusColor:'info',    amount:'4,200,000đ', time:'45 phút trước' },
-  { id:'#DH2042', product:'Cupcake set 12 cái',         initials:'PT', avatarBg:'#F5F3FF', avatarColor:'#7C3AED', status:'Sản xuất',   statusColor:'warning', amount:'350,000đ',   time:'1 giờ trước' },
-  { id:'#DH2041', product:'Bánh mousse chanh leo',      initials:'BL', avatarBg:'#FDF6EC', avatarColor:'#7A5C3A', status:'Hoàn thành', statusColor:'success', amount:'520,000đ',   time:'2 giờ trước' },
+// Nạp từ API thật trong loadRecentAndProduction() / loadTopProducts()
+const recentOrders = ref([])
+const topProducts = ref([])
+const productionOrders = ref([])
+
+// Trạng thái -> nhãn tiếng Việt + màu badge dùng chung
+const STATUS_META = {
+  CHO_XAC_NHAN:   { label: 'Chờ xác nhận', color: 'info'    },
+  DA_XAC_NHAN:    { label: 'Đã xác nhận',  color: 'info'    },
+  DANG_CHUAN_BI:  { label: 'Sản xuất',     color: 'warning' },
+  DANG_LAM:       { label: 'Sản xuất',     color: 'warning' },
+  SAN_SANG:       { label: 'Sẵn sàng',     color: 'success' },
+  DANG_GIAO:      { label: 'Đang giao',    color: 'info'    },
+  DA_GIAO:        { label: 'Đã giao',      color: 'success' },
+  HOAN_THANH:     { label: 'Hoàn thành',   color: 'success' },
+  DA_THANH_TOAN:  { label: 'Đã thanh toán',color: 'success' },
+  DA_HUY:         { label: 'Đã hủy',       color: 'danger'  },
+  DA_HOAN_TIEN:   { label: 'Đã hoàn tiền', color: 'danger'  },
+}
+
+const AVATAR_COLORS = [
+  { bg: '#FDF6EC', color: '#7A5C3A' }, { bg: '#F0FDF4', color: '#22C55E' },
+  { bg: '#EFF6FF', color: '#3B82F6' }, { bg: '#F5F3FF', color: '#7C3AED' },
 ]
 
-const topProducts = [
-  { name:'Bánh sinh nhật 3D',     icon:'ph:cake-duotone', qty:'128 cái', revenue:'64M đ',   pct:100 },
-  { name:'Cupcake nhiều màu',     icon:'ph:cookie-duotone', qty:'96 cái',  revenue:'28.8M đ', pct:75  },
-  { name:'Bánh mousse chanh leo', icon:'ph:confetti-duotone', qty:'72 cái',  revenue:'37.4M đ', pct:56  },
-  { name:'Macaron hỗn hợp',      icon:'ph:candy-duotone', qty:'64 hộp',  revenue:'16M đ',   pct:50  },
-  { name:'Bánh cưới cao cấp',    icon:'ph:rings-duotone', qty:'18 cái',  revenue:'90M đ',   pct:14  },
-]
+function initials(name = '') {
+  const parts = String(name).trim().split(/\s+/)
+  return (parts.length > 1 ? parts[0][0] + parts[parts.length - 1][0] : (parts[0] || '?').slice(0, 2)).toUpperCase()
+}
 
-const productionOrders = [
-  { id:'#DH2045', product:'Bánh 3D Mèo Shiba',  customer:'Nguyễn Khoa', deadline:'14:00', progress:60,  status:'Đang làm',   color:'warning' },
-  { id:'#DH2042', product:'Cupcake set 12',      customer:'Phạm Thu',    deadline:'15:30', progress:30,  status:'Chuẩn bị',   color:'info'    },
-  { id:'#DH2048', product:'Bánh cưới 5 tầng',   customer:'Lê Minh',     deadline:'17:00', progress:90,  status:'Hoàn thiện', color:'success' },
-  { id:'#DH2050', product:'Bánh mousse dâu',     customer:'Cao Lan',     deadline:'11:00', progress:100, status:'Xong',       color:'success' },
-  { id:'#DH2047', product:'Macaron hộp 24',      customer:'Bùi Lan',     deadline:'16:00', progress:15,  status:'Chờ',        color:'gray'    },
-]
+function timeAgo(dateStr) {
+  if (!dateStr) return ''
+  const diffMs = Date.now() - new Date(dateStr).getTime()
+  const mins = Math.floor(diffMs / 60000)
+  if (mins < 1) return 'Vừa xong'
+  if (mins < 60) return `${mins} phút trước`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs} giờ trước`
+  return `${Math.floor(hrs / 24)} ngày trước`
+}
 
 let revenueChart = null
 const monthData    = ref([42,55,48,65,72,68,85,78,92,86,98,105].map(v => v * 1_000_000))
@@ -391,10 +409,80 @@ function initChart() {
   })
 }
 
+// ── Đơn hàng gần đây + đang sản xuất + top sản phẩm (từ /api/v1/orders) ─────
+const PROGRESS_BY_STATUS = {
+  CHO_XAC_NHAN: 10, DA_XAC_NHAN: 25, DANG_CHUAN_BI: 50, DANG_LAM: 60,
+  SAN_SANG: 90, DANG_GIAO: 95, DA_GIAO: 100, HOAN_THANH: 100, DA_THANH_TOAN: 100,
+}
+
+async function loadOrdersData() {
+  try {
+    const res = await orderService.getAllOrders()
+    const orders = Array.isArray(res.data) ? res.data : (res.data?.content ?? [])
+
+    // Sắp xếp mới nhất trước
+    const sorted = [...orders].sort((a, b) => new Date(b.ngayTao) - new Date(a.ngayTao))
+
+    // Hoạt động gần đây (5 đơn mới nhất)
+    recentOrders.value = sorted.slice(0, 5).map((o, i) => {
+      const meta = STATUS_META[o.trangThai] || { label: o.trangThai, color: 'info' }
+      const colorSet = AVATAR_COLORS[i % AVATAR_COLORS.length]
+      const firstItem = o.items?.[0]?.tenSanPham || '—'
+      return {
+        id: o.maDonHang || `#${o.id}`,
+        product: firstItem + (o.items?.length > 1 ? ` +${o.items.length - 1}` : ''),
+        initials: initials(o.emailNguoiDung),
+        avatarBg: colorSet.bg, avatarColor: colorSet.color,
+        status: meta.label, statusColor: meta.color,
+        amount: Number(o.tongTien || 0).toLocaleString('vi-VN') + 'đ',
+        time: timeAgo(o.ngayTao),
+      }
+    })
+
+    // Đơn đang trong quá trình sản xuất hôm nay
+    const inProduction = sorted.filter(o => ['DA_XAC_NHAN', 'DANG_CHUAN_BI', 'DANG_LAM', 'SAN_SANG'].includes(o.trangThai))
+    productionOrders.value = inProduction.slice(0, 6).map(o => {
+      const meta = STATUS_META[o.trangThai] || { label: o.trangThai, color: 'info' }
+      return {
+        id: o.maDonHang || `#${o.id}`,
+        product: o.items?.[0]?.tenSanPham || '—',
+        customer: o.emailNguoiDung || '—',
+        deadline: o.ngayGiaoHang ? new Date(o.ngayGiaoHang).toLocaleDateString('vi-VN') : '—',
+        progress: PROGRESS_BY_STATUS[o.trangThai] ?? 0,
+        status: meta.label,
+        color: meta.color,
+      }
+    })
+
+    // Top sản phẩm bán chạy — tổng hợp số lượng & doanh thu từ toàn bộ đơn
+    const agg = new Map()
+    for (const o of orders) {
+      for (const item of (o.items || [])) {
+        const key = item.tenSanPham || 'Khác'
+        const cur = agg.get(key) || { name: key, qty: 0, revenue: 0 }
+        cur.qty += item.soLuong || 0
+        cur.revenue += (item.soLuong || 0) * (item.giaBan || 0)
+        agg.set(key, cur)
+      }
+    }
+    const rankedProducts = [...agg.values()].sort((a, b) => b.revenue - a.revenue).slice(0, 5)
+    const maxRevenue = rankedProducts[0]?.revenue || 1
+    topProducts.value = rankedProducts.map(p => ({
+      name: p.name,
+      icon: 'ph:cake-duotone',
+      qty: `${p.qty} cái`,
+      revenue: (p.revenue >= 1_000_000 ? (p.revenue / 1_000_000).toFixed(1) + 'M đ' : Number(p.revenue).toLocaleString('vi-VN') + 'đ'),
+      pct: Math.round((p.revenue / maxRevenue) * 100),
+    }))
+  } catch (err) {
+    console.warn('Không load được dữ liệu đơn hàng:', err.message)
+  }
+}
+
 onMounted(async () => {
   initChart()
   isLoading.value = true
-  await Promise.all([loadKPI(), loadRevenue()])
+  await Promise.all([loadKPI(), loadRevenue(), loadOrdersData()])
   isLoading.value = false
 })
 </script>

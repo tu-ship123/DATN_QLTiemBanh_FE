@@ -383,7 +383,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import apiClient from '@/services/apiService'
-import { productService } from '@/services/ProductService'
+import { productService } from '@/services/productService'
 import { formatPrice } from '@/utils/format'
 
 // ─── STATE ───────────────────────────────────────────────────────────────────

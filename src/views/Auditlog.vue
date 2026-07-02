@@ -4,6 +4,7 @@
       <p class="text-sm uppercase tracking-[.24em] text-cake-500">Cài đặt</p>
       <h1 class="text-3xl font-semibold text-slate-900">Nhật ký hoạt động</h1>
       <p class="mt-2 text-sm text-slate-500">Theo dõi toàn bộ thay đổi trong hệ thống. Nhấp vào một dòng để xem chi tiết khác biệt dữ liệu cũ và mới.</p>
+      <el-alert v-if="loadError" :title="loadError" type="warning" show-icon class="mt-3" />
     </div>
 
     <el-card class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
@@ -121,76 +122,47 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { Search } from '@element-plus/icons-vue';
+import { auditLogService } from '../services/auditLogService';
 
-// Dữ liệu mẫu (mock) — sau này thay bằng GET /admin/audit-logs từ API.
-// oldValue = null nghĩa là "Tạo mới", newValue = null nghĩa là "Xóa".
-const auditLogs = ref([
-  {
-    id: 1,
-    timestamp: '2026-06-18 09:42',
-    user: { name: 'Tú Nguyễn Ngọc' },
-    action: 'update',
-    target: 'Cài đặt - Vận hành',
-    oldValue: { shipping_fee: 15000, min_order_days: 1 },
-    newValue: { shipping_fee: 20000, min_order_days: 2 }
-  },
-  {
-    id: 2,
-    timestamp: '2026-06-18 10:15',
-    user: { name: 'Minh Anh' },
-    action: 'create',
-    target: 'Voucher - SUMMER2026',
-    oldValue: null,
-    newValue: { code: 'SUMMER2026', discount: 20, type: 'percent', expiry: '2026-08-31' }
-  },
-  {
-    id: 3,
-    timestamp: '2026-06-17 16:30',
-    user: { name: 'Hoàng Phúc' },
-    action: 'delete',
-    target: 'Sản phẩm - Bánh kem dâu mini',
-    oldValue: { name: 'Bánh kem dâu mini', price: 145000, stock: 12 },
-    newValue: null
-  },
-  {
-    id: 4,
-    timestamp: '2026-06-17 14:05',
-    user: { name: 'Tú Nguyễn Ngọc' },
-    action: 'update',
-    target: 'Nhân sự - Lê Thị Hồng',
-    oldValue: { role: 'staff', status: 'active' },
-    newValue: { role: 'admin', status: 'active' }
-  },
-  {
-    id: 5,
-    timestamp: '2026-06-16 11:20',
-    user: { name: 'Đức Anh' },
-    action: 'update',
-    target: 'Sản phẩm - Bánh sinh nhật 3 tầng',
-    oldValue: { price: 890000, stock: 4 },
-    newValue: { price: 950000, stock: 6 }
-  },
-  {
-    id: 6,
-    timestamp: '2026-06-15 08:55',
-    user: { name: 'Minh Anh' },
-    action: 'create',
-    target: 'Nhân sự - Phạm Văn Tài',
-    oldValue: null,
-    newValue: { name: 'Phạm Văn Tài', role: 'staff', status: 'active' }
-  },
-  {
-    id: 7,
-    timestamp: '2026-06-14 17:10',
-    user: { name: 'Hoàng Phúc' },
-    action: 'delete',
-    target: 'Voucher - WELCOME10',
-    oldValue: { code: 'WELCOME10', discount: 10, type: 'percent' },
-    newValue: null
+const auditLogs = ref([]);
+const isLoading = ref(true);
+const loadError = ref('');
+
+// hanhDong bên BE: "UPDATE" | "DELETE" | "SOFT_DELETE" (API chỉ trả 3 loại này,
+// không có "CREATE" — xem AuditLogController.getSensitiveLogs()).
+const ACTION_MAP = { UPDATE: 'update', DELETE: 'delete', SOFT_DELETE: 'delete' };
+
+function safeParseJson(str) {
+  if (!str) return null;
+  try { return JSON.parse(str); } catch { return { value: str }; }
+}
+
+async function loadAuditLogs() {
+  isLoading.value = true;
+  loadError.value = '';
+  try {
+    const res = await auditLogService.getSensitiveLogs();
+    const rows = Array.isArray(res.data) ? res.data : [];
+    auditLogs.value = rows.map((log) => ({
+      id: log.id,
+      timestamp: log.ngayTao ? log.ngayTao.replace('T', ' ').slice(0, 16) : '—',
+      user: { name: log.nguoiDung?.hoTen || 'Hệ thống' },
+      action: ACTION_MAP[log.hanhDong] || 'update',
+      target: `${log.tenBang || 'Bản ghi'} #${log.banGhiId ?? ''}`,
+      oldValue: safeParseJson(log.giaTriCu),
+      newValue: safeParseJson(log.giaTriMoi),
+    }));
+  } catch (err) {
+    console.warn('Không load được nhật ký hệ thống:', err.message);
+    loadError.value = 'Không thể tải nhật ký hoạt động từ server.';
+  } finally {
+    isLoading.value = false;
   }
-]);
+}
+
+onMounted(loadAuditLogs);
 
 const searchKeyword = ref('');
 const actionFilter = ref('');

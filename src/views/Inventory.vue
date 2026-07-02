@@ -304,7 +304,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, MoreFilled } from '@element-plus/icons-vue'
-import { productService } from '@/services/ProductService'
+import { productService } from '@/services/productService'
 import apiClient from '@/services/apiService'
 
 // ── STATE ──────────────────────────────────────────────────────────

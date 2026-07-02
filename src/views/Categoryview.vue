@@ -167,7 +167,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { categoryService } from '@/services/CategoryService'
+import { categoryService } from '@/services/categoryService'
 
 // ─── State ───────────────────────────────────────────────────────────────────
 const categories   = ref([])
