@@ -32,49 +32,61 @@
           <h1 class="f-title">Tạo tài khoản</h1>
           <p class="f-sub">Đăng ký thành viên Polycake</p>
 
-          <label class="field">
+          <label class="field" :class="{ 'field-error': registerErrors.hoTen }">
             <span class="ficon"><User :size="16" :stroke-width="2" /></span>
             <input
               v-model="registerForm.hoTen"
               type="text"
               placeholder="Họ và tên"
               required
+              @blur="validateField('hoTen')"
             />
           </label>
+          <span class="field-error-msg" v-if="registerErrors.hoTen">{{ registerErrors.hoTen }}</span>
 
-          <label class="field">
+          <label class="field" :class="{ 'field-error': registerErrors.email }">
             <span class="ficon"><Mail :size="16" :stroke-width="2" /></span>
             <input
               v-model="registerForm.email"
               type="email"
               placeholder="Email"
               required
+              @blur="validateField('email')"
             />
           </label>
+          <span class="field-error-msg" v-if="registerErrors.email">{{ registerErrors.email }}</span>
 
-          <label class="field">
+          <label class="field" :class="{ 'field-error': registerErrors.soDienThoai }">
             <span class="ficon"><Phone :size="16" :stroke-width="2" /></span>
             <input
               v-model="registerForm.soDienThoai"
               type="tel"
+              inputmode="numeric"
               placeholder="Số điện thoại"
               required
+              maxlength="12"
+              @keypress="blockNonPhoneChar"
+              @input="sanitizePhoneInput"
+              @blur="validateField('soDienThoai')"
             />
           </label>
+          <span class="field-error-msg" v-if="registerErrors.soDienThoai">{{ registerErrors.soDienThoai }}</span>
 
-          <label class="field">
+          <label class="field" :class="{ 'field-error': registerErrors.matKhau }">
             <span class="ficon"><Lock :size="16" :stroke-width="2" /></span>
             <input
               v-model="registerForm.matKhau"
               :type="showRegPwd ? 'text' : 'password'"
               placeholder="Mật khẩu"
               required
+              @blur="validateField('matKhau')"
             />
             <button type="button" class="eye-btn" @click="showRegPwd = !showRegPwd">
               <Eye v-if="!showRegPwd" :size="16" :stroke-width="2" />
               <EyeOff v-else :size="16" :stroke-width="2" />
             </button>
           </label>
+          <span class="field-error-msg" v-if="registerErrors.matKhau">{{ registerErrors.matKhau }}</span>
 
           <div class="pwd-strength" v-if="registerForm.matKhau">
             <div class="pwd-bars">
@@ -339,6 +351,73 @@ let countdownTimer    = null;
 const loginForm    = reactive({ email: '', matKhau: '' });
 const registerForm = reactive({ hoTen: '', email: '', soDienThoai: '', matKhau: '' });
 
+// ── Validate đăng ký (chặn phía FE trước khi gọi API) ──
+const registerErrors = reactive({ hoTen: '', email: '', soDienThoai: '', matKhau: '' });
+
+// Regex khớp với validate bên BE (StaffDto/AuthDto): 0xxxxxxxxx hoặc +84xxxxxxxxx
+const PHONE_REGEX = /^(0|\+84)[0-9]{8,10}$/;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Chặn gõ chữ/ký tự đặc biệt vào ô SĐT ngay từ bàn phím (chỉ cho số và dấu +)
+const blockNonPhoneChar = (e) => {
+  const char = e.key;
+  const isDigit = /[0-9]/.test(char);
+  const isPlusAtStart = char === '+' && e.target.selectionStart === 0 && !e.target.value.includes('+');
+  const isControlKey = char.length > 1; // Backspace, Delete, Tab, Arrow...
+  if (!isDigit && !isPlusAtStart && !isControlKey) {
+    e.preventDefault();
+  }
+};
+
+// Dọn lại giá trị nếu người dùng dán (paste) chữ vào ô SĐT
+const sanitizePhoneInput = () => {
+  const raw = registerForm.soDienThoai || '';
+  const cleaned = raw.startsWith('+')
+    ? '+' + raw.slice(1).replace(/[^0-9]/g, '')
+    : raw.replace(/[^0-9]/g, '');
+  registerForm.soDienThoai = cleaned;
+  if (registerErrors.soDienThoai) validateField('soDienThoai');
+};
+
+// Validate từng field, trả về true nếu hợp lệ
+const validateField = (field) => {
+  const v = registerForm[field];
+  switch (field) {
+    case 'hoTen':
+      registerErrors.hoTen = !v?.trim() ? 'Vui lòng nhập họ tên' : '';
+      break;
+    case 'email':
+      registerErrors.email = !v?.trim()
+        ? 'Vui lòng nhập email'
+        : !EMAIL_REGEX.test(v.trim())
+          ? 'Email không đúng định dạng'
+          : '';
+      break;
+    case 'soDienThoai':
+      registerErrors.soDienThoai = !v?.trim()
+        ? 'Vui lòng nhập số điện thoại'
+        : !PHONE_REGEX.test(v.trim())
+          ? 'Số điện thoại không hợp lệ (VD: 0912345678)'
+          : '';
+      break;
+    case 'matKhau':
+      registerErrors.matKhau = !v
+        ? 'Vui lòng nhập mật khẩu'
+        : v.length < 6
+          ? 'Mật khẩu phải có ít nhất 6 ký tự'
+          : '';
+      break;
+  }
+  return !registerErrors[field];
+};
+
+// Validate toàn bộ form trước khi submit, trả về true nếu tất cả hợp lệ
+const validateRegisterForm = () => {
+  const fields = ['hoTen', 'email', 'soDienThoai', 'matKhau'];
+  const results = fields.map((f) => validateField(f));
+  return results.every(Boolean);
+};
+
 // ── Password strength (UI only) ──
 const pwdStrength = computed(() => {
   const v = registerForm.matKhau;
@@ -443,6 +522,13 @@ const handleLogin = async () => {
 };
 
 const handleRegister = async () => {
+  // Chặn ngay tại FE: nếu có field sai (VD: SĐT toàn chữ) thì KHÔNG gọi API,
+  // chỉ hiện lỗi ngay dưới field tương ứng cho người dùng sửa.
+  if (!validateRegisterForm()) {
+    ElMessage.warning('Vui lòng kiểm tra lại thông tin đã nhập!');
+    return;
+  }
+
   isRegisterLoading.value = true;
   try {
     await authService.register(registerForm);
@@ -450,8 +536,13 @@ const handleRegister = async () => {
     isSignUp.value = false;
     loginForm.email = registerForm.email;
     registerForm.matKhau = '';
+    Object.keys(registerErrors).forEach((k) => { registerErrors[k] = ''; });
   } catch (error) {
-    ElMessage.error(error.response?.data?.message || error.response?.data || 'Đăng ký thất bại.');
+    const data = error.response?.data;
+    // Nếu BE trả về lỗi validate từng field (VD: { message: "Dữ liệu không hợp lệ!", errors: { soDienThoai: "..." } })
+    // thì ưu tiên hiện lỗi field cụ thể đầu tiên để người dùng biết chính xác mình nhập sai đâu.
+    const fieldError = data?.errors ? Object.values(data.errors)[0] : null;
+    ElMessage.error(fieldError || data?.message || data || 'Đăng ký thất bại.');
   } finally {
     isRegisterLoading.value = false;
   }
@@ -727,6 +818,22 @@ form {
   margin-top: 8px;
   box-sizing: border-box;
   cursor: text;
+}
+.field.field-error {
+  border-color: #E0463C;
+  background: rgba(224, 70, 60, 0.06);
+}
+.field.field-error:focus-within {
+  border-color: #E0463C;
+  box-shadow: 0 0 0 3px rgba(224, 70, 60, 0.18);
+}
+.field-error-msg {
+  display: block;
+  color: #E0463C;
+  font-size: 0.74rem;
+  font-weight: 600;
+  margin: 4px 2px 0;
+  line-height: 1.3;
 }
 .field input {
   flex: 1;

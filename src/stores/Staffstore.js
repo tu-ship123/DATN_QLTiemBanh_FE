@@ -104,7 +104,11 @@ export const useStaffStore = defineStore('staff', {
         this.staffList.unshift(newStaff); // Thêm vào đầu danh sách
         return { success: true, data: newStaff };
       } catch (err) {
-        const msg = err.response?.data?.message ?? 'Không thể tạo nhân viên.';
+        // Ưu tiên hiện lỗi field cụ thể (VD: "Email đã được sử dụng!", "Số điện thoại không hợp lệ")
+        // thay vì chỉ hiện câu chung chung "Dữ liệu không hợp lệ!"
+        const data = err.response?.data;
+        const fieldError = data?.errors ? Object.values(data.errors)[0] : null;
+        const msg = fieldError ?? data?.message ?? 'Không thể tạo nhân viên.';
         this.error = msg;
         return { success: false, message: msg };
       } finally {
@@ -131,7 +135,9 @@ export const useStaffStore = defineStore('staff', {
         if (idx !== -1) this.staffList[idx] = updated;
         return { success: true, data: updated };
       } catch (err) {
-        const msg = err.response?.data?.message ?? 'Cập nhật thất bại.';
+        const data = err.response?.data;
+        const fieldError = data?.errors ? Object.values(data.errors)[0] : null;
+        const msg = fieldError ?? data?.message ?? 'Cập nhật thất bại.';
         this.error = msg;
         return { success: false, message: msg };
       } finally {
