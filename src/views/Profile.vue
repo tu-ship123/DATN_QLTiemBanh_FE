@@ -31,13 +31,48 @@
     </div>
 
     <!-- ===== TAB: THÔNG TIN ===== -->
-    <div v-if="activeTab === 'info'" class="rounded-[24px] bg-white border border-[#EDE0CC] shadow-sm p-6 space-y-5">
+    <div v-if="activeTab === 'info'" class="rounded-[24px] bg-white border border-[#EDE0CC] shadow-sm p-6 space-y-6">
       <h2 class="text-base font-bold text-[#5C4428]">Thông tin cơ bản</h2>
+
+      <!-- Avatar upload + preview -->
+      <div class="flex flex-col sm:flex-row items-center sm:items-start gap-5 pb-5 border-b border-[#FDF6EC]">
+        <div class="relative flex-shrink-0">
+          <div class="w-24 h-24 rounded-[22px] overflow-hidden border-2 border-[#EDE0CC] shadow-sm flex items-center justify-center bg-[#FDF6EC]">
+            <img v-if="avatarPreview" :src="avatarPreview" alt="Avatar" class="w-full h-full object-cover" />
+            <span v-else class="text-2xl font-black text-[#7A5C3A]">{{ avatarInitials }}</span>
+          </div>
+          <button @click="triggerFileInput"
+            class="absolute -bottom-1.5 -right-1.5 w-8 h-8 rounded-full flex items-center justify-center text-white shadow-md hover:scale-105 transition-transform"
+            style="background:linear-gradient(135deg,#7A5C3A,#9A7650);">
+            <iconify-icon icon="ph:camera-duotone" class="text-base"></iconify-icon>
+          </button>
+          <input ref="fileInputRef" type="file" accept="image/*" class="hidden" @change="onAvatarChange" />
+        </div>
+
+        <div class="text-center sm:text-left">
+          <p class="text-sm font-bold text-[#5C4428]">Ảnh đại diện</p>
+          <p class="text-xs text-[#9A7650] mt-1 max-w-xs">
+            Chọn ảnh JPG, PNG (tối đa 5MB). Ảnh xem trước ngay bên cạnh, hãy nhấn "Lưu thay đổi" để áp dụng.
+          </p>
+          <div class="flex items-center justify-center sm:justify-start gap-2 mt-3">
+            <button @click="triggerFileInput"
+              class="text-xs font-semibold px-3.5 py-2 rounded-xl border border-[#EDE0CC] text-[#7A5C3A] hover:bg-[#FDF6EC] transition-colors">
+              <iconify-icon icon="ph:upload-simple-duotone" class="mr-1"></iconify-icon>
+              Chọn ảnh mới
+            </button>
+            <button v-if="avatarPreview" @click="removeAvatar"
+              class="text-xs font-semibold px-3.5 py-2 rounded-xl border border-red-100 text-red-400 hover:bg-red-50 transition-colors">
+              <iconify-icon icon="ph:trash-duotone" class="mr-1"></iconify-icon>
+              Xóa ảnh
+            </button>
+          </div>
+        </div>
+      </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label class="text-xs font-semibold text-[#9A7650] mb-1 block">Họ và tên</label>
-          <input v-model="form.hoTen" type="text"
+          <input v-model="form.hoTen" type="text" placeholder="Nhập họ và tên"
             class="w-full px-4 py-3 rounded-xl border border-[#EDE0CC] bg-[#FDF6EC] text-sm text-[#5C4428] outline-none focus:border-[#7A5C3A] focus:ring-2 focus:ring-[#7A5C3A]/10 transition-all" />
         </div>
         <div>
@@ -47,17 +82,32 @@
         </div>
         <div>
           <label class="text-xs font-semibold text-[#9A7650] mb-1 block">Số điện thoại</label>
-          <input v-model="form.soDienThoai" type="text"
+          <input v-model="form.soDienThoai" type="text" placeholder="Nhập số điện thoại"
+            class="w-full px-4 py-3 rounded-xl border border-[#EDE0CC] bg-[#FDF6EC] text-sm text-[#5C4428] outline-none focus:border-[#7A5C3A] focus:ring-2 focus:ring-[#7A5C3A]/10 transition-all" />
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-[#9A7650] mb-1 block">Ngày sinh</label>
+          <input v-model="form.ngaySinh" type="date"
+            class="w-full px-4 py-3 rounded-xl border border-[#EDE0CC] bg-[#FDF6EC] text-sm text-[#5C4428] outline-none focus:border-[#7A5C3A] focus:ring-2 focus:ring-[#7A5C3A]/10 transition-all" />
+        </div>
+        <div class="sm:col-span-2">
+          <label class="text-xs font-semibold text-[#9A7650] mb-1 block">Địa chỉ</label>
+          <input v-model="form.diaChi" type="text" placeholder="Số nhà, đường, phường/xã, quận/huyện"
             class="w-full px-4 py-3 rounded-xl border border-[#EDE0CC] bg-[#FDF6EC] text-sm text-[#5C4428] outline-none focus:border-[#7A5C3A] focus:ring-2 focus:ring-[#7A5C3A]/10 transition-all" />
         </div>
       </div>
 
-      <div class="pt-2">
+      <div class="flex flex-col sm:flex-row items-center gap-3 pt-2">
         <button @click="luuThongTin"
-          class="chocopine-btn-primary px-8 py-3 text-sm">
+          class="chocopine-btn-primary px-8 py-3 text-sm w-full sm:w-auto justify-center">
           <iconify-icon icon="ph:floppy-disk-duotone" class="text-base mr-1"></iconify-icon>
           Lưu thay đổi
         </button>
+        <RouterLink to="/shop/change-password"
+          class="w-full sm:w-auto text-center px-8 py-3 rounded-2xl text-sm font-bold border border-[#EDE0CC] text-[#7A5C3A] hover:bg-[#FDF6EC] transition-colors no-underline">
+          <iconify-icon icon="ph:lock-key-duotone" class="text-base mr-1"></iconify-icon>
+          Đổi mật khẩu
+        </RouterLink>
       </div>
     </div>
 
@@ -229,6 +279,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import apiClient from '@/services/apiService'
 
@@ -242,7 +293,44 @@ const tabs = [
 const activeTab = ref('voucher')  // Mặc định mở tab voucher
 
 // ─── Form thông tin ───────────────────────────────────────────────────────────
-const form = ref({ hoTen: '', soDienThoai: '' })
+const form = ref({ hoTen: '', soDienThoai: '', ngaySinh: '', diaChi: '' })
+
+// ─── Avatar ───────────────────────────────────────────────────────────────────
+const fileInputRef = ref(null)
+const avatarPreview = ref(authStore.user?.avatarUrl || '')
+const avatarFile = ref(null)
+
+const avatarInitials = computed(() => {
+  const name = form.value.hoTen || authStore.user?.email || ''
+  return name.trim().charAt(0).toUpperCase() || 'U'
+})
+
+function triggerFileInput() {
+  fileInputRef.value?.click()
+}
+
+function onAvatarChange(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  if (!file.type.startsWith('image/')) {
+    showToast('Vui lòng chọn tệp hình ảnh.', 'error')
+    return
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('Ảnh vượt quá dung lượng cho phép (5MB).', 'error')
+    return
+  }
+  avatarFile.value = file
+  const reader = new FileReader()
+  reader.onload = (ev) => { avatarPreview.value = ev.target.result }
+  reader.readAsDataURL(file)
+}
+
+function removeAvatar() {
+  avatarPreview.value = ''
+  avatarFile.value = null
+  if (fileInputRef.value) fileInputRef.value.value = ''
+}
 
 // ─── Điểm thưởng ─────────────────────────────────────────────────────────────
 const tongDiem = ref(0)
@@ -323,7 +411,8 @@ async function doiDiem(goi) {
 }
 
 async function luuThongTin() {
-  showToast('Tính năng cập nhật thông tin đang phát triển.', 'info')
+  // TODO: nối API cập nhật hồ sơ (multipart/form-data khi có avatarFile) khi BE sẵn sàng
+  showToast('Đã lưu thông tin (giao diện demo, chưa lưu vào hệ thống).', 'success')
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
