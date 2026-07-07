@@ -275,9 +275,11 @@ const mainMenu = [
 ]
 
 const secondMenu = [
-  { path: '/admin/inventory',   icon: 'ph:package-duotone',   label: 'Kho hàng'              },
-  { path: '/admin/decor-items', icon: 'ph:sparkle-duotone',   label: 'Phụ kiện trang trí'    },
-  { path: '/admin/vouchers',    icon: 'ph:ticket-duotone',    label: 'Voucher & Khuyến mãi'  },
+  { path: '/admin/inventory',       icon: 'ph:package-duotone',            label: 'Kho hàng'              },
+  { path: '/admin/inventory-alert', icon: 'ph:warning-circle-duotone',     label: 'Cảnh báo tồn kho'      },
+  { path: '/admin/purchase-order',  icon: 'ph:shopping-cart-simple-duotone', label: 'Đặt hàng nhập kho'   },
+  { path: '/admin/decor-items',     icon: 'ph:sparkle-duotone',            label: 'Phụ kiện trang trí'    },
+  { path: '/admin/vouchers',        icon: 'ph:ticket-duotone',             label: 'Voucher & Khuyến mãi'  },
 ]
 
 const systemMenu = [
@@ -287,7 +289,7 @@ const systemMenu = [
 
 const currentBreadcrumb = computed(() => route.meta?.breadcrumb ?? ['Trang chủ'])
 
-const isActive = (path) => route.path.startsWith(path)
+const isActive = (path) => route.path === path || route.path.startsWith(path + '/')
 
 const handleLogout = async () => {
   await authStore.logout()

@@ -100,13 +100,15 @@ const routes = [
       { path: 'products',    name: 'Products',    component: () => import('@/views/Products.vue'),        meta: { title: 'Sản phẩm',                breadcrumb: ['Trang chủ', 'Sản phẩm'] } },
       { path: 'decor-items', name: 'DecorItems',  component: () => import('@/views/DecorItems.vue'),      meta: { title: 'Phụ kiện trang trí',      breadcrumb: ['Trang chủ', 'Phụ kiện trang trí'] } },
       { path: 'staff',       name: 'Staff',       component: () => import('@/views/Staff.vue'),           meta: { title: 'Nhân sự & Phân quyền',    breadcrumb: ['Trang chủ', 'Nhân sự'] } },
-      { path: 'inventory',   name: 'Inventory',   component: () => import('@/views/Inventory.vue'),       meta: { title: 'Kho hàng',                breadcrumb: ['Trang chủ', 'Kho hàng'] } },
-      { path: 'vouchers',    name: 'Vouchers',    component: () => import('@/views/Vouchers.vue'),        meta: { title: 'Voucher',                 breadcrumb: ['Trang chủ', 'Voucher'] } },
-      { path: 'analytics',   name: 'Analytics',   component: () => import('@/views/Analytics.vue'),       meta: { title: 'Phân tích',               breadcrumb: ['Trang chủ', 'Phân tích'] } },
-      { path: 'reviews',     name: 'Reviews',     component: () => import('@/views/Reviews.vue'),         meta: { title: 'Đánh giá',                breadcrumb: ['Trang chủ', 'Đánh giá'] } },
-      { path: 'messages',    name: 'Messages',    component: () => import('@/views/Messages.vue'),        meta: { title: 'Tin nhắn',                breadcrumb: ['Trang chủ', 'Tin nhắn'] } },
-      { path: 'settings',    name: 'Settings',    component: () => import('@/views/Settings.vue'),        meta: { title: 'Cài đặt',                 breadcrumb: ['Trang chủ', 'Cài đặt'] } },
-      { path: 'audit-log',   name: 'AuditLog',    component: () => import('@/views/AuditLog.vue'),        meta: { title: 'Nhật ký hoạt động',       breadcrumb: ['Trang chủ', 'Cài đặt', 'Nhật ký hoạt động'] } }
+      { path: 'inventory',        name: 'Inventory',       component: () => import('@/views/Inventory.vue'),       meta: { title: 'Kho hàng',                breadcrumb: ['Trang chủ', 'Kho hàng'] } },
+      { path: 'inventory-alert',  name: 'InventoryAlert',  component: () => import('@/views/InventoryAlert.vue'), meta: { title: 'Cảnh báo tồn kho',        breadcrumb: ['Trang chủ', 'Kho hàng', 'Cảnh báo tồn kho'] } },
+      { path: 'purchase-order',   name: 'PurchaseOrder',   component: () => import('@/views/PurchaseOrder.vue'),  meta: { title: 'Đặt hàng nhập kho',       breadcrumb: ['Trang chủ', 'Kho hàng', 'Đặt hàng nhập kho'] } },
+      { path: 'vouchers',         name: 'Vouchers',        component: () => import('@/views/Vouchers.vue'),        meta: { title: 'Voucher',                 breadcrumb: ['Trang chủ', 'Voucher'] } },
+      { path: 'analytics',        name: 'Analytics',       component: () => import('@/views/Analytics.vue'),       meta: { title: 'Phân tích',               breadcrumb: ['Trang chủ', 'Phân tích'] } },
+      { path: 'reviews',          name: 'Reviews',         component: () => import('@/views/Reviews.vue'),         meta: { title: 'Đánh giá',                breadcrumb: ['Trang chủ', 'Đánh giá'] } },
+      { path: 'messages',         name: 'Messages',        component: () => import('@/views/Messages.vue'),        meta: { title: 'Tin nhắn',                breadcrumb: ['Trang chủ', 'Tin nhắn'] } },
+      { path: 'settings',         name: 'Settings',        component: () => import('@/views/Settings.vue'),        meta: { title: 'Cài đặt',                 breadcrumb: ['Trang chủ', 'Cài đặt'] } },
+      { path: 'audit-log',        name: 'AuditLog',        component: () => import('@/views/AuditLog.vue'),        meta: { title: 'Nhật ký hoạt động',       breadcrumb: ['Trang chủ', 'Cài đặt', 'Nhật ký hoạt động'] } }
     ]
   },
 
