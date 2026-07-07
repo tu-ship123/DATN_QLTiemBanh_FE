@@ -18,9 +18,11 @@ export const orderService = {
     return apiClient.get(`/api/v1/orders/${id}`);
   },
 
-  /** Khách tự hủy đơn của mình */
-  cancelMyOrder(id) {
-    return apiClient.put(`/api/v1/orders/${id}/cancel`);
+  /** Khách tự hủy đơn của mình — kèm lý do hủy do khách nhập ở popup xác nhận */
+  cancelMyOrder(id, lyDo = '') {
+    return apiClient.put(`/api/v1/orders/${id}/cancel`, null, {
+      params: lyDo ? { lyDo } : {},
+    });
   },
 
   /** Nhân viên hủy hóa đơn POS khi bấm Huỷ / đóng mã QR trước khi khách thanh toán */
