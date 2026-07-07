@@ -74,6 +74,12 @@ const routes = [
         name: 'Profile',
         component: () => import('@/views/Profile.vue'),
         meta: { title: 'Hồ sơ của tôi', breadcrumb: ['Cửa hàng', 'Hồ sơ'], requiresAuth: true, roles: ['ROLE_KHACH_HANG'] }
+      },
+      {
+        path: 'change-password',
+        name: 'ChangePassword',
+        component: () => import('@/views/ChangePassword.vue'),
+        meta: { title: 'Đổi mật khẩu', breadcrumb: ['Cửa hàng', 'Hồ sơ', 'Đổi mật khẩu'], requiresAuth: true, roles: ['ROLE_KHACH_HANG'] }
       }
     ]
   },
