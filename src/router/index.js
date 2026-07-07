@@ -74,6 +74,12 @@ const routes = [
         name: 'Profile',
         component: () => import('@/views/Profile.vue'),
         meta: { title: 'Hồ sơ của tôi', breadcrumb: ['Cửa hàng', 'Hồ sơ'], requiresAuth: true, roles: ['ROLE_KHACH_HANG'] }
+      },
+      {
+        path: 'change-password',
+        name: 'ChangePassword',
+        component: () => import('@/views/ChangePassword.vue'),
+        meta: { title: 'Đổi mật khẩu', breadcrumb: ['Cửa hàng', 'Hồ sơ', 'Đổi mật khẩu'], requiresAuth: true, roles: ['ROLE_KHACH_HANG'] }
       }
     ]
   },
@@ -112,6 +118,7 @@ const routes = [
     meta: { requiresAuth: true, roles: ['ROLE_NHAN_VIEN', 'ROLE_ADMIN'] },
     children: [
       { path: 'checkin',  name: 'StaffCheckin',  component: () => import('@/views/Checkin.vue'),       meta: { title: 'Chấm công',              breadcrumb: ['Nhân viên', 'Chấm công'] } },
+      { path: 'calendar', name: 'StaffCalendar', component: () => import('@/views/MyCalendar.vue'),    meta: { title: 'Lịch làm việc',          breadcrumb: ['Nhân viên', 'Lịch làm việc'] } },
       { path: 'pos',      name: 'StaffPOS',      component: () => import('@/views/POS.vue'),            meta: { title: 'Bán hàng tại quầy',      breadcrumb: ['Nhân viên', 'Bán hàng'] } },
       { path: 'orders',   name: 'StaffOrders',   component: () => import('@/views/StaffOrders.vue'),    meta: { title: 'Đơn hàng (Staff)',       breadcrumb: ['Nhân viên', 'Đơn hàng'] } },
       { path: 'products', name: 'StaffProducts', component: () => import('@/views/Products.vue'),       meta: { title: 'Sản phẩm (Staff)',       breadcrumb: ['Nhân viên', 'Sản phẩm'] } },

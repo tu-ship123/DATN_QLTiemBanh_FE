@@ -138,6 +138,7 @@ const sidebarOpen = ref(true)
 const isMobile    = ref(false)
 const staffMenu = [
   { path: '/staff-area/checkin',   icon: 'ph:fingerprint-duotone',      label: 'Chấm công' },
+  { path: '/staff-area/calendar',  icon: 'ph:calendar-duotone',         label: 'Lịch làm việc' },
   { path: '/staff-area/orders',    icon: 'ph:receipt-duotone',          label: 'Quản lý đơn hàng' },
   { path: '/staff-area/bakery',    icon: 'ph:cake-duotone',             label: 'Bếp bánh' },
   { path: '/staff-area/shipper',   icon: 'ph:motorcycle-duotone',       label: 'Giao Hàng' },
