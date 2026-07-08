@@ -117,7 +117,8 @@ const routes = [
       { path: 'products', name: 'StaffProducts', component: () => import('@/views/Products.vue'),       meta: { title: 'Sản phẩm (Staff)',       breadcrumb: ['Nhân viên', 'Sản phẩm'] } },
       { path: 'bakery',   name: 'BakeryOrders',  component: () => import('@/views/BakeryOrders.vue'),   meta: { title: 'Tiệm bánh – Xử lý đơn', breadcrumb: ['Nhân viên', 'Tiệm Bánh'] } },
       { path: 'shipper',   name: 'ShipperView',  component: () => import('@/views/ShipperView.vue'),  meta: { title: 'Shipper – Giao hàng',  breadcrumb: ['Nhân viên', 'Giao Hàng'] } },
-      { path: 'end-shift', name: 'EndShift',      component: () => import('@/views/EndShift.vue'),      meta: { title: 'Kết ca – Báo cáo',     breadcrumb: ['Nhân viên', 'Kết Ca'] } }
+      { path: 'end-shift', name: 'EndShift',      component: () => import('@/views/EndShift.vue'),      meta: { title: 'Kết ca – Báo cáo',     breadcrumb: ['Nhân viên', 'Kết Ca'] } },
+      { path: 'kiem-ke',   name: 'EndShiftInventoryCheck', component: () => import('@/views/EndShiftInventoryCheck.vue'), meta: { title: 'Kiểm kê cuối ca',      breadcrumb: ['Nhân viên', 'Kiểm Kê Cuối Ca'] } }
     ]
   }
 ];
