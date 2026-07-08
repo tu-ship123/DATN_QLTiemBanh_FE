@@ -4,11 +4,23 @@
     <!-- LEFT: Danh sách sản phẩm -->
     <div class="flex-1 flex flex-col min-w-0 border-r border-[#EDE8E3]">
       <div class="bg-white px-5 py-4 border-b border-[#EDE8E3] shrink-0">
-        <div class="flex items-center gap-3 bg-[#F5F0ED] rounded-xl px-4 py-2.5 mb-4 focus-within:ring-2 focus-within:ring-[#E8634A]/20">
+        <div class="flex items-center gap-3 bg-[#F5F0ED] rounded-xl px-4 py-2.5 mb-3 focus-within:ring-2 focus-within:ring-[#E8634A]/20">
           <iconify-icon icon="ph:magnifying-glass" class="text-gray-400 text-xl shrink-0"></iconify-icon>
           <input v-model="search" type="text" placeholder="Tìm tên bánh, mã sản phẩm..."
             class="bg-transparent outline-none w-full text-sm text-[#1E2A3B] placeholder-gray-400" />
           <button v-if="search" @click="search = ''" class="text-gray-400 hover:text-gray-600">
+            <iconify-icon icon="ph:x" class="text-lg"></iconify-icon>
+          </button>
+        </div>
+
+        <!-- Quét mã vạch -->
+        <div class="flex items-center gap-3 bg-white rounded-xl px-4 py-2.5 mb-4 border-2 border-dashed border-[#E8634A]/30 focus-within:border-[#E8634A] focus-within:border-solid focus-within:ring-2 focus-within:ring-[#E8634A]/20 transition-all">
+          <iconify-icon icon="ph:barcode" class="text-[#E8634A] text-xl shrink-0"></iconify-icon>
+          <input ref="barcodeInputRef" v-model="barcodeInput" type="text"
+            placeholder="Quét mã vạch sản phẩm rồi nhấn Enter..."
+            class="bg-transparent outline-none w-full text-sm text-[#1E2A3B] placeholder-gray-400 font-mono"
+            @keyup.enter="handleBarcodeScan" />
+          <button v-if="barcodeInput" @click="barcodeInput = ''; focusBarcodeInput()" class="text-gray-400 hover:text-gray-600">
             <iconify-icon icon="ph:x" class="text-lg"></iconify-icon>
           </button>
         </div>
@@ -67,6 +79,7 @@
             <div class="text-xs font-black text-[#1E2A3B] truncate mb-0.5">{{ p.tenSanPham }}</div>
             <div class="text-xs font-bold text-[#E8634A]">{{ formatPrice(p.donGia) }}</div>
             <div class="text-[10px] text-gray-400 mt-0.5">Tồn: {{ p.soLuongTon }}</div>
+            <div class="text-[9px] text-gray-300 font-mono mt-0.5 truncate">{{ maVachOf(p) }}</div>
           </button>
         </div>
       </div>
@@ -80,10 +93,34 @@
             <div class="font-display font-black text-base text-[#1E2A3B]">Đơn hiện tại</div>
             <div class="text-xs text-gray-400 mt-0.5">#POS-{{ orderNo }}</div>
           </div>
-          <button @click="clearCart" class="text-xs font-bold text-red-400 hover:text-red-500 px-3 py-1.5 rounded-lg hover:bg-red-50 transition flex items-center gap-1">
-            <iconify-icon icon="ph:trash-duotone" class="text-sm"></iconify-icon> Xóa tất cả
+          <div class="flex items-center gap-1">
+            <button @click="treoBill" :disabled="cart.length === 0"
+              class="text-xs font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1"
+              :class="cart.length === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-[#7A5C3A] hover:bg-[#FDF6EC]'">
+              <iconify-icon icon="ph:tray-duotone" class="text-sm"></iconify-icon> Treo bill
+            </button>
+            <button @click="clearCart" class="text-xs font-bold text-red-400 hover:text-red-500 px-3 py-1.5 rounded-lg hover:bg-red-50 transition flex items-center gap-1">
+              <iconify-icon icon="ph:trash-duotone" class="text-sm"></iconify-icon> Xóa tất cả
+            </button>
+          </div>
+        </div>
+
+        <!-- Dải bill đang treo -->
+        <div v-if="heldBills.length" class="flex items-center gap-2 overflow-x-auto pb-3 -mt-1 mb-3">
+          <button v-for="bill in heldBills" :key="bill.id" @click="resumeHeldBill(bill)"
+            class="shrink-0 flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-xl border border-amber-200 bg-amber-50 hover:bg-amber-100 transition-colors group">
+            <iconify-icon icon="ph:tray-duotone" class="text-amber-500 text-sm shrink-0"></iconify-icon>
+            <div class="text-left leading-tight">
+              <div class="text-[11px] font-black text-amber-700 whitespace-nowrap">{{ bill.label }}</div>
+              <div class="text-[10px] text-amber-500 whitespace-nowrap">{{ bill.cart.length }} món · {{ formatPrice(billTotal(bill)) }}</div>
+            </div>
+            <span @click.stop="discardHeldBill(bill)"
+              class="ml-1 w-5 h-5 rounded-full flex items-center justify-center text-amber-400 opacity-0 group-hover:opacity-100 hover:bg-amber-200 hover:text-amber-600 transition-all shrink-0">
+              <iconify-icon icon="ph:x-bold" class="text-[10px]"></iconify-icon>
+            </span>
           </button>
         </div>
+
         <!-- Email khách -->
         <div class="relative">
           <iconify-icon icon="ph:user-duotone" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-base"></iconify-icon>
@@ -380,8 +417,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import apiClient from '@/services/apiService'
 import { productService } from '@/services/productService'
 import { formatPrice } from '@/utils/format'
@@ -397,6 +434,137 @@ const cart       = ref([])
 const orderNo    = ref(Math.floor(Math.random() * 9000) + 1000)
 const emailKhach = ref('')
 const ghiChu     = ref('')
+
+// ─── QUÉT MÃ VẠCH ───────────────────────────────────────────────────────────
+const barcodeInput    = ref('')
+const barcodeInputRef = ref(null)
+
+// TODO: khi BE có trường mã vạch thật (vd. p.maVach) thì dùng trực tiếp, bỏ hàm giả lập này đi
+function maVachOf(p) {
+  return '89999' + String(p.id).padStart(8, '0')
+}
+
+function focusBarcodeInput() {
+  nextTick(() => barcodeInputRef.value?.focus())
+}
+
+function handleBarcodeScan() {
+  const code = barcodeInput.value.trim()
+  if (!code) return
+
+  // Cho phép quét mã vạch thật (giả lập) hoặc gõ thẳng ID sản phẩm để tiện test khi chưa có máy quét
+  const found = allProducts.value.find(p => maVachOf(p) === code || String(p.id) === code)
+
+  if (!found) {
+    ElMessage.error(`Không tìm thấy sản phẩm với mã: ${code}`)
+  } else if (found.soLuongTon === 0) {
+    ElMessage.warning(`"${found.tenSanPham}" đã hết hàng!`)
+  } else {
+    addToCart(found)
+    ElMessage.success(`Đã thêm "${found.tenSanPham}" vào giỏ`)
+  }
+  barcodeInput.value = ''
+  focusBarcodeInput()
+}
+
+// ─── TREO BILL ───────────────────────────────────────────────────────────────
+const heldBills = ref([])  // { id, label, cart, ghiChu, emailKhach, orderNo, createdAt }
+
+function billTotal(bill) {
+  return bill.cart.reduce((s, i) => s + Number(i.donGia) * i.qty, 0)
+}
+
+async function treoBill() {
+  if (cart.value.length === 0) {
+    ElMessage.warning('Giỏ hàng đang trống, không có gì để treo.')
+    return
+  }
+  try {
+    const { value: label } = await ElMessageBox.prompt(
+      'Đặt tên cho bill để dễ nhận biết khi mở lại (vd: "Bàn 5", "Chị Lan")',
+      'Treo bill',
+      {
+        confirmButtonText: 'Treo bill',
+        cancelButtonText: 'Huỷ',
+        inputValue: `Khách ${heldBills.value.length + 1}`,
+        inputValidator: (v) => !!v?.trim() || 'Vui lòng nhập tên bill',
+      }
+    )
+    heldBills.value.push({
+      id: Date.now(),
+      label: label.trim(),
+      cart: cart.value,
+      ghiChu: ghiChu.value,
+      emailKhach: emailKhach.value,
+      orderNo: orderNo.value,
+      createdAt: new Date(),
+    })
+    // Mở bill trắng mới để phục vụ khách khác
+    cart.value = []
+    ghiChu.value = ''
+    emailKhach.value = ''
+    orderNo.value = Math.floor(Math.random() * 9000) + 1000
+    ElMessage.success(`Đã treo bill "${label.trim()}". Bạn có thể phục vụ khách khác ngay bây giờ.`)
+  } catch {
+    // Người dùng bấm Huỷ trên hộp thoại đặt tên -> không làm gì cả
+  }
+}
+
+async function resumeHeldBill(bill) {
+  const swapIn = () => {
+    heldBills.value = heldBills.value.filter(b => b.id !== bill.id)
+    cart.value = bill.cart
+    ghiChu.value = bill.ghiChu
+    emailKhach.value = bill.emailKhach
+    orderNo.value = bill.orderNo
+    ElMessage.success(`Đã mở lại bill "${bill.label}"`)
+  }
+
+  if (cart.value.length === 0) {
+    swapIn()
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      'Giỏ hàng hiện tại chưa thanh toán. Bạn có muốn treo bill hiện tại lại trước khi mở bill khác không?',
+      'Giỏ hàng chưa trống',
+      { confirmButtonText: 'Treo bill hiện tại rồi mở', cancelButtonText: 'Huỷ', type: 'warning' }
+    )
+    await treoBillSilently()
+    swapIn()
+  } catch {
+    // Huỷ -> giữ nguyên, không chuyển bill
+  }
+}
+
+// Treo nhanh không hỏi tên, dùng khi resume bill khác mà giỏ hiện tại còn hàng
+async function treoBillSilently() {
+  if (cart.value.length === 0) return
+  heldBills.value.push({
+    id: Date.now(),
+    label: `Khách ${heldBills.value.length + 1}`,
+    cart: cart.value,
+    ghiChu: ghiChu.value,
+    emailKhach: emailKhach.value,
+    orderNo: orderNo.value,
+    createdAt: new Date(),
+  })
+}
+
+async function discardHeldBill(bill) {
+  try {
+    await ElMessageBox.confirm(
+      `Xoá bill "${bill.label}" đang treo? Hành động này không thể hoàn tác.`,
+      'Xác nhận xoá bill',
+      { confirmButtonText: 'Xoá', cancelButtonText: 'Huỷ', type: 'warning' }
+    )
+    heldBills.value = heldBills.value.filter(b => b.id !== bill.id)
+    ElMessage.info(`Đã xoá bill "${bill.label}"`)
+  } catch {
+    // Huỷ -> không xoá
+  }
+}
 
 const showCashModal    = ref(false)
 const showQRModal      = ref(false)
@@ -475,7 +643,7 @@ async function loadProducts() {
   }
 }
 
-onMounted(() => loadProducts())
+onMounted(() => { loadProducts(); focusBarcodeInput() })
 
 // ─── FILTER SẢN PHẨM ────────────────────────────────────────────────────────
 const filteredProducts = computed(() =>
