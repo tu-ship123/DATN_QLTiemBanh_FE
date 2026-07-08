@@ -145,6 +145,7 @@ const staffMenu = [
   { path: '/staff-area/products',  icon: 'ph:shopping-bag-duotone',     label: 'Danh sách bánh' },
   { path: '/staff-area/pos',       icon: 'ph:storefront-duotone',       label: 'Bán hàng tại quầy' },
   { path: '/staff-area/end-shift', icon: 'ph:flag-checkered-duotone',   label: 'Kết Ca – Báo cáo' },
+  { path: '/staff-area/kiem-ke',   icon: 'ph:clipboard-text-duotone',   label: 'Kiểm Kê Cuối Ca' },
 ]
 
 const currentBreadcrumb = computed(

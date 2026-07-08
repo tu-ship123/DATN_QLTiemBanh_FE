@@ -165,6 +165,12 @@
             <p v-if="dg.noiDung" class="text-sm text-slate-700 mt-2 leading-relaxed">{{ dg.noiDung }}</p>
             <p v-else class="text-xs text-muted italic mt-2">Không có nội dung</p>
 
+            <!-- Ảnh khách hàng đính kèm -->
+            <a v-if="dg.hinhAnh" :href="dg.hinhAnh" target="_blank" rel="noopener"
+              class="inline-block w-16 h-16 mt-2 rounded-xl overflow-hidden border border-slate-200">
+              <img :src="dg.hinhAnh" class="w-full h-full object-cover" alt="Ảnh khách hàng đính kèm" />
+            </a>
+
             <!-- Phản hồi của tiệm -->
             <div v-if="dg.phanHoiCuaTiem"
               class="mt-3 bg-amber-50 border border-amber-100 rounded-xl p-3">

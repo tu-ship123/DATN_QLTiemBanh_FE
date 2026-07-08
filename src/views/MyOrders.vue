@@ -190,10 +190,21 @@
           </div>
 
           <div class="rounded-[24px] bg-white border border-[#EDE0CC] shadow-sm p-6">
-            <h3 class="text-base font-bold text-[#5C4428] mb-4 flex items-center gap-2">
-              <iconify-icon icon="ph:shopping-bag-duotone" class="text-[#7A5C3A] text-lg"></iconify-icon>
-              Bánh ngọt trong đơn
-            </h3>
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-base font-bold text-[#5C4428] flex items-center gap-2">
+                <iconify-icon icon="ph:shopping-bag-duotone" class="text-[#7A5C3A] text-lg"></iconify-icon>
+                Bánh ngọt trong đơn
+              </h3>
+              <button
+                @click="openDesignViewer(activeOrder)"
+                :disabled="designLoading"
+                class="flex items-center gap-1.5 rounded-xl border border-[#EDE0CC] bg-[#FDF6EC] px-3 py-2 text-[11px] font-bold text-[#7A5C3A] hover:bg-[#F5E9D6] transition-colors disabled:opacity-60"
+              >
+                <iconify-icon v-if="designLoading" icon="ph:circle-notch" class="animate-spin"></iconify-icon>
+                <iconify-icon v-else icon="ph:cube-duotone"></iconify-icon>
+                Xem thiết kế 3D
+              </button>
+            </div>
             <div class="space-y-3 font-sans">
               <div v-for="item in activeOrder.items" :key="item.sanPhamId" class="flex items-center gap-4 p-3 rounded-2xl bg-[#FFFFFF] border border-[#EDE0CC] hover:bg-[#FDF6EC] transition-colors">
                 <img src="https://images.unsplash.com/photo-1542821298-0bb848916421?auto=format&fit=crop&w=400&q=80" alt="Bánh" class="w-16 h-16 rounded-xl object-cover shadow-sm flex-shrink-0" />
@@ -304,6 +315,28 @@
                       class="w-full px-3 py-2.5 rounded-xl border border-[#EDE0CC] bg-white text-sm text-[#5C4428] outline-none focus:border-[#7A5C3A] resize-none"></textarea>
                   </div>
 
+                  <!-- Ảnh đính kèm -->
+                  <div>
+                    <label class="text-xs font-semibold text-[#9A7650] mb-2 block">Ảnh thực tế (không bắt buộc)</label>
+                    <div class="flex items-center gap-3">
+                      <div v-if="danhGia.hinhAnh"
+                        class="relative w-16 h-16 rounded-xl overflow-hidden bg-slate-100 border border-[#EDE0CC] shrink-0">
+                        <img :src="danhGia.hinhAnh" class="w-full h-full object-cover" alt="Ảnh đánh giá" />
+                        <button @click="danhGia.hinhAnh = null"
+                          class="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/60 text-white text-[10px] flex items-center justify-center">
+                          ✕
+                        </button>
+                      </div>
+                      <label
+                        class="cursor-pointer inline-flex items-center gap-1.5 text-xs font-bold text-[#7A5C3A] border border-dashed border-[#C4A882] rounded-xl px-3 py-2 hover:bg-[#FDF6EC] transition-colors">
+                        <iconify-icon icon="ph:camera-plus-duotone" class="text-base"></iconify-icon>
+                        {{ danhGia.hinhAnh ? 'Đổi ảnh' : 'Thêm ảnh' }}
+                        <input type="file" accept="image/*" class="hidden" @change="handleReviewImageChange" />
+                      </label>
+                    </div>
+                    <p class="text-[10px] text-[#A68B5C] mt-1">PNG, JPG tối đa 5MB</p>
+                  </div>
+
                   <button @click="guiDanhGia" :disabled="danhGiaLoading || !danhGia.soSao"
                     class="w-full py-2.5 rounded-xl text-xs font-bold text-white transition-colors disabled:opacity-60"
                     style="background:#7A5C3A;">
@@ -316,7 +349,7 @@
               <!-- HỦY ĐƠN -->
               <button
                 v-if="['CHO_XU_LY', 'CHO_XAC_NHAN', 'PAID'].includes(activeOrder.trangThai)"
-                @click="cancelOrder"
+                @click="openCancelModal(activeOrder)"
                 class="w-full rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
               >
                 <iconify-icon icon="ph:x-circle-bold" class="text-sm"></iconify-icon>
@@ -370,6 +403,56 @@
       <p class="text-xs text-[#9A7650]">Mã đơn hàng <strong>{{ searchCode }}</strong> không thuộc về bạn hoặc không tồn tại.</p>
     </div>
 
+    <!-- ── MODAL XEM THIẾT KẾ 3D (chỉ xem) ─────────────────────────────── -->
+    <div v-if="showDesignModal"
+      class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] flex items-center justify-center p-4"
+      @click.self="showDesignModal = false">
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
+        <div class="px-6 py-5 flex justify-between items-center" style="background:linear-gradient(135deg,#7A5C3A,#9A7650);">
+          <div>
+            <h2 class="text-lg font-black text-white">Thiết kế bánh 3D · #{{ designOrderId }}</h2>
+            <p class="text-white/80 text-xs mt-0.5">Xem lại mẫu bánh bạn đã tự thiết kế cho đơn này</p>
+          </div>
+          <button @click="showDesignModal = false" class="text-white/80 hover:text-white text-2xl font-light leading-none">✕</button>
+        </div>
+        <div class="p-5 max-h-[75vh] overflow-y-auto">
+          <CakeDesignViewer3D :design="designData" />
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MODAL NHẬP LÝ DO HỦY ĐƠN ─────────────────────────────────────── -->
+    <div v-if="showCancelModal"
+      class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4"
+      @click.self="showCancelModal = false">
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 font-sans">
+        <h3 class="text-lg font-black text-[#5C4428] mb-1">Hủy đơn #{{ cancelTarget?.id }}</h3>
+        <p class="text-sm text-[#9A7650] mb-4">Vui lòng cho biết lý do bạn muốn hủy đơn. Thao tác này không thể hoàn tác.</p>
+        <textarea
+          v-model="cancelReason"
+          rows="3"
+          placeholder="VD: Đặt nhầm, muốn đổi mẫu bánh, tìm được chỗ khác rẻ hơn..."
+          class="w-full rounded-xl border border-[#EDE0CC] p-3 text-sm outline-none focus:border-[#7A5C3A] resize-none mb-4"
+        ></textarea>
+        <div class="flex gap-3">
+          <button
+            @click="showCancelModal = false"
+            class="flex-1 py-2.5 rounded-xl text-sm font-bold border border-[#EDE0CC] text-[#9A7650] hover:bg-[#FDF6EC]"
+          >
+            Đóng
+          </button>
+          <button
+            @click="confirmCancelOrder"
+            :disabled="!cancelReason.trim() || cancelLoading"
+            class="flex-1 py-2.5 rounded-xl text-sm font-bold bg-red-500 text-white hover:bg-red-600 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            <iconify-icon v-if="cancelLoading" icon="ph:circle-notch" class="animate-spin"></iconify-icon>
+            {{ cancelLoading ? 'Đang hủy...' : 'Xác nhận hủy đơn' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <Transition name="toast">
       <div
         v-if="toast.show"
@@ -388,6 +471,7 @@ import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { orderService } from '@/services/orderService' 
 import apiClient from '@/services/apiService' // Để gọi thêm hàm cancel
+import CakeDesignViewer3D from '@/components/cake3d/CakeDesignViewer3D.vue'
 
 const router = useRouter()
 const orders = ref([])
@@ -426,21 +510,62 @@ const searchOrder = () => {
   if (!found) showToast('Không tìm thấy mã đơn hàng này', 'error')
 }
 
-// ===== LOGIC HUỶ ĐƠN THỰC TẾ (Gọi API) =====
-const cancelOrder = async () => {
-  if (!activeOrder.value) return
-  if (!confirm('Bạn có chắc chắn muốn hủy đơn hàng này? Thao tác không thể hoàn tác.')) return
+// ===== LOGIC HUỶ ĐƠN (Popup nhập lý do + xác nhận) =====
+const showCancelModal = ref(false)
+const cancelTarget = ref(null)
+const cancelReason = ref('')
+const cancelLoading = ref(false)
 
+// Mở popup nhập lý do hủy, thay cho window.confirm() cũ
+const openCancelModal = (order) => {
+  cancelTarget.value = order
+  cancelReason.value = ''
+  showCancelModal.value = true
+}
+
+// Xác nhận trong popup -> gọi API hủy kèm lý do
+const confirmCancelOrder = async () => {
+  if (!cancelTarget.value || !cancelReason.value.trim()) return
+  cancelLoading.value = true
   try {
-    // Gọi API Hủy theo phương thức PUT đã định nghĩa trong OrderController
-    await apiClient.put(`/api/v1/orders/${activeOrder.value.id}/cancel`)
-    
+    // Gọi API Hủy theo phương thức PUT đã định nghĩa trong OrderController, kèm lý do hủy
+    await orderService.cancelMyOrder(cancelTarget.value.id, cancelReason.value.trim())
+
     showToast('Đã huỷ đơn hàng thành công', 'success')
-    activeOrder.value.trangThai = 'DA_HUY' // Cập nhật lại UI ngay lập tức
-    
+    cancelTarget.value.trangThai = 'DA_HUY'
+    cancelTarget.value.lyDoHuy = cancelReason.value.trim()
+    if (activeOrder.value?.id === cancelTarget.value.id) {
+      activeOrder.value.trangThai = 'DA_HUY'
+      activeOrder.value.lyDoHuy = cancelReason.value.trim()
+    }
+    showCancelModal.value = false
   } catch (error) {
     console.error(error)
     showToast(error.response?.data || 'Có lỗi xảy ra khi hủy đơn', 'error')
+  } finally {
+    cancelLoading.value = false
+  }
+}
+
+// ===== LOGIC XEM THIẾT KẾ 3D CỦA ĐƠN (chỉ xem) =====
+const showDesignModal = ref(false)
+const designData = ref(null)
+const designOrderId = ref(null)
+const designLoading = ref(false)
+
+const openDesignViewer = async (order) => {
+  if (!order) return
+  designLoading.value = true
+  try {
+    const res = await orderService.getOrder3DDesign(order.id)
+    designData.value = res.data
+    designOrderId.value = order.id
+    showDesignModal.value = true
+  } catch (error) {
+    console.error(error)
+    showToast(error.response?.data || 'Không tải được dữ liệu thiết kế 3D của đơn này', 'error')
+  } finally {
+    designLoading.value = false
   }
 }
 
@@ -464,13 +589,13 @@ const xacNhanNhanHang = async () => {
 const moFormDanhGia = ref(false)
 const daDanhGia = ref(false)
 const danhGiaLoading = ref(false)
-const danhGia = ref({ sanPhamId: null, soSao: 0, noiDung: '' })
+const danhGia = ref({ sanPhamId: null, soSao: 0, noiDung: '', hinhAnh: null })
 
 // Tự điền sanPhamId và kiểm tra đã đánh giá chưa khi chuyển đơn
 watch(() => activeOrder.value, async (order) => {
   moFormDanhGia.value = false
   daDanhGia.value = false
-  danhGia.value = { sanPhamId: order?.items?.[0]?.sanPhamId || null, soSao: 0, noiDung: '' }
+  danhGia.value = { sanPhamId: order?.items?.[0]?.sanPhamId || null, soSao: 0, noiDung: '', hinhAnh: null }
 
   // Nếu đơn đã hoàn thành, hỏi BE xem đã đánh giá chưa
   if (order?.trangThai === 'HOAN_THANH') {
@@ -483,6 +608,18 @@ watch(() => activeOrder.value, async (order) => {
   }
 }, { immediate: true })
 
+// Chọn ảnh thực tế đính kèm đánh giá -> convert base64 (đồng bộ cách làm với ảnh sản phẩm)
+const handleReviewImageChange = (e) => {
+  const file = e.target.files?.[0]
+  if (!file) return
+  if (!file.type.startsWith('image/')) { showToast('Vui lòng chọn file ảnh', 'error'); return }
+  if (file.size > 5 * 1024 * 1024) { showToast('Ảnh tối đa 5MB', 'error'); return }
+  const reader = new FileReader()
+  reader.onload = () => { danhGia.value.hinhAnh = reader.result }
+  reader.readAsDataURL(file)
+  e.target.value = ''
+}
+
 const guiDanhGia = async () => {
   if (!danhGia.value.soSao) { showToast('Vui lòng chọn số sao!', 'error'); return }
   danhGiaLoading.value = true
@@ -492,6 +629,7 @@ const guiDanhGia = async () => {
       sanPhamId: danhGia.value.sanPhamId || activeOrder.value.items?.[0]?.sanPhamId,
       soSao: danhGia.value.soSao,
       noiDung: danhGia.value.noiDung,
+      hinhAnh: danhGia.value.hinhAnh,
     })
     // 2. Cộng điểm đánh giá
     await apiClient.post(`/api/v1/loyalty/cong-diem-danh-gia/${activeOrder.value.id}`)

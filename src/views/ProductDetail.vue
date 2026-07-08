@@ -160,9 +160,9 @@
       </div>
     </div>
 
-    <!-- Sản phẩm liên quan -->
+    <!-- Có thể bạn thích -->
     <section v-if="relatedProducts.length > 0" class="mt-20">
-      <h2 class="text-2xl font-black text-[#5C4428] mb-6">Sản phẩm liên quan</h2>
+      <h2 class="text-2xl font-black text-[#5C4428] mb-6">Có thể bạn thích</h2>
       <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
         <div
           v-for="item in relatedProducts"
@@ -242,6 +242,11 @@
 
           <p v-if="r.noiDung" class="text-sm text-gray-600 leading-relaxed">{{ r.noiDung }}</p>
           <p v-else class="text-sm text-gray-400 italic">Khách hàng không để lại nhận xét.</p>
+
+          <a v-if="r.hinhAnh" :href="r.hinhAnh" target="_blank" rel="noopener"
+            class="block w-20 h-20 rounded-xl overflow-hidden border border-[#EDE0CC] hover:border-[#C4A882] transition-colors">
+            <img :src="r.hinhAnh" class="w-full h-full object-cover" alt="Ảnh khách hàng đính kèm" />
+          </a>
 
           <div v-if="r.phanHoiCuaTiem" class="bg-[#FDF6EC] rounded-xl p-3 border-l-4 border-[#7A5C3A]">
             <p class="text-xs font-bold text-[#5C4428] mb-1">💬 Phản hồi từ Chocopine:</p>
@@ -344,17 +349,29 @@ const loadProduct = async () => {
   }
 }
 
-// Sản phẩm liên quan: cùng danh mục, loại trừ sản phẩm hiện tại, tối đa 4
+// "Có thể bạn thích": ưu tiên cùng danh mục, nếu chưa đủ 4 thì lấy thêm
+// sản phẩm còn hàng khác (loại trừ sản phẩm hiện tại) để luôn gợi ý đủ 4 món.
+const RELATED_LIMIT = 4
 const relatedProducts = computed(() => {
   if (!product.value) return []
-  return productStore.products
-    .filter(
-      (p) =>
-        p.danhMucId === product.value.danhMucId &&
-        p.id !== product.value.id &&
-        p.soLuongTon > 0
-    )
-    .slice(0, 4)
+
+  const allAvailable = productStore.products.filter(
+    (p) => p.id !== product.value.id && p.soLuongTon > 0
+  )
+
+  const sameCategory = allAvailable.filter(
+    (p) => p.danhMucId === product.value.danhMucId
+  )
+
+  if (sameCategory.length >= RELATED_LIMIT) {
+    return sameCategory.slice(0, RELATED_LIMIT)
+  }
+
+  // Chưa đủ số lượng gợi ý -> bổ sung thêm sản phẩm khác danh mục
+  const usedIds = new Set(sameCategory.map((p) => p.id))
+  const others = allAvailable.filter((p) => !usedIds.has(p.id))
+
+  return [...sameCategory, ...others].slice(0, RELATED_LIMIT)
 })
 
 // ==========================================

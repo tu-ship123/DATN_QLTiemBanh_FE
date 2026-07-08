@@ -180,7 +180,8 @@
             </div>
             <select v-model="sortBy" class="sort-select">
               <option value="newest">Mới nhất</option>
-              <option value="price_asc">Giá thấp nhất</option>
+              <option value="price_asc">Giá thấp → cao</option>
+              <option value="price_desc">Giá cao → thấp</option>
             </select>
             <RouterLink to="/shop/products" class="section-link">
               Xem tất cả <iconify-icon icon="ph:arrow-right"></iconify-icon>
@@ -505,6 +506,8 @@ const displayedProducts = computed(() => {
     result = [...result].sort((a, b) => new Date(b.ngayTao) - new Date(a.ngayTao))
   } else if (sortBy.value === 'price_asc') {
     result = [...result].sort((a, b) => a.donGia - b.donGia)
+  } else if (sortBy.value === 'price_desc') {
+    result = [...result].sort((a, b) => b.donGia - a.donGia)
   }
 
   return result
