@@ -108,7 +108,10 @@ const routes = [
       { path: 'reviews',          name: 'Reviews',         component: () => import('@/views/Reviews.vue'),         meta: { title: 'Đánh giá',                breadcrumb: ['Trang chủ', 'Đánh giá'] } },
       { path: 'messages',         name: 'Messages',        component: () => import('@/views/Messages.vue'),        meta: { title: 'Tin nhắn',                breadcrumb: ['Trang chủ', 'Tin nhắn'] } },
       { path: 'settings',         name: 'Settings',        component: () => import('@/views/Settings.vue'),        meta: { title: 'Cài đặt',                 breadcrumb: ['Trang chủ', 'Cài đặt'] } },
-      { path: 'audit-log',        name: 'AuditLog',        component: () => import('@/views/AuditLog.vue'),        meta: { title: 'Nhật ký hoạt động',       breadcrumb: ['Trang chủ', 'Cài đặt', 'Nhật ký hoạt động'] } }
+      { path: 'security-settings',name: 'SecuritySettings',component: () => import('@/views/SecuritySettings.vue'), meta: { title: 'Bảo mật',                 breadcrumb: ['Trang chủ', 'Cài đặt', 'Bảo mật'] } },
+      { path: 'audit-log',        name: 'AuditLog',        component: () => import('@/views/AuditLog.vue'),        meta: { title: 'Nhật ký hoạt động',       breadcrumb: ['Trang chủ', 'Cài đặt', 'Nhật ký hoạt động'] } },
+      { path: 'backup',           name: 'Backup',          component: () => import('@/views/Backup.vue'),          meta: { title: 'Sao lưu & Phục hồi',      breadcrumb: ['Trang chủ', 'Hệ thống', 'Sao lưu & Phục hồi'] } },
+      { path: 'payroll',          name: 'Payroll',         component: () => import('@/views/Payroll.vue'),         meta: { title: 'Lương thưởng',            breadcrumb: ['Trang chủ', 'Nhân sự', 'Lương thưởng'] } }
     ]
   },
 
