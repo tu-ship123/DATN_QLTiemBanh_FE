@@ -272,6 +272,7 @@ const mainMenu = [
   { path: '/admin/analytics',  icon: 'ph:chart-line-up-duotone',         label: 'Phân tích'             },
   { path: '/admin/messages',   icon: 'ph:chat-teardrop-dots-duotone',    label: 'Tin nhắn'              },
   { path: '/admin/categories', icon: 'ph:tag-duotone',                   label: 'Danh mục'              },
+  { path: '/admin/payroll',    icon: 'ph:money-wavy-duotone',            label: 'Lương thưởng'          },
 ]
 
 const secondMenu = [
@@ -283,8 +284,10 @@ const secondMenu = [
 ]
 
 const systemMenu = [
-  { path: '/admin/settings',  icon: 'ph:gear-duotone',    label: 'Cài đặt'            },
-  { path: '/admin/audit-log', icon: 'ph:clock-countdown-duotone', label: 'Nhật ký hoạt động' },
+  { path: '/admin/settings',          icon: 'ph:gear-duotone',            label: 'Cài đặt'            },
+  { path: '/admin/security-settings', icon: 'ph:shield-check-duotone',    label: 'Bảo mật'            },
+  { path: '/admin/backup',            icon: 'ph:database-duotone',        label: 'Sao lưu & Phục hồi' },
+  { path: '/admin/audit-log',         icon: 'ph:clock-countdown-duotone', label: 'Nhật ký hoạt động'  },
 ]
 
 const currentBreadcrumb = computed(() => route.meta?.breadcrumb ?? ['Trang chủ'])

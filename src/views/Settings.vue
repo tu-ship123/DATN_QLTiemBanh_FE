@@ -4,12 +4,13 @@
       <div>
         <p class="text-sm uppercase tracking-[.24em] text-cake-500">Cài đặt</p>
         <h1 class="text-3xl font-semibold text-slate-900">Thiết lập cửa hàng</h1>
-        <p class="mt-2 text-sm text-slate-500">Quản lý thông tin cửa hàng, bảo mật và thông báo trong cùng một giao diện gọn nhẹ.</p>
+        <p class="mt-2 text-sm text-slate-500">Quản lý thông tin cửa hàng, vận hành và thông báo.</p>
       </div>
       <el-button
         type="primary"
         class="rounded-3xl bg-gradient-to-r from-cake-500 to-orange-500 px-6 py-3 text-white shadow-sm shadow-cake-200"
         @click="saveSettings"
+        :loading="isSaving"
       >
         Lưu thay đổi
       </el-button>
@@ -31,16 +32,24 @@
             <el-form-item label="Địa chỉ">
               <el-input v-model="form.storeInfo.address" placeholder="Nhập địa chỉ cửa hàng" />
             </el-form-item>
+            <el-form-item label="Mô tả ngắn">
+              <el-input v-model="form.storeInfo.description" type="textarea" :rows="3" placeholder="Slogan hoặc mô tả ngắn về tiệm bánh..." />
+            </el-form-item>
           </el-form>
         </el-collapse-item>
 
-        <!-- Cấu hình vận hành: form dựng động từ mảng operationalConfigs.
-             Thêm/bớt 1 phần tử trong mảng là tự sinh thêm field, không cần sửa template. -->
         <el-collapse-item title="Cấu hình vận hành" name="2">
           <p class="mb-4 text-sm text-slate-400">
-            Các thông số áp dụng cho toàn bộ đơn hàng. Dữ liệu hiện đang là dữ liệu mẫu, chưa kết nối API.
+            Các thông số áp dụng cho toàn bộ đơn hàng và hệ thống website.
           </p>
           <el-form label-width="240px" class="space-y-4">
+            <el-form-item label="Bật tính năng thiết kế 3D">
+              <div>
+                <el-switch v-model="form.operational.enable3D" active-color="#fb923c" inactive-color="#d1d5db" />
+                <p class="mt-1 text-xs text-slate-400">Cho phép khách hàng sử dụng công cụ tự thiết kế bánh 3D trên website.</p>
+              </div>
+            </el-form-item>
+
             <el-form-item
               v-for="cfg in operationalConfigs"
               :key="cfg.key"
@@ -60,24 +69,7 @@
           </el-form>
         </el-collapse-item>
 
-        <el-collapse-item title="Cấu hình bảo mật" name="3">
-          <el-form :model="form.security" label-width="170px" class="space-y-4">
-            <el-form-item label="Mật khẩu hiện tại">
-              <el-input v-model="form.security.currentPassword" type="password" placeholder="••••••••" />
-            </el-form-item>
-            <el-form-item label="Mật khẩu mới">
-              <el-input v-model="form.security.newPassword" type="password" placeholder="••••••••" />
-            </el-form-item>
-            <el-form-item label="Xác nhận mật khẩu">
-              <el-input v-model="form.security.confirmPassword" type="password" placeholder="••••••••" />
-            </el-form-item>
-            <el-form-item label="Xác thực hai bước">
-              <el-switch v-model="form.security.twoFactor" active-color="#fb923c" inactive-color="#d1d5db" />
-            </el-form-item>
-          </el-form>
-        </el-collapse-item>
-
-        <el-collapse-item title="Cấu hình thông báo" name="4">
+        <el-collapse-item title="Cấu hình thông báo" name="3">
           <el-form :model="form.notifications" label-width="170px" class="space-y-4">
             <el-form-item label="Thông báo đơn hàng">
               <el-switch v-model="form.notifications.orderUpdates" active-color="#fb923c" inactive-color="#d1d5db" />
@@ -109,13 +101,11 @@ const form = reactive({
     name: 'Chocopine Bakery',
     email: 'hello@polycake.com',
     phone: '090 123 4567',
-    address: '123 Nguyễn Trãi, Quận 1'
+    address: '123 Nguyễn Trãi, Quận 1',
+    description: 'Tiệm bánh ngọt hạnh phúc mỗi ngày.'
   },
-  security: {
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
-    twoFactor: true
+  operational: {
+    enable3D: true
   },
   notifications: {
     orderUpdates: true,
@@ -124,10 +114,6 @@ const form = reactive({
   }
 });
 
-// key dùng để map với cột khoa_cau_hinh bên backend (bảng cau_hinh_he_thong).
-// Lưu ý: backend chỉ UPDATE cấu hình đã tồn tại sẵn trong DB (chưa có API tạo mới),
-// nên field nào chưa được seed sẵn trong DB sẽ giữ giá trị mặc định ở dưới và
-// việc lưu (PUT) cho key đó sẽ báo lỗi "không tìm thấy cấu hình".
 const operationalConfigs = reactive([
   { key: 'shipping_fee',        label: 'Phí vận chuyển',                 value: 20000,  min: 0, max: 200000,  step: 1000,  suffix: 'VNĐ', description: 'Áp dụng cho đơn hàng dưới ngưỡng miễn phí ship.' },
   { key: 'min_order_days',      label: 'Số ngày đặt hàng tối thiểu',     value: 2,      min: 0, max: 14,      step: 1,     suffix: 'ngày', description: 'Thời gian tối thiểu khách cần đặt trước khi nhận bánh.' },
@@ -135,9 +121,8 @@ const operationalConfigs = reactive([
   { key: 'max_order_per_day',   label: 'Số đơn nhận tối đa / ngày',      value: 50,     min: 1, max: 500,     step: 1,     suffix: 'đơn', description: '' },
 ]);
 
-// Map field storeInfo -> khoaCauHinh tương ứng (nếu backend có seed sẵn)
 const STORE_INFO_KEYS = {
-  name: 'store_name', email: 'store_email', phone: 'store_phone', address: 'store_address',
+  name: 'store_name', email: 'store_email', phone: 'store_phone', address: 'store_address', description: 'store_description'
 };
 
 async function loadSettings() {
@@ -157,6 +142,10 @@ async function loadSettings() {
     Object.entries(STORE_INFO_KEYS).forEach(([field, key]) => {
       if (byKey.has(key)) form.storeInfo[field] = byKey.get(key);
     });
+    
+    if (byKey.has('enable_3d')) {
+      form.operational.enable3D = byKey.get('enable_3d') === 'true';
+    }
   } catch (err) {
     console.warn('Không load được cấu hình hệ thống:', err.message);
     ElMessage.warning('Không thể tải cấu hình hệ thống từ server, đang hiển thị giá trị mặc định.');
@@ -170,6 +159,7 @@ const saveSettings = async () => {
   const toSave = [
     ...operationalConfigs.map(cfg => ({ key: cfg.key, value: String(cfg.value) })),
     ...Object.entries(STORE_INFO_KEYS).map(([field, key]) => ({ key, value: form.storeInfo[field] })),
+    { key: 'enable_3d', value: String(form.operational.enable3D) }
   ];
 
   const results = await Promise.allSettled(
