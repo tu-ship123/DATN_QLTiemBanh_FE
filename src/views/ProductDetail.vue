@@ -243,6 +243,11 @@
           <p v-if="r.noiDung" class="text-sm text-gray-600 leading-relaxed">{{ r.noiDung }}</p>
           <p v-else class="text-sm text-gray-400 italic">Khách hàng không để lại nhận xét.</p>
 
+          <a v-if="r.hinhAnh" :href="r.hinhAnh" target="_blank" rel="noopener"
+            class="block w-20 h-20 rounded-xl overflow-hidden border border-[#EDE0CC] hover:border-[#C4A882] transition-colors">
+            <img :src="r.hinhAnh" class="w-full h-full object-cover" alt="Ảnh khách hàng đính kèm" />
+          </a>
+
           <div v-if="r.phanHoiCuaTiem" class="bg-[#FDF6EC] rounded-xl p-3 border-l-4 border-[#7A5C3A]">
             <p class="text-xs font-bold text-[#5C4428] mb-1">💬 Phản hồi từ Chocopine:</p>
             <p class="text-sm text-[#5C4428]">{{ r.phanHoiCuaTiem }}</p>

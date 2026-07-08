@@ -315,6 +315,28 @@
                       class="w-full px-3 py-2.5 rounded-xl border border-[#EDE0CC] bg-white text-sm text-[#5C4428] outline-none focus:border-[#7A5C3A] resize-none"></textarea>
                   </div>
 
+                  <!-- Ảnh đính kèm -->
+                  <div>
+                    <label class="text-xs font-semibold text-[#9A7650] mb-2 block">Ảnh thực tế (không bắt buộc)</label>
+                    <div class="flex items-center gap-3">
+                      <div v-if="danhGia.hinhAnh"
+                        class="relative w-16 h-16 rounded-xl overflow-hidden bg-slate-100 border border-[#EDE0CC] shrink-0">
+                        <img :src="danhGia.hinhAnh" class="w-full h-full object-cover" alt="Ảnh đánh giá" />
+                        <button @click="danhGia.hinhAnh = null"
+                          class="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/60 text-white text-[10px] flex items-center justify-center">
+                          ✕
+                        </button>
+                      </div>
+                      <label
+                        class="cursor-pointer inline-flex items-center gap-1.5 text-xs font-bold text-[#7A5C3A] border border-dashed border-[#C4A882] rounded-xl px-3 py-2 hover:bg-[#FDF6EC] transition-colors">
+                        <iconify-icon icon="ph:camera-plus-duotone" class="text-base"></iconify-icon>
+                        {{ danhGia.hinhAnh ? 'Đổi ảnh' : 'Thêm ảnh' }}
+                        <input type="file" accept="image/*" class="hidden" @change="handleReviewImageChange" />
+                      </label>
+                    </div>
+                    <p class="text-[10px] text-[#A68B5C] mt-1">PNG, JPG tối đa 5MB</p>
+                  </div>
+
                   <button @click="guiDanhGia" :disabled="danhGiaLoading || !danhGia.soSao"
                     class="w-full py-2.5 rounded-xl text-xs font-bold text-white transition-colors disabled:opacity-60"
                     style="background:#7A5C3A;">
@@ -567,13 +589,13 @@ const xacNhanNhanHang = async () => {
 const moFormDanhGia = ref(false)
 const daDanhGia = ref(false)
 const danhGiaLoading = ref(false)
-const danhGia = ref({ sanPhamId: null, soSao: 0, noiDung: '' })
+const danhGia = ref({ sanPhamId: null, soSao: 0, noiDung: '', hinhAnh: null })
 
 // Tự điền sanPhamId và kiểm tra đã đánh giá chưa khi chuyển đơn
 watch(() => activeOrder.value, async (order) => {
   moFormDanhGia.value = false
   daDanhGia.value = false
-  danhGia.value = { sanPhamId: order?.items?.[0]?.sanPhamId || null, soSao: 0, noiDung: '' }
+  danhGia.value = { sanPhamId: order?.items?.[0]?.sanPhamId || null, soSao: 0, noiDung: '', hinhAnh: null }
 
   // Nếu đơn đã hoàn thành, hỏi BE xem đã đánh giá chưa
   if (order?.trangThai === 'HOAN_THANH') {
@@ -586,6 +608,18 @@ watch(() => activeOrder.value, async (order) => {
   }
 }, { immediate: true })
 
+// Chọn ảnh thực tế đính kèm đánh giá -> convert base64 (đồng bộ cách làm với ảnh sản phẩm)
+const handleReviewImageChange = (e) => {
+  const file = e.target.files?.[0]
+  if (!file) return
+  if (!file.type.startsWith('image/')) { showToast('Vui lòng chọn file ảnh', 'error'); return }
+  if (file.size > 5 * 1024 * 1024) { showToast('Ảnh tối đa 5MB', 'error'); return }
+  const reader = new FileReader()
+  reader.onload = () => { danhGia.value.hinhAnh = reader.result }
+  reader.readAsDataURL(file)
+  e.target.value = ''
+}
+
 const guiDanhGia = async () => {
   if (!danhGia.value.soSao) { showToast('Vui lòng chọn số sao!', 'error'); return }
   danhGiaLoading.value = true
@@ -595,6 +629,7 @@ const guiDanhGia = async () => {
       sanPhamId: danhGia.value.sanPhamId || activeOrder.value.items?.[0]?.sanPhamId,
       soSao: danhGia.value.soSao,
       noiDung: danhGia.value.noiDung,
+      hinhAnh: danhGia.value.hinhAnh,
     })
     // 2. Cộng điểm đánh giá
     await apiClient.post(`/api/v1/loyalty/cong-diem-danh-gia/${activeOrder.value.id}`)
