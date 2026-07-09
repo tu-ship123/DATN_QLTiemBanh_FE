@@ -25,8 +25,8 @@
         </button>
       </div>
     </div>
-     
-    <!-- 2 Cột Lkjnkayout -->
+
+    <!-- 2 Cột Layout -->
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
 
       <!-- CỘT TRÁI: Danh sách sản phẩm -->

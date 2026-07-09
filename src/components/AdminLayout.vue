@@ -289,6 +289,9 @@ const systemMenu = [
   { path: '/admin/security-settings', icon: 'ph:shield-check-duotone',    label: 'Bảo mật'            },
   { path: '/admin/backup',            icon: 'ph:database-duotone',        label: 'Sao lưu & Phục hồi' },
   { path: '/admin/audit-log',         icon: 'ph:clock-countdown-duotone', label: 'Nhật ký hoạt động'  },
+  { path: '/admin/health-check',      icon: 'ph:heartbeat-duotone',       label: 'Giám sát hệ thống'  },
+  { path: '/admin/rbac',              icon: 'ph:lock-key-duotone',        label: 'Phân quyền (RBAC)'  },
+  { path: '/admin/webhook',           icon: 'ph:webhooks-logo-duotone',   label: 'Webhook'            },
 ]
 
 const currentBreadcrumb = computed(() => route.meta?.breadcrumb ?? ['Trang chủ'])

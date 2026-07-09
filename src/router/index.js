@@ -112,6 +112,9 @@ const routes = [
       { path: 'security-settings',name: 'SecuritySettings',component: () => import('@/views/SecuritySettings.vue'), meta: { title: 'Bảo mật',                 breadcrumb: ['Trang chủ', 'Cài đặt', 'Bảo mật'] } },
       { path: 'audit-log',        name: 'AuditLog',        component: () => import('@/views/AuditLog.vue'),        meta: { title: 'Nhật ký hoạt động',       breadcrumb: ['Trang chủ', 'Cài đặt', 'Nhật ký hoạt động'] } },
       { path: 'backup',           name: 'Backup',          component: () => import('@/views/Backup.vue'),          meta: { title: 'Sao lưu & Phục hồi',      breadcrumb: ['Trang chủ', 'Hệ thống', 'Sao lưu & Phục hồi'] } },
+      { path: 'health-check',     name: 'HealthCheck',     component: () => import('@/views/HealthCheck.vue'),     meta: { title: 'Giám sát hệ thống',       breadcrumb: ['Trang chủ', 'Hệ thống', 'Giám sát hệ thống'] } },
+      { path: 'rbac',             name: 'RBACPage',        component: () => import('@/views/RBACPage.vue'),        meta: { title: 'Phân quyền (RBAC)',       breadcrumb: ['Trang chủ', 'Hệ thống', 'Phân quyền'] } },
+      { path: 'webhook',          name: 'WebhookPage',     component: () => import('@/views/WebhookPage.vue'),     meta: { title: 'Webhook',                 breadcrumb: ['Trang chủ', 'Hệ thống', 'Webhook'] } },
       { path: 'payroll',          name: 'Payroll',         component: () => import('@/views/Payroll.vue'),         meta: { title: 'Lương thưởng',            breadcrumb: ['Trang chủ', 'Nhân sự', 'Lương thưởng'] } }
     ]
   },
