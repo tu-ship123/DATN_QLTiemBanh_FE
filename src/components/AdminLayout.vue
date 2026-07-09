@@ -270,6 +270,7 @@ const mainMenu = [
   { path: '/admin/products',   icon: 'ph:cake-duotone',                  label: 'Sản phẩm'              },
   { path: '/admin/reviews',    icon: 'ph:star-duotone',                  label: 'Đánh giá'              },
   { path: '/admin/analytics',  icon: 'ph:chart-line-up-duotone',         label: 'Phân tích'             },
+  { path: '/admin/reports',    icon: 'ph:chart-pie-slice-duotone',       label: 'Báo cáo'               },
   { path: '/admin/messages',   icon: 'ph:chat-teardrop-dots-duotone',    label: 'Tin nhắn'              },
   { path: '/admin/categories', icon: 'ph:tag-duotone',                   label: 'Danh mục'              },
   { path: '/admin/payroll',    icon: 'ph:money-wavy-duotone',            label: 'Lương thưởng'          },
