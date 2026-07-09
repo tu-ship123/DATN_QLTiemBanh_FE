@@ -74,6 +74,18 @@ const routes = [
         name: 'Profile',
         component: () => import('@/views/Profile.vue'),
         meta: { title: 'Hồ sơ của tôi', breadcrumb: ['Cửa hàng', 'Hồ sơ'], requiresAuth: true, roles: ['ROLE_KHACH_HANG'] }
+      },
+      {
+        path: 'wishlist',
+        name: 'WishlistPage',
+        component: () => import('@/views/WishlistPage.vue'),
+        meta: { title: 'Thiết kế đã lưu', breadcrumb: ['Cửa hàng', 'Thiết kế đã lưu'], requiresAuth: true, roles: ['ROLE_KHACH_HANG'] }
+      },
+      {
+        path: 'address-book',
+        name: 'AddressBookPage',
+        component: () => import('@/views/AddressBookPage.vue'),
+        meta: { title: 'Sổ địa chỉ', breadcrumb: ['Cửa hàng', 'Sổ địa chỉ'], requiresAuth: true, roles: ['ROLE_KHACH_HANG'] }
       }
     ]
   },

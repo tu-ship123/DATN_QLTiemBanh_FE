@@ -70,6 +70,8 @@
                   </div>
                   <el-dropdown-item command="profile">Hồ sơ của tôi</el-dropdown-item>
                   <el-dropdown-item command="orders">Đơn hàng đã mua</el-dropdown-item>
+                  <el-dropdown-item command="wishlist">Thiết kế đã lưu</el-dropdown-item>
+                  <el-dropdown-item command="address-book">Sổ địa chỉ</el-dropdown-item>
                   <el-dropdown-item divided command="logout" class="dropdown-logout">Đăng xuất</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
@@ -222,6 +224,10 @@ const handleUserAction = async (command) => {
     router.push('/shop/profile')
   } else if (command === 'orders') {
     router.push('/shop/orders')
+  } else if (command === 'wishlist') {
+    router.push('/shop/wishlist')
+  } else if (command === 'address-book') {
+    router.push('/shop/address-book')
   }
 }
 
