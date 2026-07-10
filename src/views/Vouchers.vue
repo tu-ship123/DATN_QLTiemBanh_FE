@@ -105,6 +105,10 @@
             <div class="flex items-center gap-2">
               <span class="badge" :class="'badge-' + voucher.statusType">{{ voucher.status }}</span>
               <button
+                @click="router.push(`/admin/vouchers/${voucher.id}/usage`)"
+                class="text-xs px-2 py-1 rounded-lg text-amber-600 hover:bg-amber-50 transition flex items-center gap-1"
+              ><iconify-icon icon="ph:clock-counter-clockwise-duotone"></iconify-icon> Xem lượt dùng</button>
+              <button
                 @click="openEdit(voucher)"
                 class="text-xs px-2 py-1 rounded-lg text-blue-600 hover:bg-blue-50 transition"
               ><iconify-icon icon="ph:pencil-simple-duotone" class="mr-1"></iconify-icon> Sửa</button>
@@ -273,8 +277,11 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import apiClient from '../services/apiService'
+
+const router = useRouter()
 
 const loading = ref(false)
 const filterStatus = ref('Tất cả')

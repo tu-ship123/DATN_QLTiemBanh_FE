@@ -267,6 +267,7 @@ const mainMenu = [
   { path: '/admin/orders',     icon: 'ph:receipt-duotone',               label: 'Quản lý đơn hàng', badgeKey: 'orders' },
   { path: '/admin/customers',  icon: 'ph:users-duotone',                 label: 'Khách hàng'            },
   { path: '/admin/staff',      icon: 'ph:users-three-duotone',           label: 'Nhân sự & Phân quyền' },
+  { path: '/admin/staff-performance', icon: 'ph:trophy-duotone',         label: 'Hiệu suất nhân viên'   },
   { path: '/admin/products',   icon: 'ph:cake-duotone',                  label: 'Sản phẩm'              },
   { path: '/admin/reviews',    icon: 'ph:star-duotone',                  label: 'Đánh giá'              },
   { path: '/admin/analytics',  icon: 'ph:chart-line-up-duotone',         label: 'Phân tích'             },
