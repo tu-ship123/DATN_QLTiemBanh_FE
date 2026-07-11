@@ -33,6 +33,18 @@
             </div>
           </el-popover>
         </div>
+
+        <!-- Quét mã vạch -->
+        <div class="flex items-center gap-3 bg-white rounded-xl px-4 py-2.5 mb-4 border-2 border-dashed border-[#E8634A]/30 focus-within:border-[#E8634A] focus-within:border-solid focus-within:ring-2 focus-within:ring-[#E8634A]/20 transition-all">
+          <iconify-icon icon="ph:barcode" class="text-[#E8634A] text-xl shrink-0"></iconify-icon>
+          <input ref="barcodeInputRef" v-model="barcodeInput" type="text"
+            placeholder="Quét mã vạch sản phẩm rồi nhấn Enter..."
+            class="bg-transparent outline-none w-full text-sm text-[#1E2A3B] placeholder-gray-400 font-mono"
+            @keyup.enter="handleBarcodeScan" />
+          <button v-if="barcodeInput" @click="barcodeInput = ''; focusBarcodeInput()" class="text-gray-400 hover:text-gray-600">
+            <iconify-icon icon="ph:x" class="text-lg"></iconify-icon>
+          </button>
+        </div>
         <div class="flex gap-2 flex-wrap">
           <button
             v-for="tab in tabs" :key="tab.key" @click="activeTab = tab.key"
@@ -88,6 +100,7 @@
             <div class="text-xs font-black text-[#1E2A3B] truncate mb-0.5">{{ p.tenSanPham }}</div>
             <div class="text-xs font-bold text-[#E8634A]">{{ formatPrice(p.donGia) }}</div>
             <div class="text-[10px] text-gray-400 mt-0.5">Tồn: {{ p.soLuongTon }}</div>
+            <div class="text-[9px] text-gray-300 font-mono mt-0.5 truncate">{{ maVachOf(p) }}</div>
           </button>
         </div>
       </div>
@@ -99,14 +112,43 @@
         <div class="flex items-center justify-between mb-3">
           <div>
             <div class="font-display font-black text-base text-[#1E2A3B]">Đơn hiện tại</div>
-            <div class="text-xs text-gray-400 mt-0.5">#POS-{{ orderNo }}</div>
+            <div class="flex items-center gap-1.5 mt-0.5">
+              <span class="text-xs text-gray-400">#POS-{{ orderNo }}</span>
+              <span v-if="soTheRung.trim()" class="flex items-center gap-1 text-[11px] font-black text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
+                <iconify-icon icon="ph:bell-ringing-duotone" class="text-xs"></iconify-icon> Thẻ {{ soTheRung.trim() }}
+              </span>
+            </div>
           </div>
-          <button @click="clearCart" class="text-xs font-bold text-red-400 hover:text-red-500 px-3 py-1.5 rounded-lg hover:bg-red-50 transition flex items-center gap-1">
-            <iconify-icon icon="ph:trash-duotone" class="text-sm"></iconify-icon> Xóa tất cả
+          <div class="flex items-center gap-1">
+            <button @click="treoBill" :disabled="cart.length === 0"
+              class="text-xs font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1"
+              :class="cart.length === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-[#7A5C3A] hover:bg-[#FDF6EC]'">
+              <iconify-icon icon="ph:tray-duotone" class="text-sm"></iconify-icon> Treo bill
+            </button>
+            <button @click="clearCart" class="text-xs font-bold text-red-400 hover:text-red-500 px-3 py-1.5 rounded-lg hover:bg-red-50 transition flex items-center gap-1">
+              <iconify-icon icon="ph:trash-duotone" class="text-sm"></iconify-icon> Xóa tất cả
+            </button>
+          </div>
+        </div>
+
+        <!-- Dải bill đang treo -->
+        <div v-if="heldBills.length" class="flex items-center gap-2 overflow-x-auto pb-3 -mt-1 mb-3">
+          <button v-for="bill in heldBills" :key="bill.id" @click="resumeHeldBill(bill)"
+            class="shrink-0 flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-xl border border-amber-200 bg-amber-50 hover:bg-amber-100 transition-colors group">
+            <iconify-icon icon="ph:tray-duotone" class="text-amber-500 text-sm shrink-0"></iconify-icon>
+            <div class="text-left leading-tight">
+              <div class="text-[11px] font-black text-amber-700 whitespace-nowrap">{{ bill.label }}</div>
+              <div class="text-[10px] text-amber-500 whitespace-nowrap">{{ bill.cart.length }} món · {{ formatPrice(billTotal(bill)) }}</div>
+            </div>
+            <span @click.stop="discardHeldBill(bill)"
+              class="ml-1 w-5 h-5 rounded-full flex items-center justify-center text-amber-400 opacity-0 group-hover:opacity-100 hover:bg-amber-200 hover:text-amber-600 transition-all shrink-0">
+              <iconify-icon icon="ph:x-bold" class="text-[10px]"></iconify-icon>
+            </span>
           </button>
         </div>
+
         <!-- Email khách -->
-        <div class="relative">
+        <div class="relative mb-2">
           <iconify-icon icon="ph:user-duotone" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-base"></iconify-icon>
           <input
             v-model="emailKhach"
@@ -114,6 +156,49 @@
             placeholder="Email khách hàng (để trống = dùng email nhân viên)"
             class="w-full text-xs border border-[#EDE8E3] rounded-xl pl-8 pr-3 py-2 focus:outline-none focus:border-[#E8634A] focus:ring-1 focus:ring-[#E8634A]/20"
           />
+        </div>
+
+        <!-- Số thẻ rung -->
+        <div class="relative mb-2">
+          <iconify-icon icon="ph:bell-ringing-duotone" class="absolute left-3 top-1/2 -translate-y-1/2 text-amber-400 text-base"></iconify-icon>
+          <input
+            v-model="soTheRung"
+            type="text"
+            placeholder="Số thẻ rung (vd: A12) để gọi khách"
+            class="w-full text-xs border border-[#EDE8E3] rounded-xl pl-8 pr-3 py-2 focus:outline-none focus:border-[#E8634A] focus:ring-1 focus:ring-[#E8634A]/20"
+          />
+        </div>
+
+        <!-- Mã giảm giá -->
+        <div v-if="!appliedVoucher" class="relative">
+          <iconify-icon icon="ph:ticket-duotone" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-base"></iconify-icon>
+          <input
+            v-model="voucherCode"
+            type="text"
+            placeholder="Nhập mã giảm giá..."
+            @keyup.enter="applyVoucher"
+            class="w-full text-xs border border-[#EDE8E3] rounded-xl pl-8 pr-20 py-2 uppercase focus:outline-none focus:border-[#E8634A] focus:ring-1 focus:ring-[#E8634A]/20"
+          />
+          <button @click="applyVoucher" :disabled="!voucherCode.trim()"
+            class="absolute right-1.5 top-1/2 -translate-y-1/2 text-[11px] font-black px-3 py-1.5 rounded-lg transition"
+            :class="voucherCode.trim() ? 'bg-[#E8634A] text-white hover:bg-[#d4583f]' : 'bg-gray-100 text-gray-300 cursor-not-allowed'">
+            Áp dụng
+          </button>
+        </div>
+        <p v-if="voucherError" class="text-[11px] text-red-500 mt-1 flex items-center gap-1">
+          <iconify-icon icon="ph:warning-circle-duotone"></iconify-icon> {{ voucherError }}
+        </p>
+        <div v-if="appliedVoucher" class="flex items-center justify-between gap-2 bg-green-50 border border-green-200 rounded-xl px-3 py-2">
+          <div class="flex items-center gap-2 min-w-0">
+            <iconify-icon icon="ph:ticket-duotone" class="text-green-500 text-base shrink-0"></iconify-icon>
+            <div class="min-w-0">
+              <div class="text-[11px] font-black text-green-700 truncate">Mã "{{ appliedVoucher.code }}" đã áp dụng</div>
+              <div class="text-[10px] text-green-500 truncate">{{ appliedVoucher.moTa }} · -{{ formatPrice(discountAmount) }}</div>
+            </div>
+          </div>
+          <button @click="removeVoucher" class="shrink-0 text-green-400 hover:text-red-400 transition">
+            <iconify-icon icon="ph:x-circle-fill" class="text-lg"></iconify-icon>
+          </button>
         </div>
       </div>
 
@@ -158,11 +243,16 @@
           <span>Tạm tính ({{ totalQty }} món)</span>
           <span class="font-semibold text-[#1E2A3B]">{{ formatPrice(subtotal) }}</span>
         </div>
+        <div v-if="appliedVoucher" class="flex justify-between text-sm text-green-600">
+          <span>Giảm giá ({{ appliedVoucher.code }})</span>
+          <span class="font-semibold">-{{ formatPrice(discountAmount) }}</span>
+        </div>
         <div class="flex justify-between text-base font-black text-[#1E2A3B] pt-2 border-t border-[#EDE8E3]">
           <span>Tổng cộng</span>
-          <span class="text-[#E8634A] text-lg">{{ formatPrice(subtotal) }}</span>
+          <span class="text-[#E8634A] text-lg">{{ formatPrice(finalTotal) }}</span>
         </div>
         <p class="text-[10px] text-gray-400 text-center italic">(Giá hiển thị theo BE, không cộng thêm VAT ở FE)</p>
+        <p v-if="appliedVoucher" class="text-[10px] text-amber-500 text-center italic">(Mã giảm giá hiện đang demo giao diện, số tiền hệ thống ghi nhận sẽ đúng khi nối API)</p>
       </div>
 
       <div class="px-5 pb-5 space-y-2 shrink-0">
@@ -194,7 +284,7 @@
       <div class="space-y-4">
         <div class="text-center p-4 bg-[#FFF8F4] rounded-xl">
           <div class="text-sm text-gray-400 mb-1">Tổng tiền cần thanh toán</div>
-          <div class="text-3xl font-black text-[#E8634A]">{{ formatPrice(subtotal) }}</div>
+          <div class="text-3xl font-black text-[#E8634A]">{{ formatPrice(finalTotal) }}</div>
         </div>
 
         <div>
@@ -405,8 +495,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import apiClient from '@/services/apiService'
 import { productService } from '@/services/productService'
 import { accessoryService } from '@/services/AccessoryService'
@@ -423,6 +513,193 @@ const cart       = ref([])
 const orderNo    = ref(Math.floor(Math.random() * 9000) + 1000)
 const emailKhach = ref('')
 const ghiChu     = ref('')
+const soTheRung  = ref('')
+
+// ─── MÃ GIẢM GIÁ (voucher) ──────────────────────────────────────────────────
+// TODO: khi BE có API kiểm tra/áp mã giảm giá thật, thay danh sách giả lập này bằng lệnh gọi API
+const MOCK_VOUCHERS = {
+  GIAM10:  { loai: 'PHAN_TRAM', giaTri: 10,    toiThieu: 100000, moTa: 'Giảm 10% hóa đơn' },
+  GIAM20K: { loai: 'TIEN_MAT',  giaTri: 20000, toiThieu: 150000, moTa: 'Giảm 20.000đ' },
+  SALE50K: { loai: 'TIEN_MAT',  giaTri: 50000, toiThieu: 300000, moTa: 'Giảm 50.000đ cho hóa đơn từ 300k' },
+}
+const voucherCode    = ref('')
+const appliedVoucher = ref(null)  // { code, loai, giaTri, moTa }
+const voucherError   = ref('')
+
+function applyVoucher() {
+  const code = voucherCode.value.trim().toUpperCase()
+  voucherError.value = ''
+  if (!code) return
+
+  const v = MOCK_VOUCHERS[code]
+  if (!v) {
+    voucherError.value = 'Mã giảm giá không tồn tại hoặc đã hết hạn.'
+    return
+  }
+  if (subtotal.value < v.toiThieu) {
+    voucherError.value = `Đơn hàng cần tối thiểu ${formatPrice(v.toiThieu)} để dùng mã này.`
+    return
+  }
+  appliedVoucher.value = { code, ...v }
+  voucherCode.value = ''
+  ElMessage.success(`Đã áp dụng mã "${code}": ${v.moTa}`)
+}
+
+function removeVoucher() {
+  appliedVoucher.value = null
+  voucherError.value = ''
+}
+
+const discountAmount = computed(() => {
+  if (!appliedVoucher.value) return 0
+  const v = appliedVoucher.value
+  return v.loai === 'PHAN_TRAM'
+    ? Math.round(subtotal.value * v.giaTri / 100)
+    : Math.min(v.giaTri, subtotal.value)
+})
+
+const finalTotal = computed(() => Math.max(0, subtotal.value - discountAmount.value))
+
+// ─── QUÉT MÃ VẠCH ───────────────────────────────────────────────────────────
+const barcodeInput    = ref('')
+const barcodeInputRef = ref(null)
+
+// TODO: khi BE có trường mã vạch thật (vd. p.maVach) thì dùng trực tiếp, bỏ hàm giả lập này đi
+function maVachOf(p) {
+  return '89999' + String(p.id).padStart(8, '0')
+}
+
+function focusBarcodeInput() {
+  nextTick(() => barcodeInputRef.value?.focus())
+}
+
+function handleBarcodeScan() {
+  const code = barcodeInput.value.trim()
+  if (!code) return
+
+  // Cho phép quét mã vạch thật (giả lập) hoặc gõ thẳng ID sản phẩm để tiện test khi chưa có máy quét
+  const found = allProducts.value.find(p => maVachOf(p) === code || String(p.id) === code)
+
+  if (!found) {
+    ElMessage.error(`Không tìm thấy sản phẩm với mã: ${code}`)
+  } else if (found.soLuongTon === 0) {
+    ElMessage.warning(`"${found.tenSanPham}" đã hết hàng!`)
+  } else {
+    addToCart(found)
+    ElMessage.success(`Đã thêm "${found.tenSanPham}" vào giỏ`)
+  }
+  barcodeInput.value = ''
+  focusBarcodeInput()
+}
+
+// ─── TREO BILL ───────────────────────────────────────────────────────────────
+const heldBills = ref([])  // { id, label, cart, ghiChu, emailKhach, orderNo, createdAt }
+
+function billTotal(bill) {
+  return bill.cart.reduce((s, i) => s + Number(i.donGia) * i.qty, 0)
+}
+
+async function treoBill() {
+  if (cart.value.length === 0) {
+    ElMessage.warning('Giỏ hàng đang trống, không có gì để treo.')
+    return
+  }
+  try {
+    const { value: label } = await ElMessageBox.prompt(
+      'Đặt tên cho bill để dễ nhận biết khi mở lại (vd: "Bàn 5", "Chị Lan")',
+      'Treo bill',
+      {
+        confirmButtonText: 'Treo bill',
+        cancelButtonText: 'Huỷ',
+        inputValue: `Khách ${heldBills.value.length + 1}`,
+        inputValidator: (v) => !!v?.trim() || 'Vui lòng nhập tên bill',
+      }
+    )
+    heldBills.value.push({
+      id: Date.now(),
+      label: label.trim(),
+      cart: cart.value,
+      ghiChu: ghiChu.value,
+      emailKhach: emailKhach.value,
+      orderNo: orderNo.value,
+      soTheRung: soTheRung.value,
+      appliedVoucher: appliedVoucher.value,
+      createdAt: new Date(),
+    })
+    // Mở bill trắng mới để phục vụ khách khác
+    cart.value = []
+    ghiChu.value = ''
+    emailKhach.value = ''
+    soTheRung.value = ''
+    appliedVoucher.value = null
+    voucherError.value = ''
+    orderNo.value = Math.floor(Math.random() * 9000) + 1000
+    ElMessage.success(`Đã treo bill "${label.trim()}". Bạn có thể phục vụ khách khác ngay bây giờ.`)
+  } catch {
+    // Người dùng bấm Huỷ trên hộp thoại đặt tên -> không làm gì cả
+  }
+}
+
+async function resumeHeldBill(bill) {
+  const swapIn = () => {
+    heldBills.value = heldBills.value.filter(b => b.id !== bill.id)
+    cart.value = bill.cart
+    ghiChu.value = bill.ghiChu
+    emailKhach.value = bill.emailKhach
+    orderNo.value = bill.orderNo
+    soTheRung.value = bill.soTheRung || ''
+    appliedVoucher.value = bill.appliedVoucher || null
+    voucherError.value = ''
+    ElMessage.success(`Đã mở lại bill "${bill.label}"`)
+  }
+
+  if (cart.value.length === 0) {
+    swapIn()
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      'Giỏ hàng hiện tại chưa thanh toán. Bạn có muốn treo bill hiện tại lại trước khi mở bill khác không?',
+      'Giỏ hàng chưa trống',
+      { confirmButtonText: 'Treo bill hiện tại rồi mở', cancelButtonText: 'Huỷ', type: 'warning' }
+    )
+    await treoBillSilently()
+    swapIn()
+  } catch {
+    // Huỷ -> giữ nguyên, không chuyển bill
+  }
+}
+
+// Treo nhanh không hỏi tên, dùng khi resume bill khác mà giỏ hiện tại còn hàng
+async function treoBillSilently() {
+  if (cart.value.length === 0) return
+  heldBills.value.push({
+    id: Date.now(),
+    label: `Khách ${heldBills.value.length + 1}`,
+    cart: cart.value,
+    ghiChu: ghiChu.value,
+    emailKhach: emailKhach.value,
+    orderNo: orderNo.value,
+    soTheRung: soTheRung.value,
+    appliedVoucher: appliedVoucher.value,
+    createdAt: new Date(),
+  })
+}
+
+async function discardHeldBill(bill) {
+  try {
+    await ElMessageBox.confirm(
+      `Xoá bill "${bill.label}" đang treo? Hành động này không thể hoàn tác.`,
+      'Xác nhận xoá bill',
+      { confirmButtonText: 'Xoá', cancelButtonText: 'Huỷ', type: 'warning' }
+    )
+    heldBills.value = heldBills.value.filter(b => b.id !== bill.id)
+    ElMessage.info(`Đã xoá bill "${bill.label}"`)
+  } catch {
+    // Huỷ -> không xoá
+  }
+}
 
 // ─── CẢNH BÁO PHỤ KIỆN SẮP HẾT HÀNG ──────────────────────────────────────────
 // Ngưỡng cảnh báo: phụ kiện còn <= 10 đơn vị coi là sắp hết.
@@ -500,6 +777,7 @@ const confirmingQR     = ref(false)
 const qrData           = ref(null)       // Response từ API tạo đơn QR
 const qrImgError       = ref(false)
 const lastReceipt      = ref(null)       // receiptText từ BE để in sau
+const lastReceiptBuzzer = ref('')        // Số thẻ rung tại thời điểm chốt đơn, để hiện khi in lại
 const successData      = ref(null)       // Dữ liệu modal thành công
 
 // ─── TABS TỪ DANH MỤC THỰC ──────────────────────────────────────────────────
@@ -539,6 +817,7 @@ async function loadProducts() {
 onMounted(() => {
   loadProducts()
   loadAccessoryStock()
+  focusBarcodeInput()
 })
 
 // ─── FILTER SẢN PHẨM ────────────────────────────────────────────────────────
@@ -570,7 +849,7 @@ function increase(item) {
 }
 function decrease(item) { item.qty > 1 ? item.qty-- : removeItem(item) }
 function removeItem(item) { cart.value = cart.value.filter(i => i.id !== item.id) }
-function clearCart() { cart.value = []; ghiChu.value = ''; emailKhach.value = '' }
+function clearCart() { cart.value = []; ghiChu.value = ''; emailKhach.value = ''; soTheRung.value = ''; appliedVoucher.value = null; voucherError.value = ''; voucherCode.value = '' }
 
 // ─── MỞ MODAL ────────────────────────────────────────────────────────────────
 function openPayment(type) {
@@ -585,7 +864,7 @@ function openPayment(type) {
 }
 
 function calcChange() {
-  change.value = Number(cashGiven.value) - subtotal.value
+  change.value = Number(cashGiven.value) - finalTotal.value
 }
 
 async function cancelQR() {
@@ -641,6 +920,7 @@ async function submitOrder(phuongThuc) {
 
     // Lưu receiptText để in sau
     lastReceipt.value = data.receiptText
+    lastReceiptBuzzer.value = soTheRung.value.trim()
 
     if (phuongThuc === 'TIEN_MAT') {
       showCashModal.value = false
@@ -703,6 +983,10 @@ function newOrder() {
   change.value = 0
   ghiChu.value = ''
   emailKhach.value = ''
+  soTheRung.value = ''
+  appliedVoucher.value = null
+  voucherError.value = ''
+  voucherCode.value = ''
   successData.value = null
   // KHÔNG xóa lastReceipt để vẫn có thể in lại
 }
@@ -719,15 +1003,20 @@ function printReceiptText(text) {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
+  // Chèn số thẻ rung nổi bật ngay đầu hóa đơn để nhân viên gọi khách (chỉ hiển thị ở bản in, không đổi receiptText gốc từ BE)
+  const buzzerBlock = lastReceiptBuzzer.value
+    ? `================================\nSO THE RUNG: ${lastReceiptBuzzer.value.toUpperCase()}\n================================\n\n`
+    : ''
   const html = `
     <html><head>
       <title>Hóa đơn POS</title>
       <style>
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family: 'Courier New', monospace; font-size:12px; width:80mm; padding:4mm; white-space:pre; }
+        .buzzer { font-size:16px; font-weight:bold; text-align:center; }
         @media print { @page { size:80mm auto; margin:0; } body { width:80mm; } }
       </style>
-    </head><body>${escaped}</body></html>`
+    </head><body>${buzzerBlock ? `<div class="buzzer">${buzzerBlock}</div>` : ''}${escaped}</body></html>`
   const w = window.open('', '_blank', 'width=340,height=600')
   w.document.write(html)
   w.document.close()

@@ -72,6 +72,7 @@
                   <el-dropdown-item command="orders">Đơn hàng đã mua</el-dropdown-item>
                   <el-dropdown-item command="wishlist">Thiết kế đã lưu</el-dropdown-item>
                   <el-dropdown-item command="address-book">Sổ địa chỉ</el-dropdown-item>
+                  <el-dropdown-item command="change-password">Đổi mật khẩu</el-dropdown-item>
                   <el-dropdown-item divided command="logout" class="dropdown-logout">Đăng xuất</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
@@ -228,6 +229,8 @@ const handleUserAction = async (command) => {
     router.push('/shop/wishlist')
   } else if (command === 'address-book') {
     router.push('/shop/address-book')
+  } else if (command === 'change-password') {
+    router.push('/shop/change-password')
   }
 }
 

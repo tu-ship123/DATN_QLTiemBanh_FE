@@ -271,24 +271,33 @@ const mainMenu = [
   { path: '/admin/products',   icon: 'ph:cake-duotone',                  label: 'Sản phẩm'              },
   { path: '/admin/reviews',    icon: 'ph:star-duotone',                  label: 'Đánh giá'              },
   { path: '/admin/analytics',  icon: 'ph:chart-line-up-duotone',         label: 'Phân tích'             },
+  { path: '/admin/reports',    icon: 'ph:chart-pie-slice-duotone',       label: 'Báo cáo'               },
   { path: '/admin/messages',   icon: 'ph:chat-teardrop-dots-duotone',    label: 'Tin nhắn'              },
   { path: '/admin/categories', icon: 'ph:tag-duotone',                   label: 'Danh mục'              },
+  { path: '/admin/payroll',    icon: 'ph:money-wavy-duotone',            label: 'Lương thưởng'          },
 ]
 
 const secondMenu = [
-  { path: '/admin/inventory',   icon: 'ph:package-duotone',   label: 'Kho hàng'              },
-  { path: '/admin/decor-items', icon: 'ph:sparkle-duotone',   label: 'Phụ kiện trang trí'    },
-  { path: '/admin/vouchers',    icon: 'ph:ticket-duotone',    label: 'Voucher & Khuyến mãi'  },
+  { path: '/admin/inventory',       icon: 'ph:package-duotone',            label: 'Kho hàng'              },
+  { path: '/admin/inventory-alert', icon: 'ph:warning-circle-duotone',     label: 'Cảnh báo tồn kho'      },
+  { path: '/admin/purchase-order',  icon: 'ph:shopping-cart-simple-duotone', label: 'Đặt hàng nhập kho'   },
+  { path: '/admin/decor-items',     icon: 'ph:sparkle-duotone',            label: 'Phụ kiện trang trí'    },
+  { path: '/admin/vouchers',        icon: 'ph:ticket-duotone',             label: 'Voucher & Khuyến mãi'  },
 ]
 
 const systemMenu = [
-  { path: '/admin/settings',  icon: 'ph:gear-duotone',    label: 'Cài đặt'            },
-  { path: '/admin/audit-log', icon: 'ph:clock-countdown-duotone', label: 'Nhật ký hoạt động' },
+  { path: '/admin/settings',          icon: 'ph:gear-duotone',            label: 'Cài đặt'            },
+  { path: '/admin/security-settings', icon: 'ph:shield-check-duotone',    label: 'Bảo mật'            },
+  { path: '/admin/backup',            icon: 'ph:database-duotone',        label: 'Sao lưu & Phục hồi' },
+  { path: '/admin/audit-log',         icon: 'ph:clock-countdown-duotone', label: 'Nhật ký hoạt động'  },
+  { path: '/admin/health-check',      icon: 'ph:heartbeat-duotone',       label: 'Giám sát hệ thống'  },
+  { path: '/admin/rbac',              icon: 'ph:lock-key-duotone',        label: 'Phân quyền (RBAC)'  },
+  { path: '/admin/webhook',           icon: 'ph:webhooks-logo-duotone',   label: 'Webhook'            },
 ]
 
 const currentBreadcrumb = computed(() => route.meta?.breadcrumb ?? ['Trang chủ'])
 
-const isActive = (path) => route.path.startsWith(path)
+const isActive = (path) => route.path === path || route.path.startsWith(path + '/')
 
 const handleLogout = async () => {
   await authStore.logout()

@@ -86,6 +86,12 @@ const routes = [
         name: 'AddressBookPage',
         component: () => import('@/views/AddressBookPage.vue'),
         meta: { title: 'Sổ địa chỉ', breadcrumb: ['Cửa hàng', 'Sổ địa chỉ'], requiresAuth: true, roles: ['ROLE_KHACH_HANG'] }
+      },
+      {
+        path: 'change-password',
+        name: 'ChangePassword',
+        component: () => import('@/views/ChangePassword.vue'),
+        meta: { title: 'Đổi mật khẩu', breadcrumb: ['Cửa hàng', 'Hồ sơ', 'Đổi mật khẩu'], requiresAuth: true, roles: ['ROLE_KHACH_HANG'] }
       }
     ]
   },
@@ -107,14 +113,23 @@ const routes = [
       { path: 'decor-items', name: 'DecorItems',  component: () => import('@/views/DecorItems.vue'),      meta: { title: 'Phụ kiện trang trí',      breadcrumb: ['Trang chủ', 'Phụ kiện trang trí'] } },
       { path: 'staff',       name: 'Staff',       component: () => import('@/views/Staff.vue'),           meta: { title: 'Nhân sự & Phân quyền',    breadcrumb: ['Trang chủ', 'Nhân sự'] } },
       { path: 'staff-performance', name: 'StaffPerformancePage', component: () => import('@/views/StaffPerformancePage.vue'), meta: { title: 'Hiệu suất nhân viên', breadcrumb: ['Trang chủ', 'Hiệu suất nhân viên'] } },
-      { path: 'inventory',   name: 'Inventory',   component: () => import('@/views/Inventory.vue'),       meta: { title: 'Kho hàng',                breadcrumb: ['Trang chủ', 'Kho hàng'] } },
-      { path: 'vouchers',    name: 'Vouchers',    component: () => import('@/views/Vouchers.vue'),        meta: { title: 'Voucher',                 breadcrumb: ['Trang chủ', 'Voucher'] } },
+      { path: 'inventory',        name: 'Inventory',       component: () => import('@/views/Inventory.vue'),       meta: { title: 'Kho hàng',                breadcrumb: ['Trang chủ', 'Kho hàng'] } },
+      { path: 'inventory-alert',  name: 'InventoryAlert',  component: () => import('@/views/InventoryAlert.vue'), meta: { title: 'Cảnh báo tồn kho',        breadcrumb: ['Trang chủ', 'Kho hàng', 'Cảnh báo tồn kho'] } },
+      { path: 'purchase-order',   name: 'PurchaseOrder',   component: () => import('@/views/PurchaseOrder.vue'),  meta: { title: 'Đặt hàng nhập kho',       breadcrumb: ['Trang chủ', 'Kho hàng', 'Đặt hàng nhập kho'] } },
+      { path: 'vouchers',         name: 'Vouchers',        component: () => import('@/views/Vouchers.vue'),        meta: { title: 'Voucher',                 breadcrumb: ['Trang chủ', 'Voucher'] } },
       { path: 'vouchers/:id/usage', name: 'VoucherUsagePage', component: () => import('@/views/VoucherUsagePage.vue'), meta: { title: 'Lịch sử dùng voucher', breadcrumb: ['Trang chủ', 'Voucher', 'Lịch sử dùng'] } },
-      { path: 'analytics',   name: 'Analytics',   component: () => import('@/views/Analytics.vue'),       meta: { title: 'Phân tích',               breadcrumb: ['Trang chủ', 'Phân tích'] } },
-      { path: 'reviews',     name: 'Reviews',     component: () => import('@/views/Reviews.vue'),         meta: { title: 'Đánh giá',                breadcrumb: ['Trang chủ', 'Đánh giá'] } },
-      { path: 'messages',    name: 'Messages',    component: () => import('@/views/Messages.vue'),        meta: { title: 'Tin nhắn',                breadcrumb: ['Trang chủ', 'Tin nhắn'] } },
-      { path: 'settings',    name: 'Settings',    component: () => import('@/views/Settings.vue'),        meta: { title: 'Cài đặt',                 breadcrumb: ['Trang chủ', 'Cài đặt'] } },
-      { path: 'audit-log',   name: 'AuditLog',    component: () => import('@/views/AuditLog.vue'),        meta: { title: 'Nhật ký hoạt động',       breadcrumb: ['Trang chủ', 'Cài đặt', 'Nhật ký hoạt động'] } }
+      { path: 'analytics',        name: 'Analytics',       component: () => import('@/views/Analytics.vue'),       meta: { title: 'Phân tích',               breadcrumb: ['Trang chủ', 'Phân tích'] } },
+      { path: 'reports',          name: 'ReportsPage',     component: () => import('@/views/ReportsPage.vue'),     meta: { title: 'Báo cáo',                 breadcrumb: ['Trang chủ', 'Báo cáo'] } },
+      { path: 'reviews',          name: 'Reviews',         component: () => import('@/views/Reviews.vue'),         meta: { title: 'Đánh giá',                breadcrumb: ['Trang chủ', 'Đánh giá'] } },
+      { path: 'messages',         name: 'Messages',        component: () => import('@/views/Messages.vue'),        meta: { title: 'Tin nhắn',                breadcrumb: ['Trang chủ', 'Tin nhắn'] } },
+      { path: 'settings',         name: 'Settings',        component: () => import('@/views/Settings.vue'),        meta: { title: 'Cài đặt',                 breadcrumb: ['Trang chủ', 'Cài đặt'] } },
+      { path: 'security-settings',name: 'SecuritySettings',component: () => import('@/views/SecuritySettings.vue'), meta: { title: 'Bảo mật',                 breadcrumb: ['Trang chủ', 'Cài đặt', 'Bảo mật'] } },
+      { path: 'audit-log',        name: 'AuditLog',        component: () => import('@/views/AuditLog.vue'),        meta: { title: 'Nhật ký hoạt động',       breadcrumb: ['Trang chủ', 'Cài đặt', 'Nhật ký hoạt động'] } },
+      { path: 'backup',           name: 'Backup',          component: () => import('@/views/Backup.vue'),          meta: { title: 'Sao lưu & Phục hồi',      breadcrumb: ['Trang chủ', 'Hệ thống', 'Sao lưu & Phục hồi'] } },
+      { path: 'health-check',     name: 'HealthCheck',     component: () => import('@/views/HealthCheck.vue'),     meta: { title: 'Giám sát hệ thống',       breadcrumb: ['Trang chủ', 'Hệ thống', 'Giám sát hệ thống'] } },
+      { path: 'rbac',             name: 'RBACPage',        component: () => import('@/views/RBACPage.vue'),        meta: { title: 'Phân quyền (RBAC)',       breadcrumb: ['Trang chủ', 'Hệ thống', 'Phân quyền'] } },
+      { path: 'webhook',          name: 'WebhookPage',     component: () => import('@/views/WebhookPage.vue'),     meta: { title: 'Webhook',                 breadcrumb: ['Trang chủ', 'Hệ thống', 'Webhook'] } },
+      { path: 'payroll',          name: 'Payroll',         component: () => import('@/views/Payroll.vue'),         meta: { title: 'Lương thưởng',            breadcrumb: ['Trang chủ', 'Nhân sự', 'Lương thưởng'] } }
     ]
   },
 
@@ -126,6 +141,7 @@ const routes = [
     meta: { requiresAuth: true, roles: ['ROLE_NHAN_VIEN', 'ROLE_ADMIN'] },
     children: [
       { path: 'checkin',  name: 'StaffCheckin',  component: () => import('@/views/Checkin.vue'),       meta: { title: 'Chấm công',              breadcrumb: ['Nhân viên', 'Chấm công'] } },
+      { path: 'calendar', name: 'StaffCalendar', component: () => import('@/views/MyCalendar.vue'),    meta: { title: 'Lịch làm việc',          breadcrumb: ['Nhân viên', 'Lịch làm việc'] } },
       { path: 'pos',      name: 'StaffPOS',      component: () => import('@/views/POS.vue'),            meta: { title: 'Bán hàng tại quầy',      breadcrumb: ['Nhân viên', 'Bán hàng'] } },
       { path: 'orders',   name: 'StaffOrders',   component: () => import('@/views/StaffOrders.vue'),    meta: { title: 'Đơn hàng (Staff)',       breadcrumb: ['Nhân viên', 'Đơn hàng'] } },
       { path: 'products', name: 'StaffProducts', component: () => import('@/views/Products.vue'),       meta: { title: 'Sản phẩm (Staff)',       breadcrumb: ['Nhân viên', 'Sản phẩm'] } },
