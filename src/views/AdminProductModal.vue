@@ -9,65 +9,35 @@
     <el-form :model="form" label-position="top" v-loading="saving">
       <div class="grid grid-cols-2 gap-4">
 
-        <!-- Ảnh sản phẩm -->
-        <el-form-item label="Ảnh sản phẩm" class="col-span-2">
-          <div class="flex items-center gap-4 w-full">
-            <!-- Preview -->
-            <div class="w-24 h-24 rounded-xl overflow-hidden bg-slate-100 border border-dashed border-gray-300 flex items-center justify-center shrink-0">
-              <img v-if="form.anhSanPham && !isPlaceholder" :src="form.anhSanPham"
-                class="w-full h-full object-cover" alt="Xem trước ảnh"
-                @error="form.anhSanPham = defaultImage" />
-              <span v-else class="text-gray-300 text-3xl">
-                <iconify-icon icon="ph:cake-duotone"></iconify-icon>
-              </span>
-            </div>
-
-            <div class="flex flex-col gap-2 flex-1">
-              <!-- Tab chọn kiểu ảnh -->
-              <div class="flex gap-2">
-                <button type="button" @click="imageMode = 'upload'"
-                  class="text-xs px-3 py-1.5 rounded-lg font-semibold border transition-all"
-                  :class="imageMode === 'upload'
-                    ? 'bg-[#7A5C3A] text-white border-[#7A5C3A]'
-                    : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'">
-                  📁 Tải ảnh lên
-                </button>
-                <button type="button" @click="imageMode = 'url'"
-                  class="text-xs px-3 py-1.5 rounded-lg font-semibold border transition-all"
-                  :class="imageMode === 'url'
-                    ? 'bg-[#7A5C3A] text-white border-[#7A5C3A]'
-                    : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'">
-                  🔗 Nhập URL
+        <!-- Ảnh sản phẩm (gallery tối đa 5 tấm) -->
+        <el-form-item label="Ảnh sản phẩm (tối đa 5 tấm)" class="col-span-2">
+          <div class="w-full">
+            <div class="grid grid-cols-5 gap-3">
+              <!-- Các ảnh đã có -->
+              <div v-for="(img, idx) in form.danhSachAnh" :key="idx"
+                class="relative aspect-square rounded-xl overflow-hidden bg-slate-100 border border-gray-200 group">
+                <img :src="img" class="w-full h-full object-cover" alt="Ảnh sản phẩm" />
+                <span v-if="idx === 0"
+                  class="absolute top-1 left-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#7A5C3A] text-white">
+                  Ảnh chính
+                </span>
+                <button type="button" @click="removeGalleryImage(idx)"
+                  class="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  ✕
                 </button>
               </div>
 
-              <!-- Upload file -->
-              <template v-if="imageMode === 'upload'">
-                <label class="btn-secondary cursor-pointer inline-flex items-center gap-1.5 text-sm px-3 py-1.5 w-fit">
-                  <el-icon><Upload /></el-icon> Chọn ảnh từ máy
-                  <input type="file" accept="image/*" class="hidden" @change="handleFileChange" />
-                </label>
-                <p class="text-xs text-muted">PNG, JPG tối đa 5MB</p>
-              </template>
-
-              <!-- Nhập URL -->
-              <template v-if="imageMode === 'url'">
-                <el-input
-                  v-model="form.anhSanPham"
-                  placeholder="https://example.com/banh.jpg"
-                  size="small"
-                  clearable
-                />
-                <p class="text-xs text-muted">Dán link ảnh từ internet</p>
-              </template>
-
-              <!-- Xóa ảnh -->
-              <button v-if="form.anhSanPham && !isPlaceholder" type="button"
-                class="text-xs text-red-400 hover:text-red-500 text-left w-fit"
-                @click="form.anhSanPham = defaultImage">
-                Xóa ảnh
-              </button>
+              <!-- Ô thêm ảnh -->
+              <label v-if="form.danhSachAnh.length < 5"
+                class="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-[#7A5C3A] hover:bg-[#FDF6EC] transition-colors">
+                <el-icon class="text-xl text-gray-400"><Upload /></el-icon>
+                <span class="text-[10px] text-gray-400">Thêm ảnh</span>
+                <input type="file" accept="image/*" class="hidden" @change="handleGalleryFileChange" />
+              </label>
             </div>
+            <p class="text-xs text-muted mt-2">
+              PNG, JPG tối đa 5MB/ảnh · Ảnh đầu tiên sẽ là ảnh đại diện hiển thị ở danh sách sản phẩm.
+            </p>
           </div>
         </el-form-item>
 
@@ -130,7 +100,7 @@
 </template>
 
 <script setup>
-import { ref, watch, computed, onMounted } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Upload } from '@element-plus/icons-vue'
 import { productService } from '../services/productService'
@@ -144,7 +114,6 @@ const emit = defineEmits(['update:visible', 'save'])
 
 const categoryStore = useCategoryStore()
 const saving    = ref(false)
-const imageMode = ref('upload') // 'upload' | 'url'
 
 if (!categoryStore.categories.length) {
   categoryStore.fetchAdminCategories()
@@ -158,7 +127,7 @@ const emptyForm = () => ({
   donGia:          0,
   soLuongTon:      0,
   moTa:            '',
-  anhSanPham:      defaultImage,
+  danhSachAnh:     [],   // tối đa 5 ảnh, ảnh đầu tiên = ảnh đại diện (anhSanPham)
   trangThaiActive: true,
   isBestseller:    false,
   choPhepTuyChinh: false,
@@ -166,25 +135,25 @@ const emptyForm = () => ({
 
 const form = ref(emptyForm())
 
-const isPlaceholder = computed(() =>
-  !form.value.anhSanPham || form.value.anhSanPham === defaultImage
-)
-
 // Hàm đổ data vào form
 function fillForm(p) {
+  // Ưu tiên field mảng ảnh mới (danhSachAnh) nếu BE đã hỗ trợ; nếu chưa có,
+  // fallback về field cũ anhSanPham (1 ảnh) để tương thích ngược với BE cũ.
+  const anhCu = Array.isArray(p.danhSachAnh) && p.danhSachAnh.length
+    ? p.danhSachAnh
+    : (p.anhSanPham && p.anhSanPham !== defaultImage ? [p.anhSanPham] : [])
+
   form.value = {
     tenSanPham:      p.tenSanPham      || '',
     danhMucId:       p.danhMucId       || null,
     donGia:          p.donGia          || 0,
     soLuongTon:      p.soLuongTon      || 0,
     moTa:            p.moTa            || '',
-    anhSanPham:      p.anhSanPham      || defaultImage,
+    danhSachAnh:     anhCu.slice(0, 5),
     trangThaiActive: p.trangThai === 'DANG_BAN',
     isBestseller:    p.isBestseller    || false,
     choPhepTuyChinh: p.choPhepTuyChinh || false,
   }
-  imageMode.value = (p.anhSanPham && p.anhSanPham.startsWith('http') && p.anhSanPham !== defaultImage)
-    ? 'url' : 'upload'
 }
 
 // Fill form ngay khi component mount (v-if tạo lại component mỗi lần mở)
@@ -192,8 +161,7 @@ onMounted(() => {
   if (props.editingProduct) {
     fillForm(props.editingProduct)
   } else {
-    form.value      = emptyForm()
-    imageMode.value = 'upload'
+    form.value = emptyForm()
   }
 })
 
@@ -203,8 +171,7 @@ watch(() => props.visible, (val) => {
   if (props.editingProduct) {
     fillForm(props.editingProduct)
   } else {
-    form.value      = emptyForm()
-    imageMode.value = 'upload'
+    form.value = emptyForm()
   }
 })
 
@@ -214,25 +181,28 @@ watch(() => props.editingProduct, (p) => {
   if (p) {
     fillForm(p)
   } else {
-    form.value      = emptyForm()
-    imageMode.value = 'upload'
+    form.value = emptyForm()
   }
 })
 
-function handleFileChange(e) {
+function handleGalleryFileChange(e) {
   const file = e.target.files?.[0]
   if (!file) return
+  if (form.value.danhSachAnh.length >= 5) { ElMessage.warning('Chỉ được tối đa 5 ảnh'); return }
   if (!file.type.startsWith('image/')) { ElMessage.warning('Vui lòng chọn file ảnh'); return }
   if (file.size > 5 * 1024 * 1024)    { ElMessage.warning('Ảnh tối đa 5MB'); return }
   const reader = new FileReader()
-  reader.onload = () => { form.value.anhSanPham = reader.result }
+  reader.onload = () => { form.value.danhSachAnh.push(reader.result) }
   reader.readAsDataURL(file)
   e.target.value = ''
 }
 
+function removeGalleryImage(idx) {
+  form.value.danhSachAnh.splice(idx, 1)
+}
+
 function resetForm() {
-  form.value      = emptyForm()
-  imageMode.value = 'upload'
+  form.value = emptyForm()
 }
 
 function buildPayload() {
@@ -242,7 +212,9 @@ function buildPayload() {
     donGia:          Number(form.value.donGia),
     soLuongTon:      Number(form.value.soLuongTon),
     moTa:            form.value.moTa,
-    anhSanPham:      isPlaceholder.value ? null : form.value.anhSanPham,
+    // Gửi cả 2 field để tương thích: BE mới đọc danhSachAnh (mảng), BE cũ đọc anhSanPham (1 ảnh = ảnh đầu tiên)
+    danhSachAnh:     form.value.danhSachAnh,
+    anhSanPham:      form.value.danhSachAnh[0] || null,
     trangThai:       form.value.trangThaiActive ? 'DANG_BAN' : 'TAM_AN',
     isBestseller:    form.value.isBestseller,
     choPhepTuyChinh: form.value.choPhepTuyChinh,
