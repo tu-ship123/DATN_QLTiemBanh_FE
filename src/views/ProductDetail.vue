@@ -42,11 +42,11 @@
     <!-- Nội dung chi tiết -->
     <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-12">
 
-      <!-- Ảnh sản phẩm -->
+      <!-- Ảnh sản phẩm (slider tối đa 5 tấm) -->
       <div class="space-y-4">
-        <div class="relative rounded-[28px] overflow-hidden bg-slate-50 h-[480px] shadow-lg">
+        <div class="relative rounded-[28px] overflow-hidden bg-slate-50 h-[480px] shadow-lg group">
           <img
-            :src="product.anhSanPham || defaultImage"
+            :src="anhDangXem || defaultImage"
             :alt="product.tenSanPham"
             class="w-full h-full object-cover"
             @error="handleImageError"
@@ -55,6 +55,30 @@
           <div class="absolute left-5 top-5 rounded-full bg-white/95 backdrop-blur px-4 py-1.5 text-xs font-bold text-[#7A5C3A] shadow">
             {{ product.tenDanhMuc }}
           </div>
+
+          <!-- Nút điều hướng, chỉ hiện khi có > 1 ảnh -->
+          <template v-if="danhSachAnhSanPham.length > 1">
+            <button @click="anhIndex = (anhIndex - 1 + danhSachAnhSanPham.length) % danhSachAnhSanPham.length"
+              class="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 shadow flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white">
+              <iconify-icon icon="ph:caret-left-bold" class="text-[#5C4428]"></iconify-icon>
+            </button>
+            <button @click="anhIndex = (anhIndex + 1) % danhSachAnhSanPham.length"
+              class="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 shadow flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white">
+              <iconify-icon icon="ph:caret-right-bold" class="text-[#5C4428]"></iconify-icon>
+            </button>
+            <div class="absolute bottom-4 right-5 rounded-full bg-black/50 text-white text-xs font-bold px-2.5 py-1">
+              {{ anhIndex + 1 }}/{{ danhSachAnhSanPham.length }}
+            </div>
+          </template>
+        </div>
+
+        <!-- Dải thumbnail, chỉ hiện khi có > 1 ảnh -->
+        <div v-if="danhSachAnhSanPham.length > 1" class="flex gap-3">
+          <button v-for="(img, idx) in danhSachAnhSanPham" :key="idx" @click="anhIndex = idx"
+            class="w-20 h-20 rounded-2xl overflow-hidden shrink-0 border-2 transition-colors"
+            :class="idx === anhIndex ? 'border-[#7A5C3A]' : 'border-transparent opacity-70 hover:opacity-100'">
+            <img :src="img" class="w-full h-full object-cover" alt="Ảnh góc khác" />
+          </button>
         </div>
       </div>
 
@@ -281,6 +305,21 @@ const qty = ref(1)
 const defaultImage = 'https://placehold.co/600x480?text=Polycake'
 
 // ==========================================
+// GALLERY ẢNH SẢN PHẨM (tối đa 5 tấm, slider)
+// ==========================================
+// Ưu tiên field mảng ảnh mới (danhSachAnh) nếu BE đã hỗ trợ; nếu chưa có,
+// fallback về field cũ anhSanPham (1 ảnh) để tương thích ngược.
+const danhSachAnhSanPham = computed(() => {
+  if (!product.value) return []
+  if (Array.isArray(product.value.danhSachAnh) && product.value.danhSachAnh.length) {
+    return product.value.danhSachAnh.slice(0, 5)
+  }
+  return product.value.anhSanPham ? [product.value.anhSanPham] : []
+})
+const anhIndex = ref(0)
+const anhDangXem = computed(() => danhSachAnhSanPham.value[anhIndex.value] || defaultImage)
+
+// ==========================================
 // ĐÁNH GIÁ THẬT TỪ API
 // ==========================================
 const reviews = ref([])
@@ -323,6 +362,7 @@ const handleImageError = (e) => {
 const loadProduct = async () => {
   loading.value = true
   qty.value = 1
+  anhIndex.value = 0
   try {
     const id = Number(route.params.id)
 
