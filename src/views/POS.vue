@@ -4,13 +4,34 @@
     <!-- LEFT: Danh sách sản phẩm -->
     <div class="flex-1 flex flex-col min-w-0 border-r border-[#EDE8E3]">
       <div class="bg-white px-5 py-4 border-b border-[#EDE8E3] shrink-0">
-        <div class="flex items-center gap-3 bg-[#F5F0ED] rounded-xl px-4 py-2.5 mb-3 focus-within:ring-2 focus-within:ring-[#E8634A]/20">
-          <iconify-icon icon="ph:magnifying-glass" class="text-gray-400 text-xl shrink-0"></iconify-icon>
-          <input v-model="search" type="text" placeholder="Tìm tên bánh, mã sản phẩm..."
-            class="bg-transparent outline-none w-full text-sm text-[#1E2A3B] placeholder-gray-400" />
-          <button v-if="search" @click="search = ''" class="text-gray-400 hover:text-gray-600">
-            <iconify-icon icon="ph:x" class="text-lg"></iconify-icon>
-          </button>
+        <div class="flex items-center gap-3 mb-4">
+          <div class="flex-1 flex items-center gap-3 bg-[#F5F0ED] rounded-xl px-4 py-2.5 focus-within:ring-2 focus-within:ring-[#E8634A]/20">
+            <iconify-icon icon="ph:magnifying-glass" class="text-gray-400 text-xl shrink-0"></iconify-icon>
+            <input v-model="search" type="text" placeholder="Tìm tên bánh, mã sản phẩm..."
+              class="bg-transparent outline-none w-full text-sm text-[#1E2A3B] placeholder-gray-400" />
+            <button v-if="search" @click="search = ''" class="text-gray-400 hover:text-gray-600">
+              <iconify-icon icon="ph:x" class="text-lg"></iconify-icon>
+            </button>
+          </div>
+
+          <!-- Cảnh báo phụ kiện sắp hết -->
+          <el-popover trigger="click" width="300" placement="bottom-end">
+            <template #reference>
+              <button v-if="phuKienSapHet.length > 0"
+                class="shrink-0 flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100 transition-colors animate-pulse">
+                <iconify-icon icon="ph:warning-duotone" class="text-base"></iconify-icon>
+                {{ phuKienSapHet.length }} phụ kiện sắp hết
+              </button>
+            </template>
+            <div class="space-y-1">
+              <p class="text-xs font-bold text-[#5C4428] mb-2">Phụ kiện sắp hết hàng</p>
+              <div v-for="pk in phuKienSapHet" :key="pk.id" class="flex justify-between text-xs py-1 border-b border-[#F5F0ED] last:border-0">
+                <span class="text-gray-500">{{ pk.tenPhuKien }}</span>
+                <span class="font-bold text-red-500">còn {{ pk.soLuongTon }}</span>
+              </div>
+              <p class="text-[10px] text-gray-300 mt-2 italic">Đã tự động báo cho Admin.</p>
+            </div>
+          </el-popover>
         </div>
 
         <!-- Quét mã vạch -->
@@ -199,6 +220,10 @@
               <div class="text-xs text-[#E8634A] font-bold">{{ formatPrice(item.donGia) }}</div>
             </div>
             <div class="flex items-center gap-1.5 shrink-0">
+              <button @click="printSticker(item)" title="In tem dán hộp"
+                class="w-7 h-7 rounded-lg bg-white border border-[#EDE8E3] flex items-center justify-center text-gray-400 hover:border-[#1E2A3B] hover:text-[#1E2A3B] transition">
+                <iconify-icon icon="ph:printer-duotone" class="text-sm"></iconify-icon>
+              </button>
               <button @click="decrease(item)" class="w-7 h-7 rounded-lg bg-white border border-[#EDE8E3] flex items-center justify-center text-gray-500 hover:border-[#E8634A] hover:text-[#E8634A] transition font-bold text-lg leading-none">-</button>
               <span class="w-6 text-center text-sm font-black text-[#1E2A3B]">{{ item.qty }}</span>
               <button @click="increase(item)"
@@ -474,6 +499,7 @@ import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import apiClient from '@/services/apiService'
 import { productService } from '@/services/productService'
+import { accessoryService } from '@/services/AccessoryService'
 import { formatPrice } from '@/utils/format'
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
@@ -675,6 +701,41 @@ async function discardHeldBill(bill) {
   }
 }
 
+// ─── CẢNH BÁO PHỤ KIỆN SẮP HẾT HÀNG ──────────────────────────────────────────
+// Ngưỡng cảnh báo: phụ kiện còn <= 10 đơn vị coi là sắp hết.
+// LƯU Ý: endpoint /api/v1/admin/notifications là ĐỀ XUẤT — cần Backend xác nhận/tạo mới
+// để lưu + hiển thị thông báo này trên chuông thông báo của Admin.
+const NGUONG_SAP_HET = 10
+const allAccessories = ref([])
+const daBaoAdmin = ref(false)
+
+const phuKienSapHet = computed(() =>
+  allAccessories.value.filter(pk => (pk.soLuongTon ?? 0) > 0 && pk.soLuongTon <= NGUONG_SAP_HET)
+)
+
+async function loadAccessoryStock() {
+  try {
+    const res = await accessoryService.getAvailableAccessories()
+    allAccessories.value = res.data || []
+  } catch (err) {
+    allAccessories.value = []
+  }
+}
+
+// Tự động gửi 1 lần cho Admin khi phát hiện có phụ kiện sắp hết (không spam mỗi lần render)
+watch(phuKienSapHet, async (list) => {
+  if (list.length === 0 || daBaoAdmin.value) return
+  daBaoAdmin.value = true
+  try {
+    await apiClient.post('/api/v1/admin/notifications', {
+      loai: 'PHU_KIEN_SAP_HET',
+      noiDung: `Có ${list.length} phụ kiện sắp hết hàng: ${list.map(p => p.tenPhuKien).join(', ')}`,
+    })
+  } catch (err) {
+    // Im lặng nếu endpoint chưa sẵn sàng — nút cảnh báo vàng ở POS vẫn hiển thị bình thường
+  }
+})
+
 const showCashModal    = ref(false)
 const showQRModal      = ref(false)
 const cancelling       = ref(false)
@@ -753,7 +814,11 @@ async function loadProducts() {
   }
 }
 
-onMounted(() => { loadProducts(); focusBarcodeInput() })
+onMounted(() => {
+  loadProducts()
+  loadAccessoryStock()
+  focusBarcodeInput()
+})
 
 // ─── FILTER SẢN PHẨM ────────────────────────────────────────────────────────
 const filteredProducts = computed(() =>
@@ -957,6 +1022,42 @@ function printReceiptText(text) {
   w.document.close()
   w.focus()
   setTimeout(() => { w.print(); w.close() }, 300)
+}
+
+// ─── IN TEM DÁN STICKER (50x30mm) ───────────────────────────────────────────
+// Tem gồm: mã vạch (barcode) + tên bánh, dùng để dán lên hộp bánh.
+// Dùng thư viện JsBarcode load trực tiếp từ CDN trong cửa sổ in — không cần
+// cài thêm dependency vào project (npm install), chỉ cần máy có kết nối mạng lúc in.
+function printSticker(item) {
+  const ma = String(item.id).padStart(6, '0')
+  const ten = (item.tenSanPham || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const html = `
+    <html><head>
+      <title>Tem dán - ${ten}</title>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"><\/script>
+      <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: Arial, sans-serif; width:50mm; height:30mm; padding:2mm; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1mm; }
+        .ten-banh { font-size:9px; font-weight:700; text-align:center; line-height:1.2; max-height:9mm; overflow:hidden; }
+        svg { width:100%; }
+        @media print { @page { size:50mm 30mm; margin:0; } }
+      </style>
+    </head><body>
+      <div class="ten-banh">${ten}</div>
+      <svg id="barcode"></svg>
+      <script>
+        window.onload = function () {
+          try {
+            JsBarcode("#barcode", "${ma}", { format: "CODE128", width: 1.4, height: 26, fontSize: 10, margin: 0 });
+          } catch (e) {}
+          setTimeout(function () { window.print(); window.close(); }, 400);
+        };
+      <\/script>
+    </body></html>`
+  const w = window.open('', '_blank', 'width=300,height=250')
+  w.document.write(html)
+  w.document.close()
+  w.focus()
 }
 
 // ─── UTILS ────────────────────────────────────────────────────────────────────

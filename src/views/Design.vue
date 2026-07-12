@@ -36,17 +36,32 @@
               <p class="chocopine-desc" style="margin: 0; font-size: 12px; text-align: left;">Tổng tiền chiếc bánh này</p>
               <p class="text-2xl font-black" style="color: var(--color-primary); margin: 2px 0 0;">{{ formatPrice(currentPrice) }}</p>
             </div>
-            <button
-              type="button"
-              class="chocopine-btn-primary px-6 py-3.5 disabled:opacity-60 disabled:cursor-wait"
-              :disabled="placingOrder"
-              @click="datBanhNay"
-            >
-              <span v-if="placingOrder" class="inline-flex items-center gap-2">
-                <span class="cake3d-spinner-sm"></span> Đang thêm vào giỏ...
-              </span>
-              <span v-else>Đặt bánh này</span>
-            </button>
+            <div class="flex flex-wrap gap-2">
+              <button
+                type="button"
+                class="chocopine-btn-secondary px-5 py-3.5 disabled:opacity-60"
+                :disabled="savingDesign"
+                @click="luuThietKe"
+              >
+                <span v-if="savingDesign" class="inline-flex items-center gap-2">
+                  <span class="cake3d-spinner-sm"></span> Đang lưu...
+                </span>
+                <span v-else class="inline-flex items-center gap-1.5">
+                  <iconify-icon icon="ph:heart-duotone" class="text-base"></iconify-icon> Lưu thiết kế
+                </span>
+              </button>
+              <button
+                type="button"
+                class="chocopine-btn-primary px-6 py-3.5 disabled:opacity-60 disabled:cursor-wait"
+                :disabled="placingOrder"
+                @click="datBanhNay"
+              >
+                <span v-if="placingOrder" class="inline-flex items-center gap-2">
+                  <span class="cake3d-spinner-sm"></span> Đang thêm vào giỏ...
+                </span>
+                <span v-else>Đặt bánh này</span>
+              </button>
+            </div>
           </div>
         </div>
         <DecorPanel @change="handleDecorChange" @request-add="handleRequestAdd" @request-remove="handleRequestRemove" />
@@ -86,6 +101,7 @@ const selectedAccessories = ref([]) // [{ phu_kien_id, so_luong, ten_phu_kien, d
 const currentDesign = ref(null) // { shape, size, tierCount, frostingColor, message, messageColor }
 const currentPrice = ref(0)
 const placingOrder = ref(false)
+const savingDesign = ref(false)
 
 const builderRef = ref(null)
 const selectingTemplateId = ref(null)
@@ -128,6 +144,34 @@ async function selectTemplate(mau) {
     await builderRef.value?.loadTemplate(mau)
   } finally {
     selectingTemplateId.value = null
+  }
+}
+
+/** Khách bấm "Lưu thiết kế": lưu lại state hiện tại của bánh (không thêm vào giỏ, không
+ *  cần thanh toán) để sau này vào WishlistPage xem lại / đặt lại.
+ *  LƯU Ý: endpoint /api/v1/wishlist/thiet-ke là ĐỀ XUẤT — cần Backend xác nhận/tạo mới. */
+async function luuThietKe() {
+  if (!currentDesign.value) {
+    alert('Bạn cần chỉnh ít nhất 1 lựa chọn trên bánh trước khi lưu nhé!')
+    return
+  }
+  if (!authStore.isAuthenticated) {
+    router.push({ path: '/login', query: { redirect: '/shop/design' } })
+    return
+  }
+
+  savingDesign.value = true
+  try {
+    const thietKe = builderRef.value?.captureSnapshot() || currentDesign.value
+    await apiClient.post('/api/v1/wishlist/thiet-ke', {
+      thietKe: JSON.stringify(thietKe),
+      gia: currentPrice.value,
+    })
+    alert('Đã lưu thiết kế! Vào mục "Thiết kế đã lưu" trong hồ sơ để xem lại nhé.')
+  } catch (e) {
+    alert(e.response?.data || 'Không thể lưu thiết kế, vui lòng thử lại.')
+  } finally {
+    savingDesign.value = false
   }
 }
 
