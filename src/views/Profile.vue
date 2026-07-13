@@ -85,23 +85,18 @@
           <input v-model="form.soDienThoai" type="text" placeholder="Nhập số điện thoại"
             class="w-full px-4 py-3 rounded-xl border border-[#EDE0CC] bg-[#FDF6EC] text-sm text-[#5C4428] outline-none focus:border-[#7A5C3A] focus:ring-2 focus:ring-[#7A5C3A]/10 transition-all" />
         </div>
-        <div>
-          <label class="text-xs font-semibold text-[#9A7650] mb-1 block">Ngày sinh</label>
-          <input v-model="form.ngaySinh" type="date"
-            class="w-full px-4 py-3 rounded-xl border border-[#EDE0CC] bg-[#FDF6EC] text-sm text-[#5C4428] outline-none focus:border-[#7A5C3A] focus:ring-2 focus:ring-[#7A5C3A]/10 transition-all" />
-        </div>
-        <div class="sm:col-span-2">
-          <label class="text-xs font-semibold text-[#9A7650] mb-1 block">Địa chỉ</label>
-          <input v-model="form.diaChi" type="text" placeholder="Số nhà, đường, phường/xã, quận/huyện"
-            class="w-full px-4 py-3 rounded-xl border border-[#EDE0CC] bg-[#FDF6EC] text-sm text-[#5C4428] outline-none focus:border-[#7A5C3A] focus:ring-2 focus:ring-[#7A5C3A]/10 transition-all" />
-        </div>
       </div>
+      <p class="text-xs text-[#A68B5C]">
+        Muốn quản lý nhiều địa chỉ giao hàng? Vào mục
+        <RouterLink to="/shop/address-book" class="font-semibold text-[#7A5C3A] hover:underline">Sổ địa chỉ</RouterLink>.
+      </p>
 
       <div class="flex flex-col sm:flex-row items-center gap-3 pt-2">
-        <button @click="luuThongTin"
-          class="chocopine-btn-primary px-8 py-3 text-sm w-full sm:w-auto justify-center">
-          <iconify-icon icon="ph:floppy-disk-duotone" class="text-base mr-1"></iconify-icon>
-          Lưu thay đổi
+        <button @click="luuThongTin" :disabled="savingThongTin"
+          class="chocopine-btn-primary px-8 py-3 text-sm w-full sm:w-auto justify-center disabled:opacity-60">
+          <span v-if="savingThongTin" class="inline-block w-4 h-4 border-2 border-white/60 border-t-white rounded-full animate-spin mr-1"></span>
+          <iconify-icon v-else icon="ph:floppy-disk-duotone" class="text-base mr-1"></iconify-icon>
+          {{ savingThongTin ? 'Đang lưu...' : 'Lưu thay đổi' }}
         </button>
         <RouterLink to="/shop/change-password"
           class="w-full sm:w-auto text-center px-8 py-3 rounded-2xl text-sm font-bold border border-[#EDE0CC] text-[#7A5C3A] hover:bg-[#FDF6EC] transition-colors no-underline">
@@ -293,7 +288,7 @@ const tabs = [
 const activeTab = ref('voucher')  // Mặc định mở tab voucher
 
 // ─── Form thông tin ───────────────────────────────────────────────────────────
-const form = ref({ hoTen: '', soDienThoai: '', ngaySinh: '', diaChi: '' })
+const form = ref({ hoTen: '', soDienThoai: '' })
 
 // ─── Avatar ───────────────────────────────────────────────────────────────────
 const fileInputRef = ref(null)
@@ -356,8 +351,24 @@ const showToast = (msg, type = 'info') => {
 
 // ─── Load dữ liệu ────────────────────────────────────────────────────────────
 onMounted(async () => {
-  await Promise.all([layDiem(), layVoucher(), layGoiDoi()])
+  await Promise.all([layHoSo(), layDiem(), layVoucher(), layGoiDoi()])
 })
+
+const loadingHoSo = ref(false)
+
+async function layHoSo() {
+  loadingHoSo.value = true
+  try {
+    const res = await apiClient.get('/api/v1/users/me')
+    form.value.hoTen = res.data.hoTen || ''
+    form.value.soDienThoai = res.data.soDienThoai || ''
+    if (res.data.anhDaiDien) avatarPreview.value = res.data.anhDaiDien
+  } catch (e) {
+    console.error('Lỗi lấy hồ sơ:', e)
+  } finally {
+    loadingHoSo.value = false
+  }
+}
 
 async function layDiem() {
   loadingDiem.value = true
@@ -410,9 +421,31 @@ async function doiDiem(goi) {
   }
 }
 
+const savingThongTin = ref(false)
 async function luuThongTin() {
-  // TODO: nối API cập nhật hồ sơ (multipart/form-data khi có avatarFile) khi BE sẵn sàng
-  showToast('Đã lưu thông tin (giao diện demo, chưa lưu vào hệ thống).', 'success')
+  if (!form.value.hoTen.trim()) {
+    showToast('Vui lòng nhập họ và tên.', 'error')
+    return
+  }
+  savingThongTin.value = true
+  try {
+    const res = await apiClient.put('/api/v1/users/me', {
+      hoTen: form.value.hoTen,
+      soDienThoai: form.value.soDienThoai,
+      // BE chỉ lưu URL ảnh đã upload sẵn lên storage/CDN, chưa có endpoint nhận
+      // file trực tiếp — nên avatar chọn từ máy chỉ xem trước tạm, chưa lưu được.
+    })
+    authStore.setUser({ ...authStore.user, hoTen: res.data.hoTen, soDienThoai: res.data.soDienThoai })
+    if (avatarFile.value) {
+      showToast('Đã lưu thông tin. Riêng ảnh đại diện chưa lưu được (hệ thống chưa hỗ trợ tải ảnh lên).', 'info')
+    } else {
+      showToast('Đã lưu thay đổi thành công!', 'success')
+    }
+  } catch (e) {
+    showToast(e.response?.data?.message || e.response?.data || 'Lưu thông tin thất bại, thử lại nhé.', 'error')
+  } finally {
+    savingThongTin.value = false
+  }
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

@@ -78,18 +78,30 @@ import apiClient from '@/services/apiService'
 
 /**
  * Sổ địa chỉ giao hàng của khách hàng — thêm/sửa/xoá nhiều địa chỉ, chọn 1 địa chỉ mặc định.
- * LƯU Ý: các endpoint /api/v1/dia-chi/* là ĐỀ XUẤT — cần Backend xác nhận/tạo mới
- * (hiện Checkout.vue chỉ đang dùng 1 ô nhập tay tự do "diaChiGiaoHang", chưa có sổ địa chỉ).
+ * Đã nối với DiaChiGiaoHangController thật ở BE (/api/v1/dia-chi), xác thực theo
+ * đúng người dùng đang đăng nhập.
  */
 
 const danhSach = ref([])
 const loading = ref(false)
 
+// BE trả về tên trường tiếng Việt đầy đủ (hoTenNguoiNhan/soDienThoaiNhan/laMacDinh),
+// map lại thành tên ngắn gọn dùng trong UI cho gọn.
+function mapTuBe(dc) {
+  return {
+    id: dc.id,
+    tenNguoiNhan: dc.hoTenNguoiNhan,
+    soDienThoai: dc.soDienThoaiNhan,
+    diaChiChiTiet: dc.diaChiChiTiet,
+    macDinh: !!dc.laMacDinh,
+  }
+}
+
 async function fetchDanhSach() {
   loading.value = true
   try {
-    const { data } = await apiClient.get('/api/v1/dia-chi/cua-toi')
-    danhSach.value = data || []
+    const { data } = await apiClient.get('/api/v1/dia-chi')
+    danhSach.value = (data || []).map(mapTuBe)
   } catch (e) {
     danhSach.value = []
   } finally {
@@ -121,11 +133,18 @@ async function luuDiaChi() {
   }
   submitting.value = true
   try {
+    // BE (DiaChiDto) mong đợi hoTenNguoiNhan/soDienThoaiNhan/laMacDinh
+    const payload = {
+      hoTenNguoiNhan: form.value.tenNguoiNhan,
+      soDienThoaiNhan: form.value.soDienThoai,
+      diaChiChiTiet: form.value.diaChiChiTiet,
+      laMacDinh: form.value.macDinh,
+    }
     if (dangSua.value) {
-      await apiClient.put(`/api/v1/dia-chi/${dangSua.value}`, form.value)
+      await apiClient.put(`/api/v1/dia-chi/${dangSua.value}`, payload)
       ElMessage.success('Đã cập nhật địa chỉ.')
     } else {
-      await apiClient.post('/api/v1/dia-chi', form.value)
+      await apiClient.post('/api/v1/dia-chi', payload)
       ElMessage.success('Đã thêm địa chỉ mới.')
     }
     showForm.value = false

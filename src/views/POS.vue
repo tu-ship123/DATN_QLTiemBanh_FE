@@ -176,13 +176,14 @@
             v-model="voucherCode"
             type="text"
             placeholder="Nhập mã giảm giá..."
+            :disabled="applyingVoucher"
             @keyup.enter="applyVoucher"
             class="w-full text-xs border border-[#EDE8E3] rounded-xl pl-8 pr-20 py-2 uppercase focus:outline-none focus:border-[#E8634A] focus:ring-1 focus:ring-[#E8634A]/20"
           />
-          <button @click="applyVoucher" :disabled="!voucherCode.trim()"
+          <button @click="applyVoucher" :disabled="!voucherCode.trim() || applyingVoucher"
             class="absolute right-1.5 top-1/2 -translate-y-1/2 text-[11px] font-black px-3 py-1.5 rounded-lg transition"
-            :class="voucherCode.trim() ? 'bg-[#E8634A] text-white hover:bg-[#d4583f]' : 'bg-gray-100 text-gray-300 cursor-not-allowed'">
-            Áp dụng
+            :class="voucherCode.trim() && !applyingVoucher ? 'bg-[#E8634A] text-white hover:bg-[#d4583f]' : 'bg-gray-100 text-gray-300 cursor-not-allowed'">
+            {{ applyingVoucher ? 'Đang kiểm tra…' : 'Áp dụng' }}
           </button>
         </div>
         <p v-if="voucherError" class="text-[11px] text-red-500 mt-1 flex items-center gap-1">
@@ -252,7 +253,6 @@
           <span class="text-[#E8634A] text-lg">{{ formatPrice(finalTotal) }}</span>
         </div>
         <p class="text-[10px] text-gray-400 text-center italic">(Giá hiển thị theo BE, không cộng thêm VAT ở FE)</p>
-        <p v-if="appliedVoucher" class="text-[10px] text-amber-500 text-center italic">(Mã giảm giá hiện đang demo giao diện, số tiền hệ thống ghi nhận sẽ đúng khi nối API)</p>
       </div>
 
       <div class="px-5 pb-5 space-y-2 shrink-0">
@@ -516,33 +516,52 @@ const ghiChu     = ref('')
 const soTheRung  = ref('')
 
 // ─── MÃ GIẢM GIÁ (voucher) ──────────────────────────────────────────────────
-// TODO: khi BE có API kiểm tra/áp mã giảm giá thật, thay danh sách giả lập này bằng lệnh gọi API
-const MOCK_VOUCHERS = {
-  GIAM10:  { loai: 'PHAN_TRAM', giaTri: 10,    toiThieu: 100000, moTa: 'Giảm 10% hóa đơn' },
-  GIAM20K: { loai: 'TIEN_MAT',  giaTri: 20000, toiThieu: 150000, moTa: 'Giảm 20.000đ' },
-  SALE50K: { loai: 'TIEN_MAT',  giaTri: 50000, toiThieu: 300000, moTa: 'Giảm 50.000đ cho hóa đơn từ 300k' },
-}
-const voucherCode    = ref('')
-const appliedVoucher = ref(null)  // { code, loai, giaTri, moTa }
-const voucherError   = ref('')
+// Kiểm tra qua API thật POST /api/v1/vouchers/validate (nhân viên được phép gọi — xem SecurityConfig).
+// BE trả về { hopLe, maCode, tenVoucher, soTienGiam, message, ... } đã tính sẵn số tiền giảm
+// dựa trên tổng tiền hàng gửi lên, nên FE không tự tính % mà dùng thẳng soTienGiam.
+const subtotal = computed(() => cart.value.reduce((s, i) => s + Number(i.donGia) * i.qty, 0))
 
-function applyVoucher() {
+const voucherCode     = ref('')
+const appliedVoucher  = ref(null)  // { code, moTa, soTienGiam }
+const voucherError    = ref('')
+const applyingVoucher = ref(false)
+
+async function applyVoucher() {
   const code = voucherCode.value.trim().toUpperCase()
   voucherError.value = ''
   if (!code) return
 
-  const v = MOCK_VOUCHERS[code]
-  if (!v) {
-    voucherError.value = 'Mã giảm giá không tồn tại hoặc đã hết hạn.'
+  if (subtotal.value <= 0) {
+    voucherError.value = 'Giỏ hàng đang trống, không thể áp mã.'
     return
   }
-  if (subtotal.value < v.toiThieu) {
-    voucherError.value = `Đơn hàng cần tối thiểu ${formatPrice(v.toiThieu)} để dùng mã này.`
-    return
+
+  applyingVoucher.value = true
+  try {
+    const res = await apiClient.post('/api/v1/vouchers/validate', {
+      maCode: code,
+      tongTienHang: subtotal.value,
+    })
+    const data = res.data
+
+    if (!data.hopLe) {
+      voucherError.value = data.message || 'Mã giảm giá không hợp lệ.'
+      return
+    }
+
+    appliedVoucher.value = {
+      code: data.maCode || code,
+      moTa: data.tenVoucher || data.message || 'Đã áp dụng mã giảm giá',
+      soTienGiam: Number(data.soTienGiam) || 0,
+    }
+    voucherCode.value = ''
+    ElMessage.success(`Đã áp dụng mã "${appliedVoucher.value.code}": giảm ${formatPrice(appliedVoucher.value.soTienGiam)}`)
+  } catch (err) {
+    const msg = err.response?.data?.message || err.response?.data
+    voucherError.value = typeof msg === 'string' ? msg : 'Không kiểm tra được mã giảm giá, thử lại sau.'
+  } finally {
+    applyingVoucher.value = false
   }
-  appliedVoucher.value = { code, ...v }
-  voucherCode.value = ''
-  ElMessage.success(`Đã áp dụng mã "${code}": ${v.moTa}`)
 }
 
 function removeVoucher() {
@@ -550,12 +569,16 @@ function removeVoucher() {
   voucherError.value = ''
 }
 
-const discountAmount = computed(() => {
-  if (!appliedVoucher.value) return 0
-  const v = appliedVoucher.value
-  return v.loai === 'PHAN_TRAM'
-    ? Math.round(subtotal.value * v.giaTri / 100)
-    : Math.min(v.giaTri, subtotal.value)
+// Số tiền giảm hiển thị = số BE đã tính lúc validate (khớp với số sẽ được ghi nhận khi tạo hoá đơn)
+const discountAmount = computed(() => appliedVoucher.value?.soTienGiam ?? 0)
+
+// Giỏ hàng thay đổi sau khi đã áp mã (thêm/bớt món) → số tiền giảm cũ không còn chính xác,
+// yêu cầu nhân viên bấm áp lại để BE tính lại theo tổng tiền hàng mới nhất.
+watch(subtotal, () => {
+  if (appliedVoucher.value) {
+    appliedVoucher.value = null
+    voucherError.value = 'Giỏ hàng đã thay đổi, vui lòng áp lại mã giảm giá.'
+  }
 })
 
 const finalTotal = computed(() => Math.max(0, subtotal.value - discountAmount.value))
@@ -831,7 +854,6 @@ const filteredProducts = computed(() =>
 
 // ─── GIỎ HÀNG ────────────────────────────────────────────────────────────────
 const totalQty = computed(() => cart.value.reduce((s, i) => s + i.qty, 0))
-const subtotal = computed(() => cart.value.reduce((s, i) => s + Number(i.donGia) * i.qty, 0))
 
 function addToCart(p) {
   if (p.soLuongTon === 0) return
@@ -900,8 +922,8 @@ function handleCloseQRModal(done) {
 
 // ─── GỌI API TẠO ĐƠN POS ────────────────────────────────────────────────────
 // POST /api/v1/pos/orders  (cần Bearer Token của nhân viên)
-// Request body: { emailKhachHang, ghiChu, items: [{sanPhamId, soLuong}] }
-// Response:     { donHangId, tongTien, trangThai, nguonDon, vietQrUrl, receiptText }
+// Request body: { emailKhachHang, ghiChu, items: [{sanPhamId, soLuong}], maGiamGia }
+// Response:     { donHangId, tongTienHang, soTienGiam, maGiamGiaApDung, tongTien, trangThai, nguonDon, vietQrUrl, receiptText }
 async function submitOrder(phuongThuc) {
   submitting.value = true
   try {
@@ -912,7 +934,9 @@ async function submitOrder(phuongThuc) {
         sanPhamId: i.id,
         soLuong: i.qty
       })),
-      phuongThucThanhToan: phuongThuc
+      phuongThucThanhToan: phuongThuc,
+      // BE sẽ tự kiểm tra lại điều kiện + tính số tiền giảm chính xác dựa trên đơn hàng cuối cùng
+      maGiamGia: appliedVoucher.value?.code || null,
     }
 
     const res = await apiClient.post('/api/v1/pos/orders', payload)

@@ -71,7 +71,8 @@ import { formatPrice } from '@/utils/format'
 /**
  * Trang xem lại các thiết kế bánh 3D đã lưu (không phải đơn hàng, chỉ là bản nháp khách lưu
  * lại từ Design.vue qua nút "Lưu thiết kế").
- * LƯU Ý: các endpoint /api/v1/wishlist/thiet-ke/* là ĐỀ XUẤT — cần Backend xác nhận/tạo mới.
+ * Đã nối với ThietKeYeuThichController thật ở BE (/api/v1/wishlist/thiet-ke),
+ * xác thực theo đúng người dùng đang đăng nhập.
  */
 
 const router = useRouter()
@@ -83,7 +84,7 @@ const loading = ref(false)
 async function fetchDanhSach() {
   loading.value = true
   try {
-    const { data } = await apiClient.get('/api/v1/wishlist/thiet-ke/cua-toi')
+    const { data } = await apiClient.get('/api/v1/wishlist/thiet-ke')
     danhSach.value = data || []
   } catch (e) {
     danhSach.value = []
@@ -97,7 +98,7 @@ const showPreview = ref(false)
 const previewDesign = ref(null)
 function xemPreview(tk) {
   try {
-    previewDesign.value = typeof tk.thietKe === 'string' ? JSON.parse(tk.thietKe) : tk.thietKe
+    previewDesign.value = typeof tk.thietKeBanhJson === 'string' ? JSON.parse(tk.thietKeBanhJson) : tk.thietKeBanhJson
   } catch {
     previewDesign.value = null
   }
@@ -112,7 +113,7 @@ async function datLaiBanhNay(tk) {
     const marker = await apiClient.get('/api/v1/products/custom-cake-marker')
     const sanPhamDaiDienId = marker.data.id
 
-    const result = await cartStore.themVaoGio(sanPhamDaiDienId, 1, tk.thietKe, tk.gia)
+    const result = await cartStore.themVaoGio(sanPhamDaiDienId, 1, tk.thietKeBanhJson, tk.gia)
     if (!result.success) {
       ElMessage.error(result.message || 'Không thể thêm bánh vào giỏ hàng!')
       return

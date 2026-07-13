@@ -149,7 +149,7 @@ async function selectTemplate(mau) {
 
 /** Khách bấm "Lưu thiết kế": lưu lại state hiện tại của bánh (không thêm vào giỏ, không
  *  cần thanh toán) để sau này vào WishlistPage xem lại / đặt lại.
- *  LƯU Ý: endpoint /api/v1/wishlist/thiet-ke là ĐỀ XUẤT — cần Backend xác nhận/tạo mới. */
+ *  Đã nối với ThietKeYeuThichController thật ở BE (/api/v1/wishlist/thiet-ke). */
 async function luuThietKe() {
   if (!currentDesign.value) {
     alert('Bạn cần chỉnh ít nhất 1 lựa chọn trên bánh trước khi lưu nhé!')
@@ -164,7 +164,8 @@ async function luuThietKe() {
   try {
     const thietKe = builderRef.value?.captureSnapshot() || currentDesign.value
     await apiClient.post('/api/v1/wishlist/thiet-ke', {
-      thietKe: JSON.stringify(thietKe),
+      tenThietKe: `Thiết kế bánh ${new Date().toLocaleDateString('vi-VN')}`,
+      thietKeBanhJson: JSON.stringify(thietKe),
       gia: currentPrice.value,
     })
     alert('Đã lưu thiết kế! Vào mục "Thiết kế đã lưu" trong hồ sơ để xem lại nhé.')

@@ -110,9 +110,11 @@
 <script setup>
 import { ref, reactive, computed } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
-// import apiClient from '@/services/apiService' // TODO: bật lại khi BE có endpoint đổi mật khẩu
+import apiClient from '@/services/apiService'
+import { useAuthStore } from '@/stores/authStore'
 
 const router = useRouter()
+const authStore = useAuthStore()
 
 const form = reactive({ matKhauCu: '', matKhauMoi: '', xacNhan: '' })
 const errors = reactive({ matKhauCu: '', matKhauMoi: '', xacNhan: '' })
@@ -188,20 +190,21 @@ async function doiMatKhau() {
 
   dangLuu.value = true
   try {
-    // TODO: nối API thật khi BE sẵn sàng, ví dụ:
-    // await apiClient.put('/api/v1/users/doi-mat-khau', {
-    //   matKhauCu: form.matKhauCu,
-    //   matKhauMoi: form.matKhauMoi,
-    // })
-    await new Promise((r) => setTimeout(r, 600)) // demo độ trễ
+    // BE (HoSoController: PUT /api/v1/users/me/password) đổi mật khẩu xong sẽ
+    // đăng xuất mọi thiết bị khác và cấp lại cặp token mới CHỈ cho phiên hiện tại.
+    const res = await apiClient.put('/api/v1/users/me/password', {
+      matKhauHienTai: form.matKhauCu,
+      matKhauMoi: form.matKhauMoi,
+    })
+    authStore.setAuthData(res.data)
 
-    showToast('Đổi mật khẩu thành công! (giao diện demo, chưa lưu vào hệ thống)', 'success')
+    showToast('Đổi mật khẩu thành công!', 'success')
     form.matKhauCu = ''
     form.matKhauMoi = ''
     form.xacNhan = ''
     setTimeout(() => router.push('/shop/profile'), 900)
   } catch (e) {
-    showToast(e?.response?.data || 'Đổi mật khẩu thất bại. Vui lòng thử lại.', 'error')
+    showToast(e?.response?.data?.message || e?.response?.data || 'Đổi mật khẩu thất bại. Vui lòng thử lại.', 'error')
   } finally {
     dangLuu.value = false
   }

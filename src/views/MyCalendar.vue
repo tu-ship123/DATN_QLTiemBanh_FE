@@ -59,8 +59,16 @@
       </div>
     </div>
 
+    <!-- ===== LOADING ===== -->
+    <div v-if="loading" class="grid grid-cols-7 gap-2 mb-2">
+      <el-skeleton v-for="n in 7" :key="n" :rows="3" animated class="bg-white rounded-2xl p-3" />
+    </div>
+
+    <!-- ===== LỖI ===== -->
+    <el-alert v-else-if="loadError" :title="loadError" type="error" show-icon class="mb-4" />
+
     <!-- ===== VIEW: TUẦN ===== -->
-    <div v-if="viewMode === 'tuan'" class="bg-white rounded-2xl border border-[#EDE0CC] shadow-sm overflow-hidden">
+    <div v-else-if="viewMode === 'tuan'" class="bg-white rounded-2xl border border-[#EDE0CC] shadow-sm overflow-hidden">
       <div class="grid grid-cols-7 divide-x divide-[#F1E7D8]">
         <div v-for="day in weekDays" :key="day.iso"
           class="min-h-[220px] flex flex-col cursor-pointer transition-colors hover:bg-[#FFFBF5]"
@@ -178,8 +186,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
-// import { staffService } from '@/services/StaffService' // TODO: bật lại khi nối API thật (getMySchedulesInRange)
+import { ref, reactive, computed, watch } from 'vue'
+import { staffService } from '@/services/StaffService'
 
 // ─── Loại ca & màu sắc phân biệt ─────────────────────────────────────────────
 const CA_TYPES = {
@@ -217,57 +225,80 @@ function goToday() {
   refDate.value = new Date()
 }
 
-// ─── Sinh dữ liệu lịch ca giả lập (tĩnh, seed theo ngày để không đổi khi re-render) ─
+// ─── Dữ liệu lịch ca lấy từ API thật (cache theo ngày ISO) ───────────────────
 const scheduleCache = reactive({})
+const loading  = ref(false)
+const loadError = ref('')
 
 function isoOf(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-// Seed đơn giản dựa trên ngày để lịch cố định, không nhảy lung tung mỗi lần render
-function seededPattern(dateObj) {
-  const seed = dateObj.getFullYear() * 372 + (dateObj.getMonth() + 1) * 31 + dateObj.getDate()
-  return seed % 6 // 0..5
+// BE trả LocalTime dạng "HH:MM:SS" (hoặc mảng [H,M,S] tuỳ cấu hình) → chuẩn hoá "HH:MM"
+function formatTime(t) {
+  if (!t) return '--:--'
+  if (Array.isArray(t)) return `${String(t[0]).padStart(2, '0')}:${String(t[1]).padStart(2, '0')}`
+  return String(t).slice(0, 5)
+}
+
+// Khớp tên ca với bộ màu Sáng/Chiều/Tối; ca đặt tên khác vẫn hiển thị được (màu trung tính)
+function matchCaType(tenCa) {
+  const name = (tenCa || '').toLowerCase()
+  if (name.includes('sáng'))  return CA_TYPES.SANG
+  if (name.includes('chiều')) return CA_TYPES.CHIEU
+  if (name.includes('tối'))   return CA_TYPES.TOI
+  return { label: tenCa || 'Ca làm việc', color: '#6B7280', bg: '#F3F4F6', text: '#374151' }
 }
 
 function buildShiftsForDate(dateObj) {
-  const iso = isoOf(dateObj)
-  if (scheduleCache[iso]) return scheduleCache[iso]
+  return scheduleCache[isoOf(dateObj)] || []
+}
 
-  const dow = dateObj.getDay() // 0 = CN
-  const pattern = seededPattern(dateObj)
-  let list = []
+// Gọi GET /api/v1/staff/my-schedules/week?tuNgay=...&denNgay=... để nạp lịch ca thật
+async function fetchSchedules(tuNgay, denNgay) {
+  loading.value = true
+  loadError.value = ''
+  try {
+    const res = await staffService.getMySchedulesInRange(tuNgay, denNgay)
+    const list = res.data || []
 
-  if (dow === 1) {
-    // Thứ Hai: nghỉ định kỳ
-    list = []
-  } else if (pattern === 0) {
-    list = [CA_TYPES.SANG]
-  } else if (pattern === 1) {
-    list = [CA_TYPES.CHIEU]
-  } else if (pattern === 2) {
-    list = [CA_TYPES.TOI]
-  } else if (pattern === 3) {
-    list = [CA_TYPES.SANG, CA_TYPES.CHIEU]
-  } else if (pattern === 4) {
-    list = [CA_TYPES.CHIEU, CA_TYPES.TOI]
-  } else {
-    list = []
+    // Xoá sạch cache trong khoảng vừa fetch để không còn sót dữ liệu cũ/đã huỷ
+    const cur = new Date(tuNgay)
+    const end = new Date(denNgay)
+    while (cur <= end) {
+      scheduleCache[isoOf(cur)] = []
+      cur.setDate(cur.getDate() + 1)
+    }
+
+    const today = new Date(); today.setHours(0, 0, 0, 0)
+
+    list
+      .filter((item) => item.trangThai !== 'DA_HUY') // bỏ ca đã huỷ
+      .forEach((item) => {
+        const iso = String(item.ngayLamViec).slice(0, 10)
+        const caType = matchCaType(item.tenCa)
+        const dObj = new Date(iso); dObj.setHours(0, 0, 0, 0)
+
+        const shift = {
+          key: `${iso}-${item.id}`,
+          label: item.tenCa || caType.label,
+          time: `${formatTime(item.gioBatDau)} - ${formatTime(item.gioKetThuc)}`,
+          color: caType.color,
+          bg: caType.bg,
+          text: caType.text,
+          trangThai: dObj < today ? 'Đã hoàn thành' : (dObj.getTime() === today.getTime() ? 'Hôm nay' : 'Sắp tới'),
+          ghiChu: item.ghiChu || '',
+        }
+
+        if (!scheduleCache[iso]) scheduleCache[iso] = []
+        scheduleCache[iso].push(shift)
+      })
+  } catch (err) {
+    loadError.value = err.response?.data?.message || err.response?.data || 'Không thể tải lịch làm việc. Vui lòng thử lại.'
+    console.error('[MyCalendar] fetchSchedules:', err)
+  } finally {
+    loading.value = false
   }
-
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const cmp = new Date(dateObj); cmp.setHours(0, 0, 0, 0)
-
-  const shifts = list.map((ca, i) => ({
-    ...ca,
-    key: `${iso}-${ca.key}`,
-    trangThai: cmp < today ? 'Đã hoàn thành' : (cmp.getTime() === today.getTime() ? 'Hôm nay' : 'Sắp tới'),
-    ghiChu: i === 0 && pattern === 3 ? 'Hỗ trợ chuẩn bị đơn sự kiện buổi sáng.' : '',
-  }))
-
-  scheduleCache[iso] = shifts
-  return shifts
 }
 
 // ─── Tuần hiện tại ────────────────────────────────────────────────────────────
@@ -279,6 +310,26 @@ function startOfWeek(d) {
   date.setHours(0, 0, 0, 0)
   return date
 }
+
+// ─── Nạp lịch ca thật mỗi khi khoảng thời gian đang xem thay đổi ─────────────
+const currentRange = computed(() => {
+  if (viewMode.value === 'tuan') {
+    const start = startOfWeek(refDate.value)
+    const end = new Date(start); end.setDate(start.getDate() + 6)
+    return { tuNgay: isoOf(start), denNgay: isoOf(end) }
+  }
+  const year = refDate.value.getFullYear()
+  const month = refDate.value.getMonth()
+  const gridStart = startOfWeek(new Date(year, month, 1))
+  const gridEnd = new Date(gridStart); gridEnd.setDate(gridStart.getDate() + 41) // lưới 6 tuần
+  return { tuNgay: isoOf(gridStart), denNgay: isoOf(gridEnd) }
+})
+
+watch(
+  currentRange,
+  (r) => fetchSchedules(r.tuNgay, r.denNgay),
+  { immediate: true }
+)
 
 const weekDays = computed(() => {
   const start = startOfWeek(refDate.value)
