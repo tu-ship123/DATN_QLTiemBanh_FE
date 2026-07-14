@@ -123,6 +123,60 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+    async loginWithGoogle(idToken) {
+      this.loading = true;
+      this.loginPending = true;
+      this.error = null;
+
+      try {
+        const response = await authService.loginWithGoogle(idToken);
+        const data = response.data;
+
+        // 1. Lưu Token vào bộ nhớ
+        this.setAuthData(data);
+
+        // 2. Giải mã token để lấy quyền + email (subject của token luôn là email)
+        const decoded = parseJwt(this.accessToken);
+
+        let currentRole = '';
+        if (Array.isArray(decoded.authorities) && decoded.authorities.length > 0) {
+          const auth = decoded.authorities[0];
+          currentRole = typeof auth === 'object' ? auth.authority : auth;
+        } else if (Array.isArray(decoded.roles) && decoded.roles.length > 0) {
+          currentRole = decoded.roles[0];
+        } else if (decoded.scope) {
+          currentRole = decoded.scope;
+        } else {
+          currentRole = String(decoded.role || decoded.roles || decoded.authorities || decoded.quyen || '');
+        }
+        currentRole = currentRole.trim().toUpperCase();
+
+        const userData = {
+          email: decoded.sub || decoded.email || '',
+          role: currentRole,
+        };
+        this.setUser(userData);
+
+        if (currentRole.includes('ADMIN')) {
+          return '/admin/dashboard';
+        } else if (currentRole.includes('NHAN_VIEN')) {
+          return '/staff-area/checkin';
+        } else {
+          return '/shop';
+        }
+      } catch (err) {
+        console.error('❌ [LỖI ĐĂNG NHẬP GOOGLE]:', err);
+        this.loginPending = false;
+        this.error =
+          err.response?.data?.message ||
+          err.response?.data?.error ||
+          'Đăng nhập Google thất bại. Vui lòng thử lại.';
+        throw this.error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
     finishLoginRedirect() {
       this.loginPending = false;
     },

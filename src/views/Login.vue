@@ -161,6 +161,15 @@
             <span class="btn-label" v-else>Đăng nhập</span>
           </button>
 
+          <div class="divider-row">
+            <span></span>Hoặc<span></span>
+          </div>
+
+          <div id="google-signin-btn" class="google-btn-container"></div>
+          <p v-if="googleUnavailable" class="google-unavailable-msg">
+            Đăng nhập Google hiện chưa khả dụng.
+          </p>
+
           <p class="mobile-switch">
             Chưa có tài khoản?
             <button type="button" @click="isSignUp = true" class="switch-link">Đăng ký ngay</button>
@@ -305,7 +314,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, shallowRef, h } from 'vue';
+import { ref, reactive, computed, shallowRef, h, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import { useAuthStore } from '../stores/authStore';
@@ -350,6 +359,86 @@ let countdownTimer    = null;
 // ── Form data ──
 const loginForm    = reactive({ email: '', matKhau: '' });
 const registerForm = reactive({ hoTen: '', email: '', soDienThoai: '', matKhau: '' });
+
+// ── Đăng nhập Google (Google Identity Services) ──
+const googleUnavailable = ref(false);
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+const handleGoogleCredential = async (response) => {
+  const idToken = response?.credential;
+  if (!idToken) {
+    ElMessage.error('Không lấy được thông tin đăng nhập từ Google.');
+    return;
+  }
+  isLoginLoading.value = true;
+  try {
+    const redirectUrl = await authStore.loginWithGoogle(idToken);
+    try {
+      await router.push(redirectUrl);
+      ElMessage.success('Đăng nhập Google thành công!');
+    } catch (navErr) {
+      authStore.finishLoginRedirect();
+      console.error('❌ [LỖI ROUTER]', navErr);
+      ElMessage.error('Không thể chuyển trang. Vui lòng thử lại.');
+    }
+  } catch (error) {
+    ElMessage.error(typeof error === 'string' ? error : 'Đăng nhập Google thất bại!');
+  } finally {
+    isLoginLoading.value = false;
+  }
+};
+
+// Nạp script Google Identity Services (nếu chưa có sẵn trên trang) rồi khởi tạo nút đăng nhập
+const initGoogleSignIn = () => {
+  if (!GOOGLE_CLIENT_ID) {
+    // Chưa cấu hình VITE_GOOGLE_CLIENT_ID trong .env -> ẩn nút, không chặn các luồng đăng nhập khác
+    googleUnavailable.value = true;
+    console.warn('[Google Login] Thiếu VITE_GOOGLE_CLIENT_ID trong biến môi trường.');
+    return;
+  }
+  if (!window.google?.accounts?.id) {
+    googleUnavailable.value = true;
+    return;
+  }
+  window.google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleGoogleCredential,
+  });
+  const target = document.getElementById('google-signin-btn');
+  if (target) {
+    window.google.accounts.id.renderButton(target, {
+      theme: 'outline',
+      size: 'large',
+      width: 320,
+      text: 'continue_with',
+      locale: 'vi',
+    });
+  }
+};
+
+const loadGoogleScript = () => {
+  if (window.google?.accounts?.id) {
+    initGoogleSignIn();
+    return;
+  }
+  const existing = document.getElementById('google-gsi-script');
+  if (existing) {
+    existing.addEventListener('load', initGoogleSignIn, { once: true });
+    return;
+  }
+  const script = document.createElement('script');
+  script.id = 'google-gsi-script';
+  script.src = 'https://accounts.google.com/gsi/client';
+  script.async = true;
+  script.defer = true;
+  script.onload = initGoogleSignIn;
+  script.onerror = () => { googleUnavailable.value = true; };
+  document.head.appendChild(script);
+};
+
+onMounted(() => {
+  loadGoogleScript();
+});
 
 // ── Validate đăng ký (chặn phía FE trước khi gọi API) ──
 const registerErrors = reactive({ hoTen: '', email: '', soDienThoai: '', matKhau: '' });
@@ -973,6 +1062,35 @@ form button {
   flex-shrink: 0;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+.divider-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0 12px;
+  font-size: 0.78rem;
+  color: var(--brown-light);
+  font-family: 'Nunito', sans-serif;
+  font-weight: 600;
+}
+.divider-row span {
+  flex: 1;
+  height: 1px;
+  background: var(--cream-dark);
+}
+.divider-row span:empty { flex-basis: 0; }
+
+.google-btn-container {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+}
+.google-unavailable-msg {
+  text-align: center;
+  font-size: 0.76rem;
+  color: var(--brown-light);
+  margin-top: 6px;
+}
 
 .mobile-switch {
   display: none;

@@ -169,6 +169,10 @@
         <span class="footer-tagline">Crafted with love</span>
       </div>
     </footer>
+
+    <!-- Widget chat với cửa hàng — chỉ hiện khi khách hàng đã đăng nhập
+         (BE /api/v1/messages/me yêu cầu isAuthenticated()) -->
+    <CustomerChatWidget v-if="authStore.isAuthenticated" />
   </div>
 </template>
 
@@ -177,6 +181,7 @@ import { ref, computed, onMounted } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cartStore'
 import { useAuthStore } from '@/stores/authStore'
+import CustomerChatWidget from '@/components/CustomerChatWidget.vue'
 
 const route = useRoute()
 const router = useRouter()

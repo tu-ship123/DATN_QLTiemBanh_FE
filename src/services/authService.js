@@ -25,6 +25,14 @@ export const authService = {
   },
 
   /**
+   * Đăng nhập bằng Google (OAuth2 One Tap / GIS)
+   * @param {string} idToken - ID Token trả về từ Google Identity Services
+   */
+  loginWithGoogle(idToken) {
+    return apiClient.post('/api/v1/auth/google', { idToken });
+  },
+
+  /**
    * Quên mật khẩu — gửi OTP về email
    * @param {string} email
    */

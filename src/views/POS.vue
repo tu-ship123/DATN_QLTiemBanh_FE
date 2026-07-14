@@ -726,8 +726,8 @@ async function discardHeldBill(bill) {
 
 // ─── CẢNH BÁO PHỤ KIỆN SẮP HẾT HÀNG ──────────────────────────────────────────
 // Ngưỡng cảnh báo: phụ kiện còn <= 10 đơn vị coi là sắp hết.
-// LƯU Ý: endpoint /api/v1/admin/notifications là ĐỀ XUẤT — cần Backend xác nhận/tạo mới
-// để lưu + hiển thị thông báo này trên chuông thông báo của Admin.
+// Endpoint đúng theo NotificationController (BE): POST /api/admin/notifications/send-all
+// (path không có "v1", body dùng field title/message theo NotificationRequest DTO)
 const NGUONG_SAP_HET = 10
 const allAccessories = ref([])
 const daBaoAdmin = ref(false)
@@ -750,9 +750,9 @@ watch(phuKienSapHet, async (list) => {
   if (list.length === 0 || daBaoAdmin.value) return
   daBaoAdmin.value = true
   try {
-    await apiClient.post('/api/v1/admin/notifications', {
-      loai: 'PHU_KIEN_SAP_HET',
-      noiDung: `Có ${list.length} phụ kiện sắp hết hàng: ${list.map(p => p.tenPhuKien).join(', ')}`,
+    await apiClient.post('/api/admin/notifications/send-all', {
+      title: 'Cảnh báo phụ kiện sắp hết hàng',
+      message: `Có ${list.length} phụ kiện sắp hết hàng: ${list.map(p => p.tenPhuKien).join(', ')}`,
     })
   } catch (err) {
     // Im lặng nếu endpoint chưa sẵn sàng — nút cảnh báo vàng ở POS vẫn hiển thị bình thường
