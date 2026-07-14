@@ -52,9 +52,9 @@
       </div>
       <div class="data-card">
         <div class="p-4">
-          <div class="text-xs text-muted mb-2 flex items-center gap-1"><iconify-icon icon="ph:receipt-duotone" class="text-[#F59E0B]"></iconify-icon> Giá trị đơn TB</div>
-          <div class="text-3xl font-bold" style="color:#F59E0B">{{ kpi.avgOrderText }}</div>
-          <div class="text-xs text-muted mt-2">Trên toàn bộ đơn hàng</div>
+          <div class="text-xs text-muted mb-2 flex items-center gap-1"><iconify-icon icon="ph:receipt-duotone" class="text-[#F59E0B]"></iconify-icon> Tổng SL top 10 SP</div>
+          <div class="text-3xl font-bold" style="color:#F59E0B">{{ kpi.totalTopQty }}</div>
+          <div class="text-xs text-muted mt-2">Sản phẩm đã bán (top 10)</div>
         </div>
       </div>
     </div>
@@ -108,21 +108,17 @@
             <tr>
               <th class="text-left p-4 font-semibold text-muted">#</th>
               <th class="text-left p-4 font-semibold text-muted">Sản phẩm</th>
-              <th class="text-left p-4 font-semibold text-muted">Danh mục</th>
               <th class="text-right p-4 font-semibold text-muted">Số lượng bán</th>
-              <th class="text-right p-4 font-semibold text-muted">Doanh thu</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="(p, i) in topProducts" :key="p.name" class="border-b border-[#FDF8F2] hover:bg-[#FFFBF5]">
               <td class="p-4 font-bold" style="color:#7A5C3A">{{ i + 1 }}</td>
               <td class="p-4 flex items-center gap-2" style="color:#5C4428">
-                <iconify-icon :icon="p.icon" class="text-lg text-[#7A5C3A]"></iconify-icon>
+                <iconify-icon icon="ph:cake-duotone" class="text-lg text-[#7A5C3A]"></iconify-icon>
                 {{ p.name }}
               </td>
-              <td class="p-4 text-muted">{{ p.category }}</td>
               <td class="p-4 text-right font-semibold" style="color:#5C4428">{{ p.qty }}</td>
-              <td class="p-4 text-right font-bold" style="color:#7A5C3A">{{ formatMoney(p.revenue) }}</td>
             </tr>
           </tbody>
         </table>
@@ -132,49 +128,64 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, nextTick, watch } from 'vue'
 import Chart from 'chart.js/auto'
 import * as XLSX from 'xlsx'
 import { ElMessage } from 'element-plus'
+import apiClient from '@/services/apiService'
 
 const rangeLabel = ref('Tháng này')
 const exporting = ref(false)
+const loading = ref(false)
 
 const channelChartRef = ref(null)
 const productChartRef = ref(null)
 let channelChart = null
 let productChart = null
 
-// ── DỮ LIỆU TĨNH (mock) — sẽ thay bằng API sau ──
-const channelData = ref([
-  { name: 'Bán tại cửa hàng (POS)', value: 86000000, color: '#7A5C3A' },
-  { name: 'Đặt hàng online (Web)',  value: 64500000, color: '#F59E0B' },
-  { name: 'Ứng dụng di động',       value: 38200000, color: '#3B82F6' },
-  { name: 'Đối tác giao hàng',      value: 21300000, color: '#22C55E' },
-])
+const CHANNEL_COLORS = ['#7A5C3A', '#F59E0B', '#3B82F6', '#22C55E', '#EF4444', '#8B5CF6']
+const CHANNEL_LABELS = { ONLINE: 'Đặt hàng online (Web)', POS: 'Bán tại cửa hàng (POS)' }
 
-const topProducts = ref([
-  { name: 'Bánh kem dâu tây',        category: 'Bánh kem',   qty: 328, revenue: 49200000, icon: 'ph:cake-duotone' },
-  { name: 'Bánh su kem',             category: 'Bánh ngọt',  qty: 301, revenue: 21070000, icon: 'ph:cookie-duotone' },
-  { name: 'Bánh mì bơ tỏi',          category: 'Bánh mặn',   qty: 276, revenue: 13800000, icon: 'ph:bread-duotone' },
-  { name: 'Bánh kem chocolate',      category: 'Bánh kem',   qty: 254, revenue: 40640000, icon: 'ph:cake-duotone' },
-  { name: 'Bánh trung thu thập cẩm', category: 'Bánh đặc biệt', qty: 231, revenue: 34650000, icon: 'ph:confetti-duotone' },
-  { name: 'Bánh macaron set 6 cái',  category: 'Bánh ngọt',  qty: 219, revenue: 21900000, icon: 'ph:candy-duotone' },
-  { name: 'Bánh cupcake vani',       category: 'Bánh ngọt',  qty: 198, revenue: 9900000,  icon: 'ph:cookie-duotone' },
-  { name: 'Bánh kem hoa hồng',       category: 'Bánh kem',   qty: 176, revenue: 30800000, icon: 'ph:flower-duotone' },
-  { name: 'Bánh mì que phô mai',     category: 'Bánh mặn',   qty: 165, revenue: 8250000,  icon: 'ph:bread-duotone' },
-  { name: 'Bánh tart trái cây',      category: 'Bánh ngọt',  qty: 152, revenue: 15200000, icon: 'ph:cookie-duotone' },
-])
+const channelData = ref([])
+const topProducts = ref([])
 
 const kpi = ref({
   totalRevenueText: '0đ',
   topChannel: '—', topChannelPct: 0,
   topProduct: '—', topProductQty: 0,
-  avgOrderText: '0đ',
+  totalTopQty: 0,
 })
 
 function formatMoney(n) {
   return Number(n || 0).toLocaleString('vi-VN') + ' đ'
+}
+
+// ── FETCH DỮ LIỆU THẬT TỪ BE ──
+async function fetchDashboard() {
+  loading.value = true
+  try {
+    const { data } = await apiClient.get('/api/reports/dashboard')
+
+    channelData.value = (data.doanhThuKenh || []).map((c, i) => ({
+      name: CHANNEL_LABELS[c.nguonDon] || c.nguonDon || 'Khác',
+      value: c.tongDoanhThu || 0,
+      color: CHANNEL_COLORS[i % CHANNEL_COLORS.length],
+    }))
+
+    topProducts.value = (data.topSanPham || []).map(p => ({
+      name: p.tenSanPham,
+      qty: p.tongSoLuongBan,
+    }))
+
+    computeKpi()
+    await nextTick()
+    renderChannelChart()
+    renderProductChart()
+  } catch {
+    ElMessage.error('Không thể tải dữ liệu báo cáo!')
+  } finally {
+    loading.value = false
+  }
 }
 
 function computeKpi() {
@@ -182,15 +193,15 @@ function computeKpi() {
   channelData.value.forEach(c => { c.pct = Math.round((c.value / totalChannel) * 100) })
   const top = [...channelData.value].sort((a, b) => b.value - a.value)[0]
   const topP = topProducts.value[0]
+  const totalTopQty = topProducts.value.reduce((s, p) => s + (p.qty || 0), 0)
 
-  const totalOrdersMock = 612
   kpi.value = {
     totalRevenueText: formatMoney(totalChannel),
     topChannel: top?.name || '—',
     topChannelPct: top?.pct || 0,
     topProduct: topP?.name || '—',
     topProductQty: topP?.qty || 0,
-    avgOrderText: formatMoney(Math.round(totalChannel / totalOrdersMock)),
+    totalTopQty,
   }
 }
 
@@ -274,45 +285,26 @@ function renderProductChart() {
   })
 }
 
-// ── XUẤT EXCEL (dữ liệu tĩnh hiện tại) ──
+// ── XUẤT EXCEL: dùng đúng file BE đã tạo sẵn (GET /api/reports/export-excel) ──
 async function exportExcel() {
   if (exporting.value) return
   exporting.value = true
   try {
-    const channelRows = channelData.value.map(c => ({
-      'Kênh bán': c.name,
-      'Doanh thu (đ)': c.value,
-      'Tỉ lệ (%)': c.pct,
-    }))
-    const productRows = topProducts.value.map((p, i) => ({
-      'Hạng': i + 1,
-      'Sản phẩm': p.name,
-      'Danh mục': p.category,
-      'Số lượng bán': p.qty,
-      'Doanh thu (đ)': p.revenue,
-    }))
-
-    const wsChannel = XLSX.utils.json_to_sheet(channelRows)
-    const wsProduct = XLSX.utils.json_to_sheet(productRows)
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, wsChannel, 'Doanh thu theo kênh')
-    XLSX.utils.book_append_sheet(wb, wsProduct, 'Top 10 sản phẩm')
-
-    const ts = new Date().toLocaleDateString('vi-VN').replace(/\//g, '-')
-    XLSX.writeFile(wb, `bao-cao-doanh-thu-${ts}.xlsx`)
-
+    const response = await apiClient.get('/api/reports/export-excel', { responseType: 'blob' })
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', 'BaoCaoDoanhThu.xlsx')
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
     ElMessage.success('Đã xuất báo cáo ra file Excel!')
   } catch (err) {
-    ElMessage.error('Xuất file thất bại: ' + err.message)
+    ElMessage.error('Xuất file thất bại: ' + (err?.response?.data?.message || err.message))
   } finally {
     exporting.value = false
   }
 }
 
-onMounted(async () => {
-  computeKpi()
-  await nextTick()
-  renderChannelChart()
-  renderProductChart()
-})
+onMounted(fetchDashboard)
 </script>

@@ -183,11 +183,45 @@
           </div>
         </div>
 
-        <div class="bg-amber-50 rounded-2xl p-4 border border-amber-100" v-if="selectedOrder.note">
+        <div class="bg-amber-50 rounded-2xl p-4 border border-amber-100 mb-4" v-if="selectedOrder.note">
           <div class="text-xs font-bold text-amber-700 uppercase tracking-wider mb-1 flex items-center gap-1">
             <iconify-icon icon="ph:note-pencil-duotone" /> Ghi chú đặc biệt
           </div>
           <div class="text-sm text-amber-800">{{ selectedOrder.note }}</div>
+        </div>
+
+        <!-- Ghi chú nội bộ: chỉ Nhân viên/Admin thấy, khách hàng không thấy -->
+        <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 mb-4">
+          <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1">
+            <iconify-icon icon="ph:lock-key-duotone" /> Ghi chú nội bộ (chỉ nhân viên thấy)
+          </div>
+          <el-input
+            v-model="internalNote"
+            type="textarea"
+            :rows="2"
+            placeholder="VD: Dặn bếp làm bánh không hạt, giao trước 9h..."
+          />
+          <el-button size="small" class="mt-2" :loading="savingNote" @click="saveInternalNote">
+            Lưu ghi chú nội bộ
+          </el-button>
+        </div>
+
+        <!-- Xác nhận/Từ chối thiết kế bánh 3D: chỉ hiện khi đơn có thiết kế và đang chờ duyệt -->
+        <div
+          v-if="selectedOrder._raw?.thietKeBanhJson && selectedOrder.trangThai === 'DA_XAC_NHAN'"
+          class="bg-purple-50 rounded-2xl p-4 border border-purple-100"
+        >
+          <div class="text-xs font-bold text-purple-700 uppercase tracking-wider mb-2 flex items-center gap-1">
+            <iconify-icon icon="ph:cube-duotone" /> Đơn có thiết kế bánh 3D — chờ duyệt
+          </div>
+          <div class="flex gap-2">
+            <el-button type="success" size="small" :loading="designProcessing" @click="handleConfirmDesign">
+              Xác nhận thiết kế
+            </el-button>
+            <el-button type="danger" size="small" plain :loading="designProcessing" @click="handleRejectDesign">
+              Từ chối thiết kế
+            </el-button>
+          </div>
         </div>
       </div>
       <template #footer>
@@ -523,6 +557,9 @@ const page = ref(1)
 const tableLoading = ref(false)
 const exporting = ref(false)
 const showDetail = ref(false)
+const internalNote = ref('')
+const savingNote = ref(false)
+const designProcessing = ref(false)
 const showAddOrder = ref(false)
 const selectedOrder = ref(null)
 
@@ -697,7 +734,59 @@ const statusStep = (s) => {
 // ── ACTIONS ───────────────────────────────────────────────────────────────────
 function openDetail(row) {
   selectedOrder.value = row
+  internalNote.value = row._raw?.ghiChuNoiBo || ''
   showDetail.value = true
+}
+
+async function saveInternalNote() {
+  if (!selectedOrder.value) return
+  savingNote.value = true
+  try {
+    await orderService.updateInternalNote(selectedOrder.value._id, internalNote.value)
+    if (selectedOrder.value._raw) selectedOrder.value._raw.ghiChuNoiBo = internalNote.value
+    ElMessage.success('Đã lưu ghi chú nội bộ')
+  } catch (err) {
+    ElMessage.error(err?.response?.data?.message || 'Lưu ghi chú thất bại!')
+  } finally {
+    savingNote.value = false
+  }
+}
+
+async function handleConfirmDesign() {
+  if (!selectedOrder.value) return
+  designProcessing.value = true
+  try {
+    await orderService.confirmDesign(selectedOrder.value._id)
+    ElMessage.success('Đã xác nhận thiết kế, đơn chuyển sang Đang sản xuất')
+    showDetail.value = false
+    await fetchOrders()
+  } catch (err) {
+    ElMessage.error(err?.response?.data?.message || 'Xác nhận thiết kế thất bại!')
+  } finally {
+    designProcessing.value = false
+  }
+}
+
+async function handleRejectDesign() {
+  if (!selectedOrder.value) return
+  try {
+    const { value: lyDo } = await ElMessageBox.prompt('Nhập lý do từ chối thiết kế:', 'Từ chối thiết kế', {
+      confirmButtonText: 'Xác nhận từ chối',
+      cancelButtonText: 'Hủy',
+      inputValidator: (v) => !!v?.trim() || 'Vui lòng nhập lý do',
+    })
+    designProcessing.value = true
+    await orderService.rejectDesign(selectedOrder.value._id, lyDo)
+    ElMessage.success('Đã từ chối thiết kế, đơn quay về Chờ xác nhận')
+    showDetail.value = false
+    await fetchOrders()
+  } catch (err) {
+    if (err !== 'cancel') {
+      ElMessage.error(err?.response?.data?.message || 'Từ chối thiết kế thất bại!')
+    }
+  } finally {
+    designProcessing.value = false
+  }
 }
 
 function handleRowAction(cmd, row) {

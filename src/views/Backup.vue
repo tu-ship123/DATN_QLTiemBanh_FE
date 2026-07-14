@@ -18,7 +18,7 @@
     </div>
 
     <!-- Stats -->
-    <div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+    <div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
       <div class="rounded-[20px] bg-white p-5 border border-slate-100 shadow-sm flex items-center gap-4">
         <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center text-2xl">
           <iconify-icon icon="ph:hard-drives-duotone" />
@@ -34,40 +34,38 @@
         </div>
         <div>
           <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Lần sao lưu gần nhất</p>
-          <p class="text-xl font-bold text-slate-800">Hôm nay</p>
-        </div>
-      </div>
-      <div class="rounded-[20px] bg-white p-5 border border-slate-100 shadow-sm flex items-center gap-4">
-        <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center text-2xl">
-          <iconify-icon icon="ph:cloud-check-duotone" />
-        </div>
-        <div>
-           <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Dung lượng sử dụng</p>
-           <p class="text-xl font-bold text-slate-800">24.5 MB</p>
+          <p class="text-xl font-bold text-slate-800">{{ backups[0] ? backups[0].date : '—' }}</p>
         </div>
       </div>
     </div>
 
+    <el-alert
+      type="info"
+      show-icon
+      :closable="false"
+      class="mb-4 rounded-xl"
+      title="Hệ thống tự động backup lúc 2:00 sáng mỗi ngày. Bấm 'Tạo bản sao lưu mới' để backup thủ công ngay."
+    />
+
     <el-card class="rounded-[28px] border border-slate-200 shadow-sm" body-class="p-0">
       <div class="p-5 border-b border-slate-100">
-        <h3 class="font-semibold text-slate-800">Danh sách bản sao lưu</h3>
+        <h3 class="font-semibold text-slate-800">Lịch sử sao lưu</h3>
       </div>
-      
-      <el-table :data="backups" style="width: 100%" class="custom-table" header-cell-class-name="bg-slate-50 text-slate-500 font-semibold text-xs uppercase tracking-wider">
-        <el-table-column prop="name" label="Tên file" min-width="250">
+
+      <el-table :data="backups" v-loading="loading" style="width: 100%" class="custom-table" header-cell-class-name="bg-slate-50 text-slate-500 font-semibold text-xs uppercase tracking-wider">
+        <el-table-column label="Tên file" min-width="280">
           <template #default="{ row }">
             <div class="flex items-center gap-3">
               <iconify-icon icon="ph:file-sql-duotone" class="text-2xl text-slate-400" />
               <div>
                 <p class="text-sm font-semibold text-slate-800">{{ row.name }}</p>
-                <p class="text-xs text-slate-500">Người tạo: {{ row.author }}</p>
+                <p class="text-xs text-slate-500">Người thực hiện: {{ row.author }}</p>
               </div>
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="date" label="Thời gian tạo" width="180" />
-        <el-table-column prop="size" label="Kích thước" width="120" align="right" />
-        <el-table-column label="Trạng thái" width="130" align="center">
+        <el-table-column prop="date" label="Thời gian" width="180" />
+        <el-table-column label="Trạng thái" width="140" align="center">
           <template #default="{ row }">
             <el-tag
               :type="row.status === 'Thành công' ? 'success' : 'danger'"
@@ -78,35 +76,9 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="Thao tác" width="220" align="center" fixed="right">
-          <template #default="{ row, $index }">
-            <div class="flex items-center justify-center gap-2">
-              <el-tooltip content="Tải xuống" placement="top">
-                <el-button size="small" circle @click="downloadBackup(row)">
-                  <iconify-icon icon="ph:download-simple" class="text-slate-600" />
-                </el-button>
-              </el-tooltip>
-              <el-tooltip content="Phục hồi dữ liệu" placement="top">
-                <el-button size="small" type="warning" circle @click="restoreBackup(row)">
-                  <iconify-icon icon="ph:clock-counter-clockwise" class="text-orange-500" />
-                </el-button>
-              </el-tooltip>
-              <el-tooltip content="Xóa" placement="top">
-                <el-button size="small" type="danger" circle @click="deleteBackup($index)">
-                  <iconify-icon icon="ph:trash" class="text-red-500" />
-                </el-button>
-              </el-tooltip>
-            </div>
-          </template>
-        </el-table-column>
       </el-table>
-      <div class="p-4 border-t border-slate-100 flex justify-end">
-        <el-pagination
-          background
-          layout="prev, pager, next"
-          :total="backups.length"
-          :page-size="10"
-        />
+      <div v-if="!loading && backups.length === 0" class="p-8 text-center text-sm text-slate-400">
+        Chưa có bản sao lưu nào.
       </div>
     </el-card>
 
@@ -114,66 +86,55 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import apiClient from '@/services/apiService'
 
 const isCreating = ref(false)
+const loading = ref(false)
+const backups = ref([])
 
-const backups = ref([
-  { name: 'backup_20240520_1430.sql', author: 'Hệ thống tự động', date: '20/05/2024 14:30', size: '12.4 MB', status: 'Thành công' },
-  { name: 'backup_20240519_1800.sql', author: 'Super Admin', date: '19/05/2024 18:00', size: '12.1 MB', status: 'Thành công' },
-  { name: 'backup_20240518_1430.sql', author: 'Hệ thống tự động', date: '18/05/2024 14:30', size: '11.8 MB', status: 'Thành công' },
-  { name: 'backup_20240517_1430.sql', author: 'Hệ thống tự động', date: '17/05/2024 14:30', size: '11.5 MB', status: 'Thành công' },
-])
+function mapLog(log) {
+  // giaTriMoi có dạng "THANH_CONG|ten_file.bak" hoặc "THAT_BAI|lý do lỗi"
+  const [ketQua, chiTiet] = (log.giaTriMoi || '').split('|')
+  return {
+    name: ketQua === 'THANH_CONG' ? chiTiet : `(lỗi) ${chiTiet || 'Không rõ nguyên nhân'}`,
+    author: log.nguoiDung ? log.nguoiDung.hoTen : 'Hệ thống tự động',
+    date: log.ngayTao ? new Date(log.ngayTao).toLocaleString('vi-VN') : '',
+    status: ketQua === 'THANH_CONG' ? 'Thành công' : 'Thất bại',
+  }
+}
 
-const createBackup = () => {
+async function fetchHistory() {
+  loading.value = true
+  try {
+    const { data } = await apiClient.get('/api/v1/admin/backup/history')
+    backups.value = (data || []).map(mapLog)
+  } catch {
+    ElMessage.error('Không thể tải lịch sử sao lưu!')
+  } finally {
+    loading.value = false
+  }
+}
+
+const createBackup = async () => {
   isCreating.value = true
-  setTimeout(() => {
-    backups.value.unshift({
-      name: `backup_${new Date().toISOString().slice(0,10).replace(/-/g,'')}_${new Date().toTimeString().slice(0,5).replace(':','')}.sql`,
-      author: 'Super Admin',
-      date: new Date().toLocaleString('vi-VN'),
-      size: '12.5 MB',
-      status: 'Thành công'
-    })
+  try {
+    const { data } = await apiClient.post('/api/v1/admin/backup/run')
+    backups.value.unshift(mapLog(data))
+    if (data.giaTriMoi?.startsWith('THANH_CONG')) {
+      ElMessage.success('Đã tạo bản sao lưu mới thành công')
+    } else {
+      ElMessage.error('Backup thất bại, xem chi tiết trong bảng bên dưới')
+    }
+  } catch (err) {
+    ElMessage.error(err?.response?.data?.message || 'Không thể tạo bản sao lưu!')
+  } finally {
     isCreating.value = false
-    ElMessage.success('Đã tạo bản sao lưu mới thành công')
-  }, 1500)
+  }
 }
 
-const downloadBackup = (row) => {
-  ElMessage.success(`Đang tải xuống: ${row.name}`)
-}
-
-const restoreBackup = (row) => {
-  ElMessageBox.confirm(
-    `Bạn có chắc chắn muốn phục hồi hệ thống về bản sao lưu <b>${row.name}</b>? Toàn bộ dữ liệu hiện tại sẽ bị ghi đè!`,
-    'Cảnh báo phục hồi',
-    {
-      confirmButtonText: 'Phục hồi ngay',
-      cancelButtonText: 'Hủy',
-      type: 'warning',
-      dangerouslyUseHTMLString: true,
-    }
-  ).then(() => {
-    ElMessage.success('Hệ thống đang được phục hồi...')
-  }).catch(() => {})
-}
-
-const deleteBackup = (index) => {
-  ElMessageBox.confirm(
-    'Bản sao lưu này sẽ bị xóa vĩnh viễn. Tiếp tục?',
-    'Xóa bản sao lưu',
-    {
-      confirmButtonText: 'Xóa',
-      cancelButtonText: 'Hủy',
-      type: 'danger',
-    }
-  ).then(() => {
-    backups.value.splice(index, 1)
-    ElMessage.success('Đã xóa bản sao lưu')
-  }).catch(() => {})
-}
+onMounted(fetchHistory)
 </script>
 
 <style scoped>

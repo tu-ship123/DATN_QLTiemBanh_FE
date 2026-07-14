@@ -99,8 +99,7 @@ import apiClient from '@/services/apiService'
 
 /**
  * Bảng hiệu suất nhân viên cho Admin: số đơn xử lý + doanh thu mang lại, có thể lọc theo khoảng ngày.
- * LƯU Ý: endpoint /api/v1/admin/staff/hieu-suat là ĐỀ XUẤT — cần Backend xác nhận/tạo mới.
- * (Endpoint /api/v1/admin/staff hiện có KHÔNG trả doanh thu, chỉ có soLuongDonXuLy + hieuSuat%)
+ * Endpoint: GET /api/v1/admin/staff/hieu-suat?tuNgay=YYYY-MM-DD&denNgay=YYYY-MM-DD
  */
 
 const danhSach = ref([])

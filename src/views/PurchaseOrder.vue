@@ -218,22 +218,30 @@
           </div>
         </div>
 
-        <!-- Lịch sử nhập ca này -->
+        <!-- Lịch sử phiếu nhập -->
         <div v-if="importHistory.length > 0" class="data-card">
           <div class="p-4 border-b border-[var(--color-border)]">
             <h3 class="font-bold text-[#5C4428] text-sm flex items-center gap-2">
               <iconify-icon icon="ph:clock-countdown-duotone" class="text-base text-[#7A5C3A]" />
-              Đã nhập trong phiên này
+              Lịch sử phiếu nhập
             </h3>
           </div>
-          <div class="p-3 space-y-2">
+          <div class="p-3 space-y-2 max-h-72 overflow-y-auto">
             <div
-              v-for="record in importHistory"
-              :key="record.key"
-              class="flex items-center justify-between text-xs p-2 bg-green-50 rounded-lg border border-green-100"
+              v-for="phieu in importHistory"
+              :key="phieu.id"
+              class="p-2.5 rounded-lg border"
+              :class="phieu.trangThai === 'DA_DUYET' ? 'bg-green-50 border-green-100' : 'bg-amber-50 border-amber-100'"
             >
-              <span class="text-green-700 font-medium truncate max-w-[140px]">{{ record.tenSanPham }}</span>
-              <span class="text-green-600 font-bold shrink-0 ml-2">+{{ record.soLuong }}</span>
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-bold" :class="phieu.trangThai === 'DA_DUYET' ? 'text-green-700' : 'text-amber-700'">
+                  Phiếu #{{ phieu.id }} — {{ phieu.trangThai === 'DA_DUYET' ? 'Đã duyệt' : 'Chờ duyệt' }}
+                </span>
+                <span class="text-gray-500">{{ formatVND(phieu.tongTien) }}</span>
+              </div>
+              <div class="text-[11px] text-muted mt-1 truncate">
+                {{ (phieu.chiTietList || []).map(ct => `${ct.tenSanPham} (+${ct.soLuong})`).join(', ') }}
+              </div>
             </div>
           </div>
         </div>
@@ -296,7 +304,7 @@ const orderForm = ref({ nhaCungCap: '', ghiChu: '' })
 
 const showConfirmDialog = ref(false)
 
-// lịch sử nhập trong phiên
+// lịch sử nhập (tải thật từ BE - GET /api/admin/phieu-nhap)
 const importHistory = ref([])
 
 // ── COMPUTED ───────────────────────────────────────────────────────
@@ -337,7 +345,20 @@ async function fetchProducts() {
   }
 }
 
-onMounted(fetchProducts)
+// Lấy lịch sử phiếu nhập thật từ BE (thay vì chỉ nhớ trong session)
+async function fetchImportHistory() {
+  try {
+    const { data } = await apiClient.get('/api/admin/phieu-nhap')
+    importHistory.value = data || []
+  } catch {
+    // im lặng bỏ qua, không chặn trang chính
+  }
+}
+
+onMounted(() => {
+  fetchProducts()
+  fetchImportHistory()
+})
 
 // ── CART ───────────────────────────────────────────────────────────
 function isInCart(id) {
@@ -375,37 +396,34 @@ function createPurchaseOrder() {
 
 async function doImport() {
   submitting.value = true
-  let successCount = 0
   try {
+    // 1. Tạo phiếu nhập kho (trạng thái CHO_DUYET)
+    const payload = {
+      ghiChu: [orderForm.value.nhaCungCap ? `NCC: ${orderForm.value.nhaCungCap}` : null, orderForm.value.ghiChu]
+        .filter(Boolean).join(' — '),
+      chiTietList: cart.value.map(item => ({
+        sanPhamId: item.id,
+        soLuong: item.soLuongNhap,
+        giaNhap: item.donGia || 0
+      }))
+    }
+    const { data: phieu } = await apiClient.post('/api/admin/phieu-nhap/create', payload)
+
+    // 2. Duyệt ngay để cộng tồn kho (trang này dùng cho Admin xác nhận nhập luôn)
+    await apiClient.put(`/api/admin/phieu-nhap/${phieu.id}/approve`)
+
+    // Cập nhật tồn kho hiển thị tại chỗ + lịch sử
     for (const item of cart.value) {
-      try {
-        await apiClient.patch(`/api/v1/admin/products/${item.id}/dieu-chinh-ton-kho`, {
-          soLuongThayDoi: item.soLuongNhap
-        })
-        // Cập nhật số lượng local
-        const prod = products.value.find(p => p.id === item.id)
-        if (prod) prod.soLuongTon += item.soLuongNhap
-
-        // Lưu vào lịch sử
-        importHistory.value.unshift({
-          key: Date.now() + item.id,
-          tenSanPham: item.tenSanPham,
-          soLuong: item.soLuongNhap
-        })
-        successCount++
-      } catch {
-        // Tiếp tục
-      }
+      const prod = products.value.find(p => p.id === item.id)
+      if (prod) prod.soLuongTon += item.soLuongNhap
     }
 
-    if (successCount === cart.value.length) {
-      ElMessage.success(`Đã nhập kho thành công ${successCount} mặt hàng!`)
-    } else {
-      ElMessage.warning(`Nhập kho ${successCount}/${cart.value.length} mặt hàng. Có lỗi xảy ra với một số sản phẩm.`)
-    }
-
+    ElMessage.success(`Đã tạo và duyệt phiếu nhập #${phieu.id} thành công!`)
     clearCart()
     showConfirmDialog.value = false
+    await fetchImportHistory()
+  } catch (err) {
+    ElMessage.error(err?.response?.data?.message || err?.response?.data || 'Tạo phiếu nhập thất bại!')
   } finally {
     submitting.value = false
   }

@@ -187,7 +187,7 @@
 
 <script setup>
 import { ref, reactive, computed, watch } from 'vue'
-import { staffService } from '@/services/StaffService'
+import { staffService } from '@/services/staffService'
 
 // ─── Loại ca & màu sắc phân biệt ─────────────────────────────────────────────
 const CA_TYPES = {

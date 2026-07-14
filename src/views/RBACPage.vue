@@ -7,37 +7,50 @@
         <p class="mt-2 text-sm text-slate-500">Cấu hình quyền truy cập từng chức năng cho mỗi vai trò trong hệ thống.</p>
       </div>
       <div class="flex items-center gap-3">
-        <el-button class="rounded-xl" @click="resetChanges" :disabled="!dirty">
-          <iconify-icon icon="ph:arrow-counter-clockwise" class="mr-2 text-lg" />
-          Hoàn tác
-        </el-button>
-        <el-button
-          type="primary"
-          class="rounded-xl bg-gradient-to-r from-cake-500 to-orange-500 border-none shadow-sm shadow-cake-200"
-          :loading="saving"
-          @click="saveChanges"
-        >
-          <iconify-icon icon="ph:floppy-disk-duotone" class="mr-2 text-lg" />
-          Lưu thay đổi
-        </el-button>
+        <el-tooltip content="Ma trận phân quyền chi tiết bên dưới hiện chỉ mang tính minh họa - hệ thống hiện tại chỉ hỗ trợ 3 quyền phẳng (ADMIN/NHAN_VIEN/KHACH_HANG), chưa lưu từng permission riêng lẻ." placement="top">
+          <el-tag type="warning" effect="light" class="rounded-xl">Ma trận bên dưới: minh họa</el-tag>
+        </el-tooltip>
       </div>
     </div>
 
-    <!-- Role summary cards -->
-    <div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+    <!-- Role summary cards (dữ liệu thật từ BE) -->
+    <div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3" v-loading="loadingRoles">
       <div v-for="role in roles" :key="role.name" class="rounded-[20px] bg-white p-5 border border-slate-100 shadow-sm">
         <div class="flex items-center justify-between mb-3">
           <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl" :style="{ background: role.bg, color: role.color }">
             <iconify-icon :icon="role.icon" />
           </div>
-          <span class="badge badge-gray">{{ countGranted(role.name) }}/{{ permissionCount }} quyền</span>
+          <span class="badge badge-gray">{{ role.soLuongTaiKhoan ?? 0 }} tài khoản</span>
         </div>
         <h3 class="font-semibold text-slate-800">{{ role.label }}</h3>
-        <p class="text-xs text-slate-400 mt-1">{{ role.description }}</p>
+        <p class="text-xs text-slate-400 mt-1">{{ role.moTa || role.description }}</p>
       </div>
     </div>
 
-    <!-- Permission matrix -->
+    <!-- Đổi quyền tài khoản (tính năng thật, hoạt động với BE) -->
+    <el-card class="rounded-[28px] border border-slate-200 shadow-sm mb-6" body-class="p-0">
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+        <h3 class="font-semibold text-slate-800">Đổi quyền tài khoản</h3>
+        <el-input v-model="userSearch" placeholder="Tìm theo tên/email..." clearable class="w-[240px]">
+          <template #prefix><iconify-icon icon="ph:magnifying-glass" class="text-slate-400" /></template>
+        </el-input>
+      </div>
+      <el-table :data="filteredUsers" v-loading="loadingUsers" max-height="400">
+        <el-table-column prop="hoTen" label="Họ tên" min-width="160" />
+        <el-table-column prop="email" label="Email" min-width="200" />
+        <el-table-column label="Quyền hiện tại" width="220">
+          <template #default="{ row }">
+            <el-select v-model="row.quyen" size="small" style="width: 180px" @change="changeRole(row)">
+              <el-option label="Khách hàng" value="KHACH_HANG" />
+              <el-option label="Nhân viên" value="NHAN_VIEN" />
+              <el-option label="Quản trị viên" value="ADMIN" />
+            </el-select>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-card>
+
+    <!-- Permission matrix (MINH HỌA - chưa có API lưu chi tiết từng quyền) -->
     <el-card class="rounded-[28px] border border-slate-200 shadow-sm" body-class="p-0">
       <div class="p-5 border-b border-slate-100 flex items-center justify-between">
         <h3 class="font-semibold text-slate-800">Ma trận phân quyền</h3>
@@ -60,8 +73,7 @@
                   v-model="matrix[role.name][perm.key]"
                   active-color="#fb923c"
                   inactive-color="#d1d5db"
-                  :disabled="role.name === 'ADMIN'"
-                  @change="dirty = true"
+                  disabled
                 />
                 <div class="text-[11px] text-slate-400 mt-1">{{ role.label }}</div>
               </td>
@@ -78,19 +90,85 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import apiClient from '@/services/apiService'
 
-const saving = ref(false)
-const dirty = ref(false)
 const search = ref('')
+const userSearch = ref('')
+const loadingRoles = ref(false)
+const loadingUsers = ref(false)
 
-const roles = [
-  { name: 'ADMIN',      label: 'Quản trị viên', icon: 'ph:crown-simple-duotone', bg: '#FDF6EC', color: '#7A5C3A', description: 'Toàn quyền quản lý hệ thống' },
-  { name: 'NHAN_VIEN',  label: 'Nhân viên',      icon: 'ph:users-three-duotone', bg: '#EFF6FF', color: '#3B82F6', description: 'Vận hành cửa hàng hằng ngày' },
-  { name: 'KHACH_HANG', label: 'Khách hàng',     icon: 'ph:user-duotone',        bg: '#F0FDF4', color: '#22C55E', description: 'Người dùng mua hàng trên hệ thống' },
-]
+const roleMeta = {
+  ADMIN:      { label: 'Quản trị viên', icon: 'ph:crown-simple-duotone', bg: '#FDF6EC', color: '#7A5C3A' },
+  NHAN_VIEN:  { label: 'Nhân viên',      icon: 'ph:users-three-duotone', bg: '#EFF6FF', color: '#3B82F6' },
+  KHACH_HANG: { label: 'Khách hàng',     icon: 'ph:user-duotone',        bg: '#F0FDF4', color: '#22C55E' },
+}
 
+// roles: nạp từ GET /api/v1/admin/rbac/roles (số lượng tài khoản thật)
+const roles = reactive([
+  { name: 'ADMIN', ...roleMeta.ADMIN, soLuongTaiKhoan: 0, moTa: '' },
+  { name: 'NHAN_VIEN', ...roleMeta.NHAN_VIEN, soLuongTaiKhoan: 0, moTa: '' },
+  { name: 'KHACH_HANG', ...roleMeta.KHACH_HANG, soLuongTaiKhoan: 0, moTa: '' },
+])
+
+const users = ref([])
+
+const filteredUsers = computed(() => {
+  const q = userSearch.value.toLowerCase()
+  if (!q) return users.value
+  return users.value.filter(u =>
+    (u.hoTen || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q)
+  )
+})
+
+async function fetchRoles() {
+  loadingRoles.value = true
+  try {
+    const { data } = await apiClient.get('/api/v1/admin/rbac/roles')
+    data.forEach(r => {
+      const target = roles.find(x => x.name === r.quyen)
+      if (target) {
+        target.soLuongTaiKhoan = r.soLuongTaiKhoan
+        target.moTa = r.moTa
+      }
+    })
+  } catch {
+    ElMessage.error('Không thể tải tổng quan phân quyền!')
+  } finally {
+    loadingRoles.value = false
+  }
+}
+
+async function fetchUsers() {
+  loadingUsers.value = true
+  try {
+    const { data } = await apiClient.get('/api/v1/admin/rbac/users')
+    users.value = data || []
+  } catch {
+    ElMessage.error('Không thể tải danh sách tài khoản!')
+  } finally {
+    loadingUsers.value = false
+  }
+}
+
+async function changeRole(row) {
+  try {
+    await apiClient.put(`/api/v1/admin/rbac/users/${row.id}/role`, { quyen: row.quyen })
+    ElMessage.success(`Đã đổi quyền của ${row.hoTen} thành ${roleMeta[row.quyen]?.label || row.quyen}`)
+    fetchRoles()
+  } catch (err) {
+    ElMessage.error(err?.response?.data?.message || err?.response?.data || 'Đổi quyền thất bại!')
+    fetchUsers() // rollback lựa chọn trên UI nếu API từ chối (VD: tự hạ quyền chính mình)
+  }
+}
+
+onMounted(() => {
+  fetchRoles()
+  fetchUsers()
+})
+
+// ── Ma trận phân quyền chi tiết bên dưới: MINH HỌA, chưa có API lưu thật ──
 const permissionGroups = [
   {
     name: 'Sản phẩm & Danh mục',
@@ -124,29 +202,23 @@ const permissionGroups = [
   },
 ]
 
-const permissionCount = permissionGroups.reduce((s, g) => s + g.items.length, 0)
-
-// Ma trận mặc định (tĩnh) — sẽ đồng bộ với API phân quyền thật sau này
-function defaultMatrix() {
-  return {
-    ADMIN: Object.fromEntries(permissionGroups.flatMap(g => g.items.map(p => [p.key, true]))),
-    NHAN_VIEN: {
-      product_view: true, product_manage: true,
-      order_view: true, order_manage: true, order_cancel: false,
-      staff_view: true, staff_manage: false, rbac_manage: false,
-      report_view: true, system_manage: false,
-    },
-    KHACH_HANG: {
-      product_view: true, product_manage: false,
-      order_view: true, order_manage: false, order_cancel: false,
-      staff_view: false, staff_manage: false, rbac_manage: false,
-      report_view: false, system_manage: false,
-    },
-  }
-}
-
-const matrix = reactive(defaultMatrix())
-let snapshot = JSON.stringify(matrix)
+// Ma trận mặc định phản ánh ĐÚNG những gì code đang enforce qua SecurityConfig/@PreAuthorize
+// (không lưu được, chỉ hiển thị tham khảo)
+const matrix = reactive({
+  ADMIN: Object.fromEntries(permissionGroups.flatMap(g => g.items.map(p => [p.key, true]))),
+  NHAN_VIEN: {
+    product_view: true, product_manage: true,
+    order_view: true, order_manage: true, order_cancel: false,
+    staff_view: true, staff_manage: false, rbac_manage: false,
+    report_view: false, system_manage: false,
+  },
+  KHACH_HANG: {
+    product_view: true, product_manage: false,
+    order_view: true, order_manage: false, order_cancel: false,
+    staff_view: false, staff_manage: false, rbac_manage: false,
+    report_view: false, system_manage: false,
+  },
+})
 
 const filteredGroups = computed(() => {
   if (!search.value.trim()) return permissionGroups
@@ -155,25 +227,4 @@ const filteredGroups = computed(() => {
     .map(g => ({ ...g, items: g.items.filter(p => p.label.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q)) }))
     .filter(g => g.items.length > 0)
 })
-
-function countGranted(roleName) {
-  return Object.values(matrix[roleName]).filter(Boolean).length
-}
-
-function resetChanges() {
-  const saved = JSON.parse(snapshot)
-  Object.keys(saved).forEach(role => { Object.assign(matrix[role], saved[role]) })
-  dirty.value = false
-  ElMessage.info('Đã hoàn tác các thay đổi chưa lưu')
-}
-
-function saveChanges() {
-  saving.value = true
-  setTimeout(() => {
-    snapshot = JSON.stringify(matrix)
-    dirty.value = false
-    saving.value = false
-    ElMessage.success('Đã lưu cấu hình phân quyền')
-  }, 600)
-}
 </script>

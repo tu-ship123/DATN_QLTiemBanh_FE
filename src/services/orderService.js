@@ -119,4 +119,30 @@ export const orderService = {
   getOrder3DDesign(id) {
     return apiClient.get(`/api/v1/orders/${id}/design`);
   },
+
+  /** Nhân viên/Admin ghi/cập nhật ghi chú nội bộ (khách hàng không thấy) */
+  updateInternalNote(id, ghiChuNoiBo) {
+    return apiClient.put(`/api/v1/admin/orders/${id}/internal-note`, null, {
+      params: { ghiChuNoiBo },
+    });
+  },
+
+  /** Nhân viên giao hàng quét mã bill (HD-{id}) khi giao tận nơi -> tự động DA_GIAO */
+  scanDelivery(maVach) {
+    return apiClient.put('/api/v1/admin/orders/scan-delivery', null, {
+      params: { maVach },
+    });
+  },
+
+  /** Xác nhận thiết kế bánh 3D -> trừ kho phụ kiện + chuyển DANG_LAM + báo khách */
+  confirmDesign(id) {
+    return apiClient.put(`/api/v1/admin/orders/${id}/confirm-design`);
+  },
+
+  /** Từ chối thiết kế bánh 3D + lý do -> đơn về CHO_XAC_NHAN + báo khách sửa lại */
+  rejectDesign(id, lyDo) {
+    return apiClient.put(`/api/v1/admin/orders/${id}/reject-design`, null, {
+      params: { lyDo },
+    });
+  },
 };

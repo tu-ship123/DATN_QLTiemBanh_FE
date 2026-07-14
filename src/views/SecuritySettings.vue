@@ -51,17 +51,24 @@
           
           <div v-if="!is2FAEnabled" class="text-center space-y-4">
             <p class="text-sm text-slate-500 text-left">Quét mã QR dưới đây bằng ứng dụng Google Authenticator hoặc Authy để thiết lập.</p>
-            <div class="inline-block p-2 bg-white border border-slate-200 rounded-2xl shadow-sm">
-              <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=otpauth://totp/Chocopine:Admin?secret=JBSWY3DPEHPK3PXP&issuer=Chocopine" alt="QR Code" class="w-32 h-32" />
+            <div v-if="!qrCodeUri" class="text-left">
+              <el-button class="w-full rounded-xl" @click="startSetupTotp" :loading="settingUp">
+                Bắt đầu thiết lập 2FA
+              </el-button>
             </div>
-            <div class="text-left">
-              <p class="text-xs text-slate-400 mb-1">Hoặc nhập mã thủ công:</p>
-              <code class="px-2 py-1 bg-slate-100 rounded text-slate-700 text-xs font-mono select-all">JBSWY3DPEHPK3PXP</code>
-            </div>
-            <el-input v-model="otpCode" placeholder="Nhập mã gồm 6 chữ số" maxlength="6" class="mt-4 text-center text-lg tracking-widest font-mono" />
-            <el-button type="primary" class="w-full rounded-xl bg-cake-500 border-none hover:bg-cake-600" @click="enable2FA">
-              Kích hoạt 2FA
-            </el-button>
+            <template v-else>
+              <div class="inline-block p-2 bg-white border border-slate-200 rounded-2xl shadow-sm">
+                <img :src="qrImageUrl" alt="QR Code" class="w-32 h-32" />
+              </div>
+              <div class="text-left">
+                <p class="text-xs text-slate-400 mb-1">Hoặc nhập mã thủ công:</p>
+                <code class="px-2 py-1 bg-slate-100 rounded text-slate-700 text-xs font-mono select-all">{{ totpSecret }}</code>
+              </div>
+              <el-input v-model="otpCode" placeholder="Nhập mã gồm 6 chữ số" maxlength="6" class="mt-4 text-center text-lg tracking-widest font-mono" />
+              <el-button type="primary" class="w-full rounded-xl bg-cake-500 border-none hover:bg-cake-600" @click="enable2FA" :loading="verifying">
+                Kích hoạt 2FA
+              </el-button>
+            </template>
           </div>
 
           <div v-else class="text-center space-y-4">
@@ -69,7 +76,7 @@
                <iconify-icon icon="ph:shield-check-fill" />
              </div>
              <p class="text-sm text-slate-600">Tài khoản của bạn đã được bảo vệ bằng xác thực hai bước.</p>
-             <el-button type="danger" plain class="w-full rounded-xl" @click="disable2FA">
+             <el-button type="danger" plain class="w-full rounded-xl" @click="disable2FA" :loading="disabling">
                Tắt xác thực hai bước
              </el-button>
           </div>
@@ -114,8 +121,9 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import apiClient from '@/services/apiService'
 
 const pwdForm = reactive({
   current: '',
@@ -125,6 +133,18 @@ const pwdForm = reactive({
 
 const is2FAEnabled = ref(false)
 const otpCode = ref('')
+const qrCodeUri = ref('')
+const totpSecret = ref('')
+const settingUp = ref(false)
+const verifying = ref(false)
+const disabling = ref(false)
+
+// otpauth://... URI trả về từ BE (chứa secret thật của user) -> nhờ dịch vụ QR public vẽ ảnh
+const qrImageUrl = computed(() =>
+  qrCodeUri.value
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrCodeUri.value)}`
+    : ''
+)
 
 const loginHistory = ref([
   { id: 1, device: 'MacBook Pro (macOS)', browser: 'Chrome 124.0.0.0', icon: 'ph:laptop-duotone', ip: '192.168.1.45', time: 'Vừa xong', current: true },
@@ -132,7 +152,16 @@ const loginHistory = ref([
   { id: 3, device: 'Windows PC (Win 11)', browser: 'Edge 123.0.0.0', icon: 'ph:desktop-tower-duotone', ip: '113.160.22.10', time: '20/05/2024 09:15', current: false },
 ])
 
-const changePassword = () => {
+async function fetchStatus() {
+  try {
+    const { data } = await apiClient.get('/api/v1/users/me')
+    is2FAEnabled.value = !!data.is2FaEnabled
+  } catch {
+    // im lặng, giữ trạng thái mặc định false
+  }
+}
+
+const changePassword = async () => {
   if (!pwdForm.current || !pwdForm.new || !pwdForm.confirm) {
     ElMessage.warning('Vui lòng nhập đầy đủ thông tin!')
     return
@@ -141,20 +170,50 @@ const changePassword = () => {
     ElMessage.error('Mật khẩu xác nhận không khớp!')
     return
   }
-  ElMessage.success('Đổi mật khẩu thành công!')
-  pwdForm.current = ''
-  pwdForm.new = ''
-  pwdForm.confirm = ''
+  try {
+    await apiClient.put('/api/v1/users/me/password', {
+      matKhauHienTai: pwdForm.current,
+      matKhauMoi: pwdForm.new
+    })
+    ElMessage.success('Đổi mật khẩu thành công! Các thiết bị khác đã bị đăng xuất.')
+    pwdForm.current = ''
+    pwdForm.new = ''
+    pwdForm.confirm = ''
+  } catch (err) {
+    ElMessage.error(err?.response?.data?.message || err?.response?.data || 'Đổi mật khẩu thất bại!')
+  }
 }
 
-const enable2FA = () => {
+async function startSetupTotp() {
+  settingUp.value = true
+  try {
+    const { data } = await apiClient.get('/api/v1/auth/totp/setup')
+    totpSecret.value = data.secret
+    qrCodeUri.value = data.qrCodeUri
+  } catch (err) {
+    ElMessage.error(err?.response?.data?.message || err?.response?.data || 'Không thể thiết lập 2FA!')
+  } finally {
+    settingUp.value = false
+  }
+}
+
+const enable2FA = async () => {
   if (otpCode.value.length !== 6) {
     ElMessage.warning('Mã xác nhận phải gồm 6 chữ số!')
     return
   }
-  is2FAEnabled.value = true
-  otpCode.value = ''
-  ElMessage.success('Đã kích hoạt xác thực hai bước (2FA)')
+  verifying.value = true
+  try {
+    await apiClient.post('/api/v1/auth/totp/verify', null, { params: { code: otpCode.value } })
+    is2FAEnabled.value = true
+    otpCode.value = ''
+    qrCodeUri.value = ''
+    ElMessage.success('Đã kích hoạt xác thực hai bước (2FA)')
+  } catch (err) {
+    ElMessage.error(err?.response?.data?.message || err?.response?.data || 'Mã xác thực không chính xác!')
+  } finally {
+    verifying.value = false
+  }
 }
 
 const disable2FA = () => {
@@ -166,11 +225,21 @@ const disable2FA = () => {
       cancelButtonText: 'Hủy',
       type: 'warning',
     }
-  ).then(() => {
-    is2FAEnabled.value = false
-    ElMessage.success('Đã tắt xác thực hai bước (2FA)')
+  ).then(async () => {
+    disabling.value = true
+    try {
+      await apiClient.post('/api/v1/auth/totp/disable')
+      is2FAEnabled.value = false
+      ElMessage.success('Đã tắt xác thực hai bước (2FA)')
+    } catch (err) {
+      ElMessage.error(err?.response?.data?.message || err?.response?.data || 'Tắt 2FA thất bại!')
+    } finally {
+      disabling.value = false
+    }
   }).catch(() => {})
 }
+
+onMounted(fetchStatus)
 </script>
 
 <style scoped>
