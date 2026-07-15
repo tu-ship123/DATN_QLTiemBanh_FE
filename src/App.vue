@@ -22,7 +22,9 @@
 
 <script setup>
 import { RouterView } from 'vue-router'
+import { watch } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
+import { realtimeService } from '@/services/realtimeService'
 
 const authStore = useAuthStore()
 
@@ -31,6 +33,24 @@ const onPageEntered = () => {
     authStore.finishLoginRedirect()
   }
 }
+
+// ─── REALTIME: kết nối WebSocket 1 lần cho toàn app ────────────────────────
+// Đã đăng nhập sẵn từ trước (F5 lại trang) -> kết nối luôn.
+if (authStore.isAuthenticated) {
+  realtimeService.connect()
+}
+// Theo dõi việc đăng nhập / đăng xuất để tự nối lại / ngắt kết nối,
+// không phụ thuộc đang đứng ở trang/component nào trong app.
+watch(
+  () => authStore.accessToken,
+  (token) => {
+    if (token) {
+      realtimeService.connect()
+    } else {
+      realtimeService.disconnect()
+    }
+  }
+)
 </script>
 
 <style>

@@ -284,12 +284,12 @@
                     Đánh giá đơn hàng #{{ activeOrder.id }}
                   </h4>
 
-                  <!-- Chọn sản phẩm cần đánh giá -->
-                  <div v-if="activeOrder.items?.length > 1">
+                  <!-- Chọn sản phẩm cần đánh giá (chỉ hiện những sản phẩm CHƯA đánh giá) -->
+                  <div v-if="sanPhamChuaDanhGia.length > 1">
                     <label class="text-xs font-semibold text-[#9A7650] mb-1 block">Sản phẩm đánh giá</label>
                     <select v-model="danhGia.sanPhamId"
                       class="w-full px-3 py-2.5 rounded-xl border border-[#EDE0CC] bg-white text-sm text-[#5C4428] outline-none focus:border-[#7A5C3A]">
-                      <option v-for="item in activeOrder.items" :key="item.sanPhamId" :value="item.sanPhamId">
+                      <option v-for="item in sanPhamChuaDanhGia" :key="item.sanPhamId" :value="item.sanPhamId">
                         {{ item.tenSanPham }}
                       </option>
                     </select>
@@ -471,6 +471,7 @@ import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { orderService } from '@/services/orderService' 
 import apiClient from '@/services/apiService' // Để gọi thêm hàm cancel
+import { realtimeService } from '@/services/realtimeService'
 import CakeDesignViewer3D from '@/components/cake3d/CakeDesignViewer3D.vue'
 
 const router = useRouter()
@@ -483,22 +484,29 @@ const searched = ref(false)
 const activeOrder = ref(null)
 const showNotif = ref(false)
 
-// ===== LOGIC LẤY ĐƠN HÀNG TỪ BACKEND (GIỮ NGUYÊN) =====
-const fetchMyOrders = async () => {
+// ===== LOGIC LẤY ĐƠN HÀNG TỪ BACKEND =====
+// silent = true: dùng khi realtime tự làm mới dữ liệu ngầm — KHÔNG hiện spinner
+// loading toàn trang, tránh cảm giác "giật" khi có thông báo đến.
+const fetchMyOrders = async ({ silent = false } = {}) => {
   try {
-    loading.value = true
+    if (!silent) loading.value = true
     const response = await orderService.getMyOrders()
-    orders.value = response.data.reverse() 
-    
-    // Nếu có đơn hàng, mặc định hiển thị đơn đầu tiên lên giao diện Chi tiết
-    if (orders.value.length > 0) {
-      activeOrder.value = orders.value[0]
+    const danhSachMoi = response.data.reverse()
+    orders.value = danhSachMoi
+
+    // Giữ nguyên đơn đang xem (nếu vẫn còn) để không bị nhảy về đơn đầu tiên
+    // mỗi lần realtime cập nhật — chỉ thay bằng bản dữ liệu mới nhất của đơn đó.
+    if (activeOrder.value) {
+      const donDangXemMoi = danhSachMoi.find(o => o.id === activeOrder.value.id)
+      activeOrder.value = donDangXemMoi || danhSachMoi[0] || null
+    } else if (danhSachMoi.length > 0) {
+      activeOrder.value = danhSachMoi[0]
     }
   } catch (error) {
     console.error('Lỗi lấy đơn hàng:', error)
-    showToast('Không thể tải lịch sử đơn hàng lúc này.', 'error')
+    if (!silent) showToast('Không thể tải lịch sử đơn hàng lúc này.', 'error')
   } finally {
-    loading.value = false
+    if (!silent) loading.value = false
   }
 }
 
@@ -587,25 +595,47 @@ const xacNhanNhanHang = async () => {
 
 // ─── ĐÁNH GIÁ SẢN PHẨM ──────────────────────────────────────────────────────
 const moFormDanhGia = ref(false)
-const daDanhGia = ref(false)
+const daDanhGia = ref(false) // true = đã đánh giá HẾT tất cả sản phẩm trong đơn
+const sanPhamIdDaDanhGia = ref([]) // danh sách id sản phẩm ĐÃ được đánh giá trong đơn hiện tại
 const danhGiaLoading = ref(false)
 const danhGia = ref({ sanPhamId: null, soSao: 0, noiDung: '', hinhAnh: null })
+
+// Sản phẩm trong đơn hiện tại mà khách CHƯA đánh giá — dùng cho dropdown chọn sản phẩm
+const sanPhamChuaDanhGia = computed(() => {
+  const items = activeOrder.value?.items || []
+  return items.filter(item => !sanPhamIdDaDanhGia.value.includes(item.sanPhamId))
+})
+
+// Gọi BE lấy trạng thái đánh giá mới nhất của đơn, đồng thời reset sanPhamId đang chọn
+// về sản phẩm đầu tiên chưa được đánh giá (nếu còn)
+const taiTrangThaiDanhGia = async (order) => {
+  if (order?.trangThai !== 'HOAN_THANH') {
+    daDanhGia.value = false
+    sanPhamIdDaDanhGia.value = []
+    return
+  }
+  try {
+    const res = await apiClient.get(`/api/v1/orders/${order.id}/review`)
+    daDanhGia.value = res.data?.daDanhGia === true
+    sanPhamIdDaDanhGia.value = res.data?.sanPhamIdDaDanhGia || []
+  } catch {
+    // Không xử lý lỗi — mặc định cho phép đánh giá
+    daDanhGia.value = false
+    sanPhamIdDaDanhGia.value = []
+  }
+}
 
 // Tự điền sanPhamId và kiểm tra đã đánh giá chưa khi chuyển đơn
 watch(() => activeOrder.value, async (order) => {
   moFormDanhGia.value = false
-  daDanhGia.value = false
-  danhGia.value = { sanPhamId: order?.items?.[0]?.sanPhamId || null, soSao: 0, noiDung: '', hinhAnh: null }
+  danhGia.value = { sanPhamId: null, soSao: 0, noiDung: '', hinhAnh: null }
 
-  // Nếu đơn đã hoàn thành, hỏi BE xem đã đánh giá chưa
-  if (order?.trangThai === 'HOAN_THANH') {
-    try {
-      const res = await apiClient.get(`/api/v1/orders/${order.id}/review`)
-      daDanhGia.value = res.data?.daDanhGia === true
-    } catch {
-      // Không xử lý lỗi — mặc định cho phép đánh giá
-    }
-  }
+  await taiTrangThaiDanhGia(order)
+
+  // Chọn sẵn sản phẩm đầu tiên chưa được đánh giá
+  danhGia.value.sanPhamId = sanPhamChuaDanhGia.value[0]?.sanPhamId
+    ?? order?.items?.[0]?.sanPhamId
+    ?? null
 }, { immediate: true })
 
 // Chọn ảnh thực tế đính kèm đánh giá -> convert base64 (đồng bộ cách làm với ảnh sản phẩm)
@@ -631,11 +661,21 @@ const guiDanhGia = async () => {
       noiDung: danhGia.value.noiDung,
       hinhAnh: danhGia.value.hinhAnh,
     })
-    // 2. Cộng điểm đánh giá
+    // 2. Cộng điểm đánh giá (BE tự chặn cộng trùng nếu đơn đã từng được cộng điểm đánh giá)
     await apiClient.post(`/api/v1/loyalty/cong-diem-danh-gia/${activeOrder.value.id}`)
-    daDanhGia.value = true
-    moFormDanhGia.value = false
-    showToast('🌟 Cảm ơn bạn đã đánh giá! +5 điểm đã được cộng.', 'success')
+
+    // 3. Nạp lại trạng thái đánh giá mới nhất — nếu đơn còn sản phẩm khác chưa đánh giá,
+    //    daDanhGia vẫn là false nên form/nút vẫn hiển thị để khách đánh giá tiếp
+    await taiTrangThaiDanhGia(activeOrder.value)
+
+    if (daDanhGia.value) {
+      moFormDanhGia.value = false
+      showToast('🌟 Cảm ơn bạn đã đánh giá! +5 điểm đã được cộng.', 'success')
+    } else {
+      // Vẫn còn sản phẩm chưa đánh giá -> tự chọn sản phẩm tiếp theo, giữ form mở
+      danhGia.value = { sanPhamId: sanPhamChuaDanhGia.value[0]?.sanPhamId ?? null, soSao: 0, noiDung: '', hinhAnh: null }
+      showToast('🌟 Đã gửi đánh giá! Bạn có thể đánh giá thêm sản phẩm còn lại.', 'success')
+    }
   } catch (e) {
     showToast(e.response?.data || 'Gửi đánh giá thất bại!', 'error')
   } finally {
@@ -756,12 +796,24 @@ const showToast = (msg, type = 'info') => {
   toastTimer = setTimeout(() => { toast.value.show = false }, 3000)
 }
 
+// ─── REALTIME: tự cập nhật khi trạng thái đơn thay đổi (không cần F5) ──────
+let huyLangNgheRealtime = null
+
 onMounted(() => {
   fetchMyOrders()
   document.addEventListener('click', closeDropdown)
+
+  // Khi Admin/Nhân viên đổi trạng thái đơn (VD: chuyển "Đang giao"), backend
+  // sẽ bắn thông báo về đây — tự nạp lại danh sách đơn NGẦM (không loading toàn trang)
+  // để trạng thái hiển thị đúng ngay lập tức, không cần khách bấm F5.
+  huyLangNgheRealtime = realtimeService.onNotification((message) => {
+    showToast(message, 'success')
+    fetchMyOrders({ silent: true })
+  })
 })
 onBeforeUnmount(() => {
   document.removeEventListener('click', closeDropdown)
+  if (huyLangNgheRealtime) huyLangNgheRealtime()
 })
 </script>
 
