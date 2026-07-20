@@ -170,6 +170,9 @@
       </div>
     </footer>
 
+    <!-- Trợ lý ảo AI — góc trái, dùng được cả khi chưa đăng nhập -->
+    <AiChatWidget />
+
     <!-- Widget chat với cửa hàng — chỉ hiện khi khách hàng đã đăng nhập
          (BE /api/v1/messages/me yêu cầu isAuthenticated()) -->
     <CustomerChatWidget v-if="authStore.isAuthenticated" />
@@ -182,6 +185,7 @@ import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cartStore'
 import { useAuthStore } from '@/stores/authStore'
 import CustomerChatWidget from '@/components/CustomerChatWidget.vue'
+import AiChatWidget from '@/components/AiChatWidget.vue'
 
 const route = useRoute()
 const router = useRouter()
