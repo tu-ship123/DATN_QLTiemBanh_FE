@@ -618,6 +618,22 @@ function handleBarcodeScan() {
 // ─── TREO BILL ───────────────────────────────────────────────────────────────
 const heldBills = ref([])  // { id, label, cart, ghiChu, emailKhach, orderNo, createdAt }
 
+// Sinh id duy nhất cho mỗi bill treo. KHÔNG dùng Date.now() đơn thuần vì nếu
+// 2 bill được treo trong cùng 1 mili-giây (thao tác nhanh, hoặc "treo tạm" khi
+// mở bill khác) sẽ bị TRÙNG id -> heldBills.filter(b => b.id !== bill.id) sẽ
+// xóa nhầm CẢ 2 bill khi mở lại 1 trong 2, gây mất dữ liệu sản phẩm của bill còn lại.
+function genHeldBillId() {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+}
+
+// Tạo bản sao độc lập (deep clone) cho dữ liệu giỏ hàng khi treo, tránh việc
+// heldBills chỉ giữ THAM CHIẾU tới mảng cart đang sống — nếu giữ tham chiếu,
+// mọi thao tác thêm/bớt món trên giỏ hàng hiện tại sau đó có thể vô tình
+// ảnh hưởng ngược lại dữ liệu của bill đã treo (hoặc ngược lại khi mở lại).
+function cloneCart(cart) {
+  return cart.map(item => ({ ...item }))
+}
+
 function billTotal(bill) {
   return bill.cart.reduce((s, i) => s + Number(i.donGia) * i.qty, 0)
 }
@@ -639,14 +655,14 @@ async function treoBill() {
       }
     )
     heldBills.value.push({
-      id: Date.now(),
+      id: genHeldBillId(),
       label: label.trim(),
-      cart: cart.value,
+      cart: cloneCart(cart.value),
       ghiChu: ghiChu.value,
       emailKhach: emailKhach.value,
       orderNo: orderNo.value,
       soTheRung: soTheRung.value,
-      appliedVoucher: appliedVoucher.value,
+      appliedVoucher: appliedVoucher.value ? { ...appliedVoucher.value } : null,
       createdAt: new Date(),
     })
     // Mở bill trắng mới để phục vụ khách khác
@@ -666,12 +682,12 @@ async function treoBill() {
 async function resumeHeldBill(bill) {
   const swapIn = () => {
     heldBills.value = heldBills.value.filter(b => b.id !== bill.id)
-    cart.value = bill.cart
+    cart.value = cloneCart(bill.cart)
     ghiChu.value = bill.ghiChu
     emailKhach.value = bill.emailKhach
     orderNo.value = bill.orderNo
     soTheRung.value = bill.soTheRung || ''
-    appliedVoucher.value = bill.appliedVoucher || null
+    appliedVoucher.value = bill.appliedVoucher ? { ...bill.appliedVoucher } : null
     voucherError.value = ''
     ElMessage.success(`Đã mở lại bill "${bill.label}"`)
   }
@@ -698,14 +714,14 @@ async function resumeHeldBill(bill) {
 async function treoBillSilently() {
   if (cart.value.length === 0) return
   heldBills.value.push({
-    id: Date.now(),
+    id: genHeldBillId(),
     label: `Khách ${heldBills.value.length + 1}`,
-    cart: cart.value,
+    cart: cloneCart(cart.value),
     ghiChu: ghiChu.value,
     emailKhach: emailKhach.value,
     orderNo: orderNo.value,
     soTheRung: soTheRung.value,
-    appliedVoucher: appliedVoucher.value,
+    appliedVoucher: appliedVoucher.value ? { ...appliedVoucher.value } : null,
     createdAt: new Date(),
   })
 }
