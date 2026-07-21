@@ -446,19 +446,25 @@ async function submitReply() {
     return
   }
   saving.value = true
+  // Chốt id của đánh giá đang thao tác NGAY tại thời điểm bấm gửi — đây là id
+  // chắc chắn đúng (đã dùng để gọi API). Không dùng data.id từ response để tra
+  // cứu vị trí cập nhật, vì nếu response BE thiếu/khác field id sẽ khiến phản
+  // hồi bị gắn nhầm sang đánh giá khác (hiển thị sai vị trí).
+  const targetId = replyTarget.value.id
+  const wasReplied = !!replyTarget.value.phanHoiCuaTiem
   try {
     const { data } = await apiClient.put(
-      `/api/v1/admin/reviews/${replyTarget.value.id}/reply`,
+      `/api/v1/admin/reviews/${targetId}/reply`,
       { phanHoi: replyText.value }
     )
-    const idx = reviews.value.findIndex(d => d.id === data.id)
-    if (idx !== -1) reviews.value[idx] = data
+    const idx = reviews.value.findIndex(d => d.id === targetId)
+    if (idx !== -1) reviews.value[idx] = { ...reviews.value[idx], ...data, id: targetId }
 
     // reload stats
     const statRes = await apiClient.get('/api/v1/admin/reviews/stats')
     stats.value = statRes.data
 
-    ElMessage.success(replyTarget.value.phanHoiCuaTiem ? 'Đã cập nhật phản hồi!' : 'Đã gửi phản hồi!')
+    ElMessage.success(wasReplied ? 'Đã cập nhật phản hồi!' : 'Đã gửi phản hồi!')
     replyDialog.value = false
   } catch {
     ElMessage.error('Gửi phản hồi thất bại')
@@ -475,12 +481,13 @@ async function deleteReply() {
       { confirmButtonText: 'Xóa phản hồi', cancelButtonText: 'Huỷ', type: 'warning' }
     )
     // Gọi API reply với chuỗi rỗng để xóa phản hồi
+    const targetId = replyTarget.value.id
     const { data } = await apiClient.put(
-      `/api/v1/admin/reviews/${replyTarget.value.id}/reply`,
+      `/api/v1/admin/reviews/${targetId}/reply`,
       { phanHoi: '' }
     )
-    const idx = reviews.value.findIndex(d => d.id === data.id)
-    if (idx !== -1) reviews.value[idx] = data
+    const idx = reviews.value.findIndex(d => d.id === targetId)
+    if (idx !== -1) reviews.value[idx] = { ...reviews.value[idx], ...data, id: targetId }
     const statRes = await apiClient.get('/api/v1/admin/reviews/stats')
     stats.value = statRes.data
     ElMessage.success('Đã xóa phản hồi')
@@ -504,11 +511,12 @@ function toggleHide(dg) {
 }
 
 async function doDirectToggle(dg) {
-  togglingId.value = dg.id
+  const targetId = dg.id
+  togglingId.value = targetId
   try {
-    const { data } = await apiClient.put(`/api/v1/admin/reviews/${dg.id}/toggle`)
-    const idx = reviews.value.findIndex(d => d.id === data.id)
-    if (idx !== -1) reviews.value[idx] = data
+    const { data } = await apiClient.put(`/api/v1/admin/reviews/${targetId}/toggle`)
+    const idx = reviews.value.findIndex(d => d.id === targetId)
+    if (idx !== -1) reviews.value[idx] = { ...reviews.value[idx], ...data, id: targetId }
     const statRes = await apiClient.get('/api/v1/admin/reviews/stats')
     stats.value = statRes.data
     ElMessage.success('Đã hiện lại đánh giá')
@@ -521,11 +529,12 @@ async function doDirectToggle(dg) {
 
 async function doToggleHide() {
   if (!hideTarget.value) return
-  togglingId.value = hideTarget.value.id
+  const targetId = hideTarget.value.id
+  togglingId.value = targetId
   try {
-    const { data } = await apiClient.put(`/api/v1/admin/reviews/${hideTarget.value.id}/toggle`)
-    const idx = reviews.value.findIndex(d => d.id === data.id)
-    if (idx !== -1) reviews.value[idx] = data
+    const { data } = await apiClient.put(`/api/v1/admin/reviews/${targetId}/toggle`)
+    const idx = reviews.value.findIndex(d => d.id === targetId)
+    if (idx !== -1) reviews.value[idx] = { ...reviews.value[idx], ...data, id: targetId }
     const statRes = await apiClient.get('/api/v1/admin/reviews/stats')
     stats.value = statRes.data
     ElMessage.success('Đã ẩn đánh giá vi phạm')
