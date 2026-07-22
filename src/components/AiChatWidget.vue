@@ -25,6 +25,10 @@
           </div>
         </div>
 
+        <div class="ai-privacy-note">
+          Cuộc trò chuyện có thể được lưu lại để cải thiện dịch vụ.
+        </div>
+
         <div class="ai-panel-body" ref="bodyRef">
           <div v-if="messages.length === 0" class="ai-empty">
             Chào bạn! 👋 Mình là trợ lý ảo, hỏi mình về menu, giá, chính sách đặt bánh
@@ -171,6 +175,15 @@ async function handleSend() {
 }
 .ai-panel-title { font-weight: 800; font-size: 0.95rem; }
 .ai-panel-sub { font-size: 0.72rem; opacity: 0.85; margin-top: 2px; }
+
+.ai-privacy-note {
+  font-size: 0.68rem;
+  color: var(--wheat-brown-mid, #9A7650);
+  background: var(--wheat-brown-pale, #E8D9C4);
+  padding: 5px 12px;
+  text-align: center;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+}
 
 .ai-panel-body {
   flex: 1;
