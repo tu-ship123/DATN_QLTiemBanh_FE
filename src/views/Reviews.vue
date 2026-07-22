@@ -161,8 +161,10 @@
                 :class="i <= dg.soSao ? 'text-amber-400' : 'text-slate-200'">★</span>
             </div>
 
-            <!-- Nội dung -->
-            <p v-if="dg.noiDung" class="text-sm text-slate-700 mt-2 leading-relaxed">{{ dg.noiDung }}</p>
+            <!-- Nội dung khách đánh giá-->
+            <p v-if="dg.noiDung" class="text-sm text-slate-700 mt-2 leading-relaxed">
+              {{ censorProfanity(dg.noiDung) }}
+            </p>
             <p v-else class="text-xs text-muted italic mt-2">Không có nội dung</p>
 
             <!-- Ảnh khách hàng đính kèm -->
@@ -177,7 +179,7 @@
               <p class="text-xs font-semibold text-[#7A5C3A] mb-1 flex items-center gap-1">
                 <iconify-icon icon="ph:chat-circle-duotone" /> Phản hồi từ Chocopine
               </p>
-              <p class="text-sm text-slate-700">{{ dg.phanHoiCuaTiem }}</p>
+              <p class="text-sm text-slate-700">{{ censorProfanity(dg.phanHoiCuaTiem) }}</p>
             </div>
 
             <!-- Actions -->
@@ -452,10 +454,12 @@ async function submitReply() {
   // hồi bị gắn nhầm sang đánh giá khác (hiển thị sai vị trí).
   const targetId = replyTarget.value.id
   const wasReplied = !!replyTarget.value.phanHoiCuaTiem
+  // Mã hóa từ nhạy cảm trước khi gửi API
+  const cleanReplyText = censorProfanity(replyText.value)
   try {
     const { data } = await apiClient.put(
       `/api/v1/admin/reviews/${targetId}/reply`,
-      { phanHoi: replyText.value }
+      { phanHoi: cleanReplyText.value }
     )
     const idx = reviews.value.findIndex(d => d.id === targetId)
     if (idx !== -1) reviews.value[idx] = { ...reviews.value[idx], ...data, id: targetId }
@@ -571,5 +575,23 @@ function formatDate(dt) {
     day: '2-digit', month: '2-digit', year: 'numeric',
     hour: '2-digit', minute: '2-digit'
   })
+}
+// ── Ẩn đánh giá nhạy cảm ───────────────────────────────────────────────────────────────────
+// Danh sách các từ tục tĩu / nhạy cảm
+const BAD_WORDS = [
+  'đm', 'dm', 'đmm', 'dmm', 'vãi', 'vl', 'vcl', 'vkl',
+  'cc', 'cl', 'lồn', 'lon', 'buồi', 'buoi', 'cặc', 'cac',
+  'mẹ kiếp', 'chó chết', 'fuck', 'bitch', 'shit'
+]
+
+function censorProfanity(text) {
+  if (!text) return ''
+  let filtered = text
+  BAD_WORDS.forEach(word => {
+    // Escape các ký tự đặc biệt trong regex
+    const regex = new RegExp(`\\b${word}\\b`, 'gi')
+    filtered = filtered.replace(regex, (match) => '*'.repeat(match.length))
+  })
+  return filtered
 }
 </script>
