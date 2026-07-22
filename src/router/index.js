@@ -122,6 +122,7 @@ const routes = [
       { path: 'reports',          name: 'ReportsPage',     component: () => import('@/views/ReportsPage.vue'),     meta: { title: 'Báo cáo',                 breadcrumb: ['Trang chủ', 'Báo cáo'] } },
       { path: 'reviews',          name: 'Reviews',         component: () => import('@/views/Reviews.vue'),         meta: { title: 'Đánh giá',                breadcrumb: ['Trang chủ', 'Đánh giá'] } },
       { path: 'messages',         name: 'Messages',        component: () => import('@/views/Messages.vue'),        meta: { title: 'Tin nhắn',                breadcrumb: ['Trang chủ', 'Tin nhắn'] } },
+      { path: 'chatbot-history',  name: 'ChatbotHistory',  component: () => import('@/views/ChatbotHistory.vue'),  meta: { title: 'Lịch sử Trợ lý ảo',       breadcrumb: ['Trang chủ', 'Lịch sử Trợ lý ảo'] } },
       { path: 'settings',         name: 'Settings',        component: () => import('@/views/Settings.vue'),        meta: { title: 'Cài đặt',                 breadcrumb: ['Trang chủ', 'Cài đặt'] } },
       { path: 'security-settings',name: 'SecuritySettings',component: () => import('@/views/SecuritySettings.vue'), meta: { title: 'Bảo mật',                 breadcrumb: ['Trang chủ', 'Cài đặt', 'Bảo mật'] } },
       { path: 'audit-log',        name: 'AuditLog',        component: () => import('@/views/AuditLog.vue'),        meta: { title: 'Nhật ký hoạt động',       breadcrumb: ['Trang chủ', 'Cài đặt', 'Nhật ký hoạt động'] } },

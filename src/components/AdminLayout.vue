@@ -273,6 +273,7 @@ const mainMenu = [
   { path: '/admin/analytics',  icon: 'ph:chart-line-up-duotone',         label: 'Phân tích'             },
   { path: '/admin/reports',    icon: 'ph:chart-pie-slice-duotone',       label: 'Báo cáo'               },
   { path: '/admin/messages',   icon: 'ph:chat-teardrop-dots-duotone',    label: 'Tin nhắn'              },
+  { path: '/admin/chatbot-history', icon: 'ph:sparkle-duotone',          label: 'Lịch sử Trợ lý ảo'     },
   { path: '/admin/categories', icon: 'ph:tag-duotone',                   label: 'Danh mục'              },
   { path: '/admin/payroll',    icon: 'ph:money-wavy-duotone',            label: 'Lương thưởng'          },
 ]
