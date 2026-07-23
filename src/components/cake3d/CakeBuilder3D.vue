@@ -769,6 +769,27 @@ function raycastCakeSurface(evt, rect) {
   return hits.length ? hits[0] : null
 }
 
+/** Fix DF_ST02: trước đây marker luôn được đẩy lên theo trục Y cục bộ
+ *  (local.y + MARKER_OFFSET), đúng cho mặt phẳng nằm ngang nhưng SAI trên
+ *  mặt cong (hông bánh tròn, đỉnh vòm...) vì ở đó "ra khỏi bề mặt" không
+ *  còn trùng với hướng +Y nữa -> phụ kiện bị lún vào kem hoặc trồi lơ lửng
+ *  khi kéo sát rìa bánh. Sửa: đẩy theo đúng pháp tuyến (normal) tại điểm
+ *  raycast trúng, quy đổi từ world-space về local-space của cakeGroup. */
+function getLocalOffsetPosition(hit) {
+  const normalMatrix = new THREE.Matrix3().getNormalMatrix(hit.object.matrixWorld)
+  const worldNormal = hit.face.normal.clone().applyMatrix3(normalMatrix).normalize()
+
+  const invGroupMatrix = cakeGroup.matrixWorld.clone().invert()
+  const localNormal = worldNormal.clone().transformDirection(invGroupMatrix).normalize()
+
+  const local = cakeGroup.worldToLocal(hit.point.clone())
+  return {
+    x: local.x + localNormal.x * MARKER_OFFSET,
+    y: local.y + localNormal.y * MARKER_OFFSET,
+    z: local.z + localNormal.z * MARKER_OFFSET,
+  }
+}
+
 function onCanvasDragOver(evt) {
   if (!decorState.draggingItem) return
   evt.dataTransfer.dropEffect = 'copy'
@@ -793,15 +814,15 @@ function onCanvasDrop(evt) {
 
   if (!addOne(item)) return // hết hàng / đã đạt giới hạn tồn kho
   recordHistory()
-  addPlacedAccessory(item, hit.point)
+  addPlacedAccessory(item, hit)
 }
 
-async function addPlacedAccessory(item, worldPoint) {
+async function addPlacedAccessory(item, hit) {
   const uid = `${item.id}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
-  const local = cakeGroup.worldToLocal(worldPoint.clone())
+  const pos = getLocalOffsetPosition(hit)
 
   const marker = await buildAccessoryMesh(item)
-  marker.position.set(local.x, local.y + MARKER_OFFSET, local.z)
+  marker.position.set(pos.x, pos.y, pos.z)
   marker.userData.isDecorMarker = true
   marker.userData.uid = uid
   marker.userData.phuKienId = item.id
@@ -864,8 +885,8 @@ function repositionMarkersAfterShapeChange() {
     const hits = downRay.intersectObjects(cakeSurfaceMeshes, false)
 
     if (hits.length) {
-      const local = cakeGroup.worldToLocal(hits[0].point.clone())
-      marker.position.set(local.x, local.y + MARKER_OFFSET, local.z)
+      const pos = getLocalOffsetPosition(hits[0])
+      marker.position.set(pos.x, pos.y, pos.z)
     } else {
       removeMarker(uid) // không còn nằm trên mặt bánh mới -> tự động gỡ bỏ
     }
@@ -908,8 +929,8 @@ function onPointerMove(evt) {
   const marker = placedMeshes.get(draggingMarkerUid)
   if (!marker) return
 
-  const local = cakeGroup.worldToLocal(hit.point.clone())
-  marker.position.set(local.x, local.y + MARKER_OFFSET, local.z)
+  const pos = getLocalOffsetPosition(hit)
+  marker.position.set(pos.x, pos.y, pos.z)
 }
 
 function onPointerUp() {
@@ -967,18 +988,18 @@ function findAutoPlacementPoint() {
   const z = Math.sin(angle) * radius
   downRay.set(new THREE.Vector3(x, 5, z), new THREE.Vector3(0, -1, 0))
   const hits = downRay.intersectObjects(cakeSurfaceMeshes, false)
-  return hits.length ? hits[0].point : null
+  return hits.length ? hits[0] : null
 }
 
 /** Sidebar bấm nút "+" (không kéo-thả) -> phải tự đặt thật 1 phụ kiện lên bánh,
  *  không chỉ tăng số đếm, để tổng tiền hiển thị luôn khớp với những gì đang có
  *  trên bánh (trước đây bấm "+" chỉ tăng số lượng ở sidebar mà bánh không đổi gì). */
 function addAccessoryFromStepper(item) {
-  const point = findAutoPlacementPoint()
-  if (!point) return false
+  const hit = findAutoPlacementPoint()
+  if (!hit) return false
   if (!addOne(item)) return false
   recordHistory()
-  addPlacedAccessory(item, point)
+  addPlacedAccessory(item, hit)
   return true
 }
 
