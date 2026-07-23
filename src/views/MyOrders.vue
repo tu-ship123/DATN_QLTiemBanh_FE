@@ -346,6 +346,35 @@
                 </div>
               </Transition>
 
+              <!-- ĐẶT LẠI ĐƠN CŨ (DF_ST05) — hiện với đơn đã hoàn thành/đã giao/đã hủy -->
+              <button
+                v-if="['HOAN_THANH', 'DA_GIAO', 'DA_HUY'].includes(activeOrder.trangThai)"
+                @click="datLaiDonCu(activeOrder)"
+                :disabled="reorderLoading"
+                class="w-full rounded-2xl border-2 border-[#7A5C3A]/30 bg-[#FDF8F2] px-4 py-3 text-xs font-bold text-[#7A5C3A] hover:bg-[#FDF6EC] transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                <iconify-icon v-if="reorderLoading" icon="ph:circle-notch" class="text-base animate-spin"></iconify-icon>
+                <iconify-icon v-else icon="ph:arrow-clockwise-duotone" class="text-base"></iconify-icon>
+                {{ reorderLoading ? 'Đang thêm vào giỏ...' : 'Đặt lại đơn này' }}
+              </button>
+
+              <!-- YÊU CẦU SỬA ĐƠN (DF_ST06) — chỉ hiện khi đơn còn Chờ xác nhận -->
+              <button
+                v-if="activeOrder.trangThai === 'CHO_XAC_NHAN' && activeOrder.trangThaiYeuCauSuaDon !== 'CHO_XU_LY'"
+                @click="openEditRequestModal(activeOrder)"
+                class="w-full rounded-2xl border border-[#EDE0CC] bg-white px-4 py-3 text-xs font-bold text-[#5C4428] hover:bg-[#FDF6EC] transition-colors flex items-center justify-center gap-2"
+              >
+                <iconify-icon icon="ph:note-pencil-duotone" class="text-base text-[#7A5C3A]"></iconify-icon>
+                Yêu cầu sửa đơn
+              </button>
+              <div
+                v-if="activeOrder.trangThaiYeuCauSuaDon === 'CHO_XU_LY'"
+                class="w-full rounded-2xl border border-yellow-200 bg-yellow-50 px-4 py-3 text-xs font-bold text-yellow-700 flex items-center justify-center gap-2"
+              >
+                <iconify-icon icon="ph:hourglass-medium-duotone" class="text-base"></iconify-icon>
+                Yêu cầu sửa đơn đang chờ nhân viên duyệt
+              </div>
+
               <!-- HỦY ĐƠN -->
               <button
                 v-if="['CHO_XU_LY', 'CHO_XAC_NHAN', 'PAID'].includes(activeOrder.trangThai)"
@@ -453,6 +482,57 @@
       </div>
     </div>
 
+    <!-- ── MODAL YÊU CẦU SỬA ĐƠN (DF_ST06) ──────────────────────────────── -->
+    <div v-if="showEditRequestModal"
+      class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4"
+      @click.self="showEditRequestModal = false">
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 font-sans">
+        <h3 class="text-lg font-black text-[#5C4428] mb-1">Yêu cầu sửa đơn #{{ editRequestTarget?.id }}</h3>
+        <p class="text-sm text-[#9A7650] mb-4">Nhập thông tin bạn muốn thay đổi. Nhân viên sẽ xem và duyệt yêu cầu này.</p>
+
+        <div class="space-y-3">
+          <div>
+            <label class="text-xs font-semibold text-[#9A7650] mb-1 block">Địa chỉ giao hàng</label>
+            <input v-model="editRequestForm.diaChiGiaoHang" type="text"
+              class="w-full rounded-xl border border-[#EDE0CC] p-2.5 text-sm outline-none focus:border-[#7A5C3A]" />
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-[#9A7650] mb-1 block">Số điện thoại</label>
+            <input v-model="editRequestForm.soDienThoai" type="text"
+              class="w-full rounded-xl border border-[#EDE0CC] p-2.5 text-sm outline-none focus:border-[#7A5C3A]" />
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-[#9A7650] mb-1 block">Ngày giao hàng</label>
+            <input v-model="editRequestForm.ngayGiaoHang" type="date"
+              class="w-full rounded-xl border border-[#EDE0CC] p-2.5 text-sm outline-none focus:border-[#7A5C3A]" />
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-[#9A7650] mb-1 block">Ghi chú</label>
+            <textarea v-model="editRequestForm.ghiChu" rows="2"
+              class="w-full rounded-xl border border-[#EDE0CC] p-2.5 text-sm outline-none focus:border-[#7A5C3A] resize-none"></textarea>
+          </div>
+        </div>
+
+        <div class="flex gap-3 mt-5">
+          <button
+            @click="showEditRequestModal = false"
+            class="flex-1 py-2.5 rounded-xl text-sm font-bold border border-[#EDE0CC] text-[#9A7650] hover:bg-[#FDF6EC]"
+          >
+            Đóng
+          </button>
+          <button
+            @click="confirmEditRequest"
+            :disabled="editRequestLoading || !editRequestForm.diaChiGiaoHang.trim() || !editRequestForm.soDienThoai.trim() || !editRequestForm.ngayGiaoHang"
+            class="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            style="background:#7A5C3A;"
+          >
+            <iconify-icon v-if="editRequestLoading" icon="ph:circle-notch" class="animate-spin"></iconify-icon>
+            {{ editRequestLoading ? 'Đang gửi...' : 'Gửi yêu cầu' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <Transition name="toast">
       <div
         v-if="toast.show"
@@ -552,6 +632,76 @@ const confirmCancelOrder = async () => {
     showToast(error.response?.data || 'Có lỗi xảy ra khi hủy đơn', 'error')
   } finally {
     cancelLoading.value = false
+  }
+}
+
+// ===== DF_ST05: ĐẶT LẠI ĐƠN CŨ (RE-ORDER) =====
+const reorderLoading = ref(false)
+const datLaiDonCu = async (order) => {
+  if (!order) return
+  reorderLoading.value = true
+  try {
+    const res = await orderService.reorder(order.id)
+    const { soSanPhamDaThem, sanPhamBiBoQua } = res.data || {}
+    if (sanPhamBiBoQua && sanPhamBiBoQua.length > 0) {
+      showToast(
+        `Đã thêm ${soSanPhamDaThem} sản phẩm vào giỏ. Một số sản phẩm không còn khả dụng: ${sanPhamBiBoQua.join(', ')}`,
+        'info'
+      )
+    } else {
+      showToast(`Đã thêm ${soSanPhamDaThem} sản phẩm vào giỏ hàng!`, 'success')
+    }
+    router.push('/shop/cart')
+  } catch (error) {
+    console.error(error)
+    showToast(error.response?.data?.message || error.response?.data || 'Không thể đặt lại đơn hàng này!', 'error')
+  } finally {
+    reorderLoading.value = false
+  }
+}
+
+// ===== DF_ST06: YÊU CẦU SỬA ĐƠN =====
+const showEditRequestModal = ref(false)
+const editRequestTarget = ref(null)
+const editRequestLoading = ref(false)
+const editRequestForm = ref({ diaChiGiaoHang: '', soDienThoai: '', ngayGiaoHang: '', ghiChu: '' })
+
+// Chuyển ISO datetime -> yyyy-MM-dd cho input type="date"
+const toDateInputValue = (dateString) => {
+  if (!dateString) return ''
+  return new Date(dateString).toISOString().slice(0, 10)
+}
+
+const openEditRequestModal = (order) => {
+  editRequestTarget.value = order
+  editRequestForm.value = {
+    diaChiGiaoHang: order.diaChiGiaoHang || '',
+    soDienThoai: order.soDienThoai || '',
+    ngayGiaoHang: toDateInputValue(order.ngayGiaoHang),
+    ghiChu: order.ghiChu || '',
+  }
+  showEditRequestModal.value = true
+}
+
+const confirmEditRequest = async () => {
+  if (!editRequestTarget.value) return
+  editRequestLoading.value = true
+  try {
+    const res = await orderService.guiYeuCauSuaDon(editRequestTarget.value.id, editRequestForm.value)
+    // Cập nhật ngay trạng thái yêu cầu trên đơn đang xem để nút chuyển thành "đang chờ duyệt"
+    if (activeOrder.value?.id === editRequestTarget.value.id) {
+      activeOrder.value.trangThaiYeuCauSuaDon = res.data?.trangThaiYeuCauSuaDon || 'CHO_XU_LY'
+    }
+    const donTrongDanhSach = orders.value.find(o => o.id === editRequestTarget.value.id)
+    if (donTrongDanhSach) donTrongDanhSach.trangThaiYeuCauSuaDon = 'CHO_XU_LY'
+
+    showToast('Đã gửi yêu cầu sửa đơn! Nhân viên sẽ liên hệ với bạn để xác nhận.', 'success')
+    showEditRequestModal.value = false
+  } catch (error) {
+    console.error(error)
+    showToast(error.response?.data?.message || error.response?.data || 'Gửi yêu cầu sửa đơn thất bại!', 'error')
+  } finally {
+    editRequestLoading.value = false
   }
 }
 
@@ -709,6 +859,7 @@ const formatDate = (dateString, includeTime = true) => {
 const translateStatus = (status) => {
   const statusMap = {
     'CHO_XU_LY': 'Chờ xử lý',
+    'CHO_XAC_NHAN': 'Chờ xác nhận',
     'DA_XAC_NHAN': 'Đã xác nhận',
     'DANG_LAM': 'Đang làm bánh',
     'SAN_SANG': 'Sẵn sàng giao',
@@ -723,6 +874,7 @@ const translateStatus = (status) => {
 const orderStatusClass = (status) => {
   switch (status) {
     case 'CHO_XU_LY': return 'bg-yellow-50 text-yellow-700 border border-yellow-200'
+    case 'CHO_XAC_NHAN': return 'bg-yellow-50 text-yellow-700 border border-yellow-200'
     case 'DA_XAC_NHAN': return 'bg-blue-50 text-blue-700 border border-blue-200'
     case 'DANG_LAM': return 'bg-[#FDF8F2] text-[#7A5C3A] border border-[#EDE0CC]'
     case 'SAN_SANG': return 'bg-cyan-50 text-cyan-700 border border-cyan-200'

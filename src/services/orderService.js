@@ -25,6 +25,26 @@ export const orderService = {
     });
   },
 
+  /**
+   * DF_ST05 — Đặt lại đơn cũ (Re-order): thêm TOÀN BỘ sản phẩm của 1 đơn cũ
+   * vào giỏ hàng hiện tại của khách. BE tự bỏ qua (và trả về danh sách)
+   * những sản phẩm không còn khả dụng thay vì làm hỏng cả thao tác.
+   * @returns {Promise<{ data: { gioHang, soSanPhamDaThem, sanPhamBiBoQua } }>}
+   */
+  reorder(id) {
+    return apiClient.post(`/api/v1/orders/${id}/reorder`);
+  },
+
+  /**
+   * DF_ST06 — Gửi yêu cầu sửa đơn: chỉ áp dụng khi đơn đang ở trạng thái
+   * "Chờ xác nhận". BE lưu lại yêu cầu và thông báo realtime cho nhân viên/admin.
+   * @param {number} id
+   * @param {{ diaChiGiaoHang, soDienThoai, ngayGiaoHang, ghiChu }} payload
+   */
+  guiYeuCauSuaDon(id, payload) {
+    return apiClient.post(`/api/v1/orders/${id}/edit-request`, payload);
+  },
+
   /** Nhân viên hủy hóa đơn POS khi bấm Huỷ / đóng mã QR trước khi khách thanh toán */
   cancelPosOrder(id) {
     return apiClient.delete(`/api/v1/pos/orders/${id}/cancel`);
