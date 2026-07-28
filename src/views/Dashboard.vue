@@ -20,6 +20,7 @@
             :style="{ background: stat.bgColor }"
           ><iconify-icon :icon="stat.icon" class="text-xl text-[#7A5C3A]"></iconify-icon></div>
           <span
+            v-if="stat.trend"
             class="text-xs font-bold flex items-center gap-1 px-2 py-1 rounded-full"
             :class="stat.trendUp ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'"
           >
@@ -28,7 +29,7 @@
         </div>
         <div class="font-display font-black text-2xl mb-0.5" style="color:#5C4428">{{ stat.value }}</div>
         <div class="text-sm text-muted">{{ stat.label }}</div>
-        <div class="mt-3 text-xs text-muted">so với hôm qua</div>
+        <div class="mt-3 text-xs text-muted">{{ stat.compareLabel || 'so với hôm qua' }}</div>
       </div>
     </div>
 
@@ -109,7 +110,7 @@
           <div class="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition">
             <iconify-icon icon="ph:chat-teardrop-dots-duotone" class="text-2xl" style="color:#3B82F6" />
           </div>
-          <span class="badge-primary">3</span>
+          <span v-if="unreadMessages > 0" class="badge-primary">{{ unreadMessages }}</span>
         </div>
         <h3 class="font-bold text-sm mb-1" style="color:#5C4428">Tin nhắn</h3>
         <p class="text-xs text-muted">Quản lý liên hệ khách hàng</p>
@@ -239,6 +240,7 @@ import { RouterLink } from 'vue-router'
 import Chart from 'chart.js/auto'
 import { dashboardService } from '../services/dashboardService'
 import { orderService } from '../services/orderService'
+import apiClient from '../services/apiService'
 
 const today = new Date().toLocaleDateString('vi-VN', { weekday:'long', day:'numeric', month:'long', year:'numeric' })
 const updateTime = ref(new Date().toLocaleTimeString('vi-VN', { hour:'2-digit', minute:'2-digit' }))
@@ -256,6 +258,7 @@ const stats = ref([
 const recentOrders = ref([])
 const topProducts = ref([])
 const productionOrders = ref([])
+const unreadMessages = ref(0)
 
 // Trạng thái -> nhãn tiếng Việt + màu badge dùng chung
 const STATUS_META = {
@@ -335,7 +338,8 @@ async function loadKPI() {
       },
       {
         key: 'prod', icon: 'ph:clock-countdown-duotone', label: 'Đang sản xuất',
-        value: '--', trend: '--', trendUp: false, bgColor: '#FFFBEB',
+        value: d.dangSanXuat ?? 0, trend: '', trendUp: true, bgColor: '#FFFBEB',
+        compareLabel: 'cập nhật tức thời',
       },
       {
         key: 'customers', icon: 'ph:user-duotone', label: 'Khách mới',
@@ -479,10 +483,22 @@ async function loadOrdersData() {
   }
 }
 
+// ── Số tin nhắn chưa đọc (tổng của mọi hội thoại) cho badge ở quick action ──
+async function loadUnreadMessages() {
+  try {
+    const { data } = await apiClient.get('/api/v1/admin/messages/conversations')
+    unreadMessages.value = Array.isArray(data)
+      ? data.reduce((tong, hoiThoai) => tong + (hoiThoai.soTinChuaDoc || 0), 0)
+      : 0
+  } catch (err) {
+    console.warn('Không load được số tin nhắn chưa đọc:', err.message)
+  }
+}
+
 onMounted(async () => {
   initChart()
   isLoading.value = true
-  await Promise.all([loadKPI(), loadRevenue(), loadOrdersData()])
+  await Promise.all([loadKPI(), loadRevenue(), loadOrdersData(), loadUnreadMessages()])
   isLoading.value = false
 })
 </script>
