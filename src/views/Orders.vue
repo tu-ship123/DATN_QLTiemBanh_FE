@@ -613,12 +613,19 @@ const STATUS_KEY = {
   DA_HUY:       'cancelled',
 }
 
+// Bộ lọc trên UI là các NHÓM trạng thái (khớp với STATUS_KEY ở trên), không phải
+// 1-1 với 1 trạng thái đơn lẻ. VD "Đang sản xuất" gồm cả DANG_LAM và SAN_SANG,
+// "Chờ xác nhận" gồm cả CHO_XAC_NHAN và DA_XAC_NHAN.
+// [FIX] Trước đây map thẳng sang 1 trạng thái duy nhất rồi gửi lên BE lọc theo
+// đúng giá trị đó (vd 'DANG_LAM') => BE bỏ sót toàn bộ đơn 'SAN_SANG' vì BE chỉ
+// so khớp bằng "=" 1 trạng thái. Nên lọc theo NHÓM ở phía client (statusKey),
+// còn phía server chỉ dùng để lọc theo khoảng ngày.
 const FILTER_MAP = {
-  pending:    'CHO_XAC_NHAN',
-  production: 'DANG_LAM',
-  done:       'HOAN_THANH',
-  delivered:  'DANG_GIAO',
-  cancelled:  'DA_HUY',
+  pending:    'new',
+  production: 'production',
+  done:       'done',
+  delivered:  'delivered',
+  cancelled:  'cancelled',
 }
 
 const AVATAR_COLORS = [
@@ -676,7 +683,10 @@ async function fetchOrders() {
   tableLoading.value = true
   try {
     const params = {}
-    if (filterStatus.value)  params.trangThai = FILTER_MAP[filterStatus.value] || filterStatus.value
+    // [FIX] Không gửi trangThai lên BE nữa vì filter trên UI là theo NHÓM
+    // trạng thái (1 nhóm có thể ứng với nhiều trạng thái thật), còn API BE chỉ
+    // hỗ trợ so khớp đúng 1 trạng thái => lọc nhóm được xử lý ở client
+    // (xem computed filteredOrders bên dưới), server chỉ lọc theo khoảng ngày.
     if (filterDate.value?.[0]) params.tuNgay  = new Date(filterDate.value[0]).toISOString()
     if (filterDate.value?.[1]) params.denNgay = new Date(filterDate.value[1]).toISOString()
 
@@ -707,6 +717,14 @@ const orderStats = computed(() => [
 
 const filteredOrders = computed(() => {
   let result = orders.value
+  // [FIX] Lọc theo NHÓM trạng thái ở client, dùng đúng statusKey đã gộp nhóm
+  // (giống cách đếm ở thẻ thống kê orderStats phía trên) thay vì chỉ khớp 1
+  // trạng thái đơn lẻ như trước — tránh bỏ sót đơn (vd thiếu SAN_SANG khi lọc
+  // "Đang sản xuất", thiếu DA_XAC_NHAN khi lọc "Chờ xác nhận").
+  if (filterStatus.value) {
+    const groupKey = FILTER_MAP[filterStatus.value] || filterStatus.value
+    result = result.filter(o => o.statusKey === groupKey)
+  }
   if (search.value) {
     const q = search.value.toLowerCase()
     result = result.filter(o =>
