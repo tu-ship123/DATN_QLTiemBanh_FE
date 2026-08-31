@@ -95,7 +95,7 @@
           </div>
         </div>
         <div class="p-3 border-t border-[var(--color-border)]">
-          <RouterLink to="/orders" class="btn-secondary w-full justify-center text-center text-sm py-2">
+          <RouterLink to="/admin/orders" class="btn-secondary w-full justify-center text-center text-sm py-2">
             Xem tất cả đơn hàng →
           </RouterLink>
         </div>
@@ -105,7 +105,7 @@
     <!-- ===== QUICK ACTIONS ===== -->
     <div class="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-4">
       <!-- Messages -->
-      <RouterLink to="/messages" class="action-card group cursor-pointer">
+      <RouterLink to="/admin/messages" class="action-card group cursor-pointer">
         <div class="flex items-center justify-between mb-3">
           <div class="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition">
             <iconify-icon icon="ph:chat-teardrop-dots-duotone" class="text-2xl" style="color:#3B82F6" />
@@ -118,7 +118,7 @@
       </RouterLink>
 
       <!-- Analytics -->
-      <RouterLink to="/analytics" class="action-card group cursor-pointer">
+      <RouterLink to="/admin/analytics" class="action-card group cursor-pointer">
         <div class="flex items-center justify-between mb-3">
           <div class="w-12 h-12 rounded-2xl bg-purple-50 flex items-center justify-center group-hover:bg-purple-100 transition">
             <iconify-icon icon="ph:chart-line-up-duotone" class="text-2xl" style="color:#7C3AED" />
@@ -130,7 +130,7 @@
       </RouterLink>
 
       <!-- Inventory -->
-      <RouterLink to="/inventory" class="action-card group cursor-pointer">
+      <RouterLink to="/admin/inventory" class="action-card group cursor-pointer">
         <div class="flex items-center justify-between mb-3">
           <div class="w-12 h-12 rounded-2xl bg-yellow-50 flex items-center justify-center group-hover:bg-yellow-100 transition">
             <iconify-icon icon="ph:package-duotone" class="text-2xl" style="color:#D97706" />
@@ -142,7 +142,7 @@
       </RouterLink>
 
       <!-- Promotions -->
-      <RouterLink to="/vouchers" class="action-card group cursor-pointer">
+      <RouterLink to="/admin/vouchers" class="action-card group cursor-pointer">
         <div class="flex items-center justify-between mb-3">
           <div class="w-12 h-12 rounded-2xl bg-pink-50 flex items-center justify-center group-hover:bg-pink-100 transition">
             <iconify-icon icon="ph:ticket-duotone" class="text-2xl" style="color:#EC4899" />
@@ -160,7 +160,7 @@
       <div class="data-card">
         <div class="data-card-header">
           <div class="font-display font-bold text-base" style="color:#5C4428">Sản phẩm bán chạy</div>
-          <RouterLink to="/products" class="text-xs font-semibold" style="color:#7A5C3A">Xem thêm</RouterLink>
+          <RouterLink to="/admin/products" class="text-xs font-semibold" style="color:#7A5C3A">Xem thêm</RouterLink>
         </div>
         <div class="p-4 space-y-3">
           <div v-for="(p, i) in topProducts" :key="p.name" class="flex items-center gap-3">
@@ -189,7 +189,7 @@
             <div class="font-display font-bold text-base" style="color:#5C4428">Lịch sản xuất hôm nay</div>
             <div class="text-xs text-muted mt-0.5">{{ productionOrders.length }} đơn đang xử lý</div>
           </div>
-          <RouterLink to="/orders" class="text-xs font-semibold" style="color:#7A5C3A">Xem chi tiết</RouterLink>
+          <RouterLink to="/admin/orders" class="text-xs font-semibold" style="color:#7A5C3A">Xem chi tiết</RouterLink>
         </div>
         <div class="p-4">
           <el-table :data="productionOrders" style="width:100%" :show-header="true" row-class-name="hover:bg-[#FFFBF5]">

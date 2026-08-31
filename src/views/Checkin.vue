@@ -368,6 +368,14 @@ async function loadTodayShifts() {
     // Lọc bỏ ca đã huỷ
     todayShifts.value = shifts.filter(s => s.trangThai !== 'DA_HUY')
 
+    // Đồng bộ lại trạng thái chấm công thực tế từ BE cho từng ca.
+    // (Trước đây chamCongMap chỉ được set trong bộ nhớ ngay sau khi bấm
+    // Check-in/Check-out, nên mỗi lần rời trang rồi quay lại — hoặc F5 —
+    // chamCongMap bị mất, khiến UI hiện lại "Chưa check-in" dù BE đã có
+    // bản ghi ChamCong, dễ dẫn tới bấm Check-in lần 2 và bị BE báo lỗi
+    // "Bạn đã check-in ca này rồi".)
+    await loadChamCongMap(todayShifts.value)
+
     // Tự chọn ca đầu tiên nếu chưa có lựa chọn
     if (todayShifts.value.length > 0 && !selectedShift.value) {
       selectedShift.value = todayShifts.value[0]
@@ -385,6 +393,26 @@ async function loadTodayShifts() {
   } finally {
     pageLoading.value = false
   }
+}
+
+// ─── ĐỒNG BỘ CHẤM CÔNG THỰC TẾ TỪ BE ───────────────────────────────────────
+/**
+ * Với mỗi ca hôm nay, gọi GET /api/v1/staff/ket-ca/{phanCaId} (dùng chung
+ * endpoint với trang Kết Ca) để lấy ChamCongResponse (gioVao, gioRa, ...).
+ * Nếu chưa check-in, BE trả lỗi nghiệp vụ (400) → coi như chưa có ChamCong.
+ */
+async function loadChamCongMap(shifts) {
+  const results = await Promise.allSettled(
+    shifts.map(s => apiClient.get(`/api/v1/staff/ket-ca/${s.id}`))
+  )
+
+  const newMap = {}
+  results.forEach((r, idx) => {
+    if (r.status === 'fulfilled' && r.value?.data) {
+      newMap[shifts[idx].id] = r.value.data
+    }
+  })
+  chamCongMap.value = newMap
 }
 
 // ─── CA ĐANG ĐƯỢC CHỌN ──────────────────────────────────────────────────────
@@ -432,8 +460,10 @@ async function handleCheckIn() {
     showToast(msg, data.phutDiTre > 0 ? 'warn' : 'success')
 
   } catch (err) {
-    const msg = err.response?.data || err.message || 'Check-in thất bại!'
+    const msg = err.response?.data?.message || err.response?.data || err.message || 'Check-in thất bại!'
     showToast(typeof msg === 'string' ? msg : 'Check-in thất bại!', 'error')
+    // Nếu BE báo đã check-in rồi (state cũ trên client bị lệch) → đồng bộ lại ngay
+    await loadChamCongMap(todayShifts.value)
   } finally {
     actionLoading.value = false
   }
@@ -454,8 +484,10 @@ async function handleCheckOut() {
     showToast(msg, data.trangThai === 'VE_SOM' ? 'warn' : 'success')
 
   } catch (err) {
-    const msg = err.response?.data || err.message || 'Check-out thất bại!'
+    const msg = err.response?.data?.message || err.response?.data || err.message || 'Check-out thất bại!'
     showToast(typeof msg === 'string' ? msg : 'Check-out thất bại!', 'error')
+    // Nếu BE báo trạng thái khác client (đã check-out rồi, chưa check-in...) → đồng bộ lại
+    await loadChamCongMap(todayShifts.value)
   } finally {
     actionLoading.value = false
   }
