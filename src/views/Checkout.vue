@@ -30,11 +30,52 @@
 
         <!-- Thông tin nhận hàng -->
         <div class="rounded-[24px] bg-white border border-[#EDE0CC] shadow-sm p-6">
-          <h2 class="text-base font-bold text-[#5C4428] flex items-center gap-2 mb-5">
-            <span class="w-6 h-6 rounded-full text-white text-xs font-black flex items-center justify-center font-sans"
-              style="background:linear-gradient(135deg,#7A5C3A,#9A7650);">1</span>
-            Thông tin nhận hàng
-          </h2>
+          <div class="flex items-center justify-between gap-3 mb-5 flex-wrap">
+            <h2 class="text-base font-bold text-[#5C4428] flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full text-white text-xs font-black flex items-center justify-center font-sans"
+                style="background:linear-gradient(135deg,#7A5C3A,#9A7650);">1</span>
+              Thông tin nhận hàng
+            </h2>
+            <button v-if="danhSachDiaChi.length" type="button" @click="$router.push('/shop/address-book')"
+              class="text-[11px] font-bold text-[#7A5C3A] hover:underline font-sans">
+              Quản lý sổ địa chỉ
+            </button>
+          </div>
+
+          <!-- Sổ địa chỉ đã lưu: chọn nhanh thay vì gõ tay -->
+          <div v-if="loadingDiaChi" class="mb-5 text-xs text-[#A68B5C] font-sans">Đang tải sổ địa chỉ...</div>
+          <div v-else-if="danhSachDiaChi.length" class="mb-5 font-sans">
+            <label class="text-[10px] text-[#A68B5C] font-bold uppercase tracking-wide mb-2 block">Chọn từ sổ địa chỉ</label>
+            <div class="grid sm:grid-cols-2 gap-3">
+              <label v-for="dc in danhSachDiaChi" :key="dc.id"
+                class="flex items-start gap-3 p-3.5 rounded-2xl border-2 cursor-pointer transition-all duration-200"
+                :class="diaChiDangChonId === dc.id ? 'border-[#7A5C3A] bg-[#FDF6EC]' : 'border-[#EDE0CC] bg-white hover:border-[#9A7650]/40'">
+                <input type="radio" :value="dc.id" v-model="diaChiDangChonId" @change="chonDiaChiDaLuu(dc)" class="sr-only" />
+                <div class="w-4 h-4 rounded-full border-2 flex-shrink-0 mt-0.5 flex items-center justify-center transition-all"
+                  :class="diaChiDangChonId === dc.id ? 'border-[#7A5C3A]' : 'border-gray-300'">
+                  <div v-if="diaChiDangChonId === dc.id" class="w-2 h-2 rounded-full bg-[#7A5C3A]"></div>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <p class="font-bold text-xs text-[#5C4428]">{{ dc.hoTenNguoiNhan }}</p>
+                    <span v-if="dc.laMacDinh" class="text-[9px] font-black uppercase tracking-wide text-[#7A5C3A] bg-white border border-[#EDE0CC] px-1.5 py-0.5 rounded">Mặc định</span>
+                  </div>
+                  <p class="text-[11px] text-[#A68B5C] font-medium">{{ dc.soDienThoaiNhan }}</p>
+                  <p class="text-xs text-[#5C4428] leading-relaxed">{{ dc.diaChiChiTiet }}</p>
+                </div>
+              </label>
+
+              <label class="flex items-center gap-3 p-3.5 rounded-2xl border-2 cursor-pointer transition-all duration-200"
+                :class="diaChiDangChonId === null ? 'border-[#7A5C3A] bg-[#FDF6EC]' : 'border-[#EDE0CC] bg-white hover:border-[#9A7650]/40'">
+                <input type="radio" :value="null" v-model="diaChiDangChonId" @change="dungDiaChiMoi" class="sr-only" />
+                <div class="w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all"
+                  :class="diaChiDangChonId === null ? 'border-[#7A5C3A]' : 'border-gray-300'">
+                  <div v-if="diaChiDangChonId === null" class="w-2 h-2 rounded-full bg-[#7A5C3A]"></div>
+                </div>
+                <span class="text-xs font-bold text-[#5C4428]">+ Nhập địa chỉ khác</span>
+              </label>
+            </div>
+          </div>
 
           <div class="grid sm:grid-cols-2 gap-4 font-sans">
             <div class="space-y-1">
@@ -306,6 +347,7 @@ import { useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useCartStore } from '@/stores/cartStore'
 import { useAuthStore } from '@/stores/authStore'
 import { orderService } from '@/services/orderService'
+import apiClient from '@/services/apiService'
 
 const router = useRouter()
 const cartStore = useCartStore()
@@ -348,8 +390,41 @@ const form = ref({
   phuongThucThanhToan: 'SEPAY'
 })
 
-// ===== AUTO-FILL từ user / token =====
-onMounted(() => {
+// ===== SỔ ĐỊA CHỈ ĐÃ LƯU =====
+// Đổ sẵn thông tin người nhận từ 1 địa chỉ đã lưu trong sổ địa chỉ (/api/v1/dia-chi)
+// thay vì bắt khách phải gõ tay lại mỗi lần đặt hàng.
+const danhSachDiaChi = ref([])
+const loadingDiaChi = ref(false)
+const diaChiDangChonId = ref(null) // null = đang nhập tay / "địa chỉ khác"
+
+const chonDiaChiDaLuu = (dc) => {
+  diaChiDangChonId.value = dc.id
+  form.value.tenNguoiNhan = dc.hoTenNguoiNhan
+  form.value.soDienThoai = dc.soDienThoaiNhan
+  form.value.diaChiGiaoHang = dc.diaChiChiTiet
+}
+
+const dungDiaChiMoi = () => {
+  diaChiDangChonId.value = null
+}
+
+const fetchDiaChiDaLuu = async () => {
+  loadingDiaChi.value = true
+  try {
+    const { data } = await apiClient.get('/api/v1/dia-chi')
+    danhSachDiaChi.value = data || []
+    // Ưu tiên đổ sẵn địa chỉ mặc định, nếu không có thì lấy địa chỉ đầu tiên
+    const macDinh = danhSachDiaChi.value.find(dc => dc.laMacDinh) || danhSachDiaChi.value[0]
+    if (macDinh) chonDiaChiDaLuu(macDinh)
+  } catch (e) {
+    danhSachDiaChi.value = []
+  } finally {
+    loadingDiaChi.value = false
+  }
+}
+
+// ===== AUTO-FILL từ user / token (dùng khi khách chưa có địa chỉ nào trong sổ) =====
+onMounted(async () => {
   const user = authStore.user
   if (user?.hoTen)        form.value.tenNguoiNhan    = user.hoTen
   if (user?.soDienThoai)  form.value.soDienThoai     = user.soDienThoai
@@ -363,6 +438,9 @@ onMounted(() => {
     if (!form.value.soDienThoai    && decoded.soDienThoai)  form.value.soDienThoai    = decoded.soDienThoai
     if (!form.value.diaChiGiaoHang && decoded.diaChi)       form.value.diaChiGiaoHang = decoded.diaChi
   }
+
+  // Sổ địa chỉ có thể ghi đè các trường trên bằng địa chỉ mặc định đã lưu
+  await fetchDiaChiDaLuu()
 })
 
 const minDate = computed(() => getTodayString())
@@ -405,6 +483,9 @@ const handleDatHang = async () => {
     soDienThoai: form.value.soDienThoai,
     ngayGiaoHang: form.value.ngayGiaoHang,
     ghiChu: `Người nhận: ${form.value.tenNguoiNhan}. ${form.value.ghiChu}`.trim(),
+    // FIX: trước đây BE không hề biết khách chọn COD hay SEPAY (thiếu field này),
+    // khiến hệ thống không tạo được bản ghi thanh toán đúng hình thức khi tạo đơn.
+    phuongThucThanhToan: form.value.phuongThucThanhToan,
     items: danhSachSanPham
   }
 
